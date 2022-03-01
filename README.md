@@ -5,7 +5,9 @@
 As a part of the LiteBIRD Foregrounds JSG, this project is intended to provide a compact source detection/extraction tool layer in the future data analysis pipeline. 
 
 
-## Installation
+## Documentation
+
+Documentation will be placed under the doc folder
 
 
 ## Usage
