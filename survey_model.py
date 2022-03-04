@@ -43,7 +43,8 @@ for k in IMO.keys():    # add physical units to the IMO dictionary. Beams will b
 
 def load_LiteBIRD_map(fname,chan_name=None,fwhm=None,freq=None,units_string='mK_cmb'):
     
-"""
+    """
+    
     Reads a LiteBIRD healpix map from a file FNAME. Units are assumed to be
     thermodynamic mK except otherwise said. FWHM and central frequency are provided
     either using the corresponding argument (using physical quantities, e.g. 
@@ -52,7 +53,7 @@ def load_LiteBIRD_map(fname,chan_name=None,fwhm=None,freq=None,units_string='mK_
     FREQ arguments, so if wanted to use different values from the IMO ones the
     CHAN_NAME should not be declared.
     
-"""    
+    """    
     
     if chan_name is None:
         maps = Fitsmap.from_file(fname,freq=freq,fwhm=fwhm)
