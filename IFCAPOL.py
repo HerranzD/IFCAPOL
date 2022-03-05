@@ -207,23 +207,62 @@ def d2pix(d,patch):
     return (d/patch.pixsize).si.value
 
 
-def stats_central(parche,fwhm,clip=None,verbose=False):
+def stats_central(patch,fwhm,clip=None,verbose=False):
+
+    """
+    Performs basic statistics around the center of a given patch of the sky.
+    By default, the radii of the rings used for statistics are:
+        - A central circle or radius = 1sigma, for estimating the peak and
+            valley values.
+        - An outer ring for computing mean value and stddev, with
+            - inner radius = 7sigma and
+            - outer radius = image half size - 2*FWHM
+
+
+    Parameters
+    ----------
+    patch : Imagen object (see the Imagen class in sky_images.py)
+        An input patch (either I, Q or U).
+
+    fwhm : astropy.units.quantity.Quantity
+        Beam FWHM. Its value is used to compute the inner an outer
+        radii of the rings used for the analysis.
+
+    clip : bool
+        If True, sigma clipping is used for the statistics
+
+    verbose: bool
+        If True, some control messages are written on screen
+
+
+    Returns
+    -------
+    A dictionary containing:
+
+        - 'MIN' and 'MAX': The minimum and maximum values inside the central
+            circle, once the average value of the outer ring has been removed.
+        - 'MEAN': Average of the pixels within the outer ring
+        - 'STD': Standard deviation of the pixels within the outer ring
+        - 'PEAK', 'BOTTOM': The minimum and maximum of values inside the
+            central circle
+
+    """
 
     rmin_central = 1*fwhm2sigma*fwhm
     rmax_central = 3*fwhm2sigma*fwhm
     rmin_stats   = 7*fwhm2sigma*fwhm
-    rmax_stats   = parche.size[0]*parche.pixsize/2-2*fwhm
+    rmax_stats   = patch.size[0]*patch.pixsize/2-2*fwhm
 
     if verbose:
         print(' Inner radius = {0} arcmin = {1} pixels'.format(arc_min(rmin_central),
-                                                               d2pix(rmin_central,parche)))
+                                                               d2pix(rmin_central,patch)))
         print(' Inner stat radius = {0} arcmin = {1} pixels'.format(arc_min(rmin_stats),
-                                                                    d2pix(rmin_stats,parche)))
+                                                                    d2pix(rmin_stats,patch)))
         print(' Outer stat radius = {0} arcmin = {1} pixels'.format(arc_min(rmax_stats),
-                                                               d2pix(rmax_stats,parche)))
+                                                               d2pix(rmax_stats,patch)))
 
-    st1          = parche.stats_in_rings(rmin_central,rmax_central,clip=clip)
-    st2          = parche.stats_in_rings(rmin_stats,rmax_stats,clip=clip)
+    st1          = patch.stats_in_rings(rmin_central,rmax_central,clip=clip)
+    st2          = patch.stats_in_rings(rmin_stats,rmax_stats,clip=clip)
 
     return {'MIN'   :st1['min_inside']-st2['mean'],
             'MAX'   :st1['max_inside']-st2['mean'],
