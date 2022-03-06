@@ -49,7 +49,7 @@ signif_fraction  = 0.025           # Graction of britht pixels to mask
 iterative_MF     = True            # Iterative matched filtering
 image_resampling = 1               # Resampling factor when projecting patches
 
-# %%  SKY PATCHING --------------------------------
+# %%  SKY PATCHING
 
 def define_npix(nside):
     return int(64*hp.nside2resol(256)/hp.nside2resol(nside))
@@ -116,7 +116,166 @@ def get_patches(sky_map,coord):
     return out_dict
 
 
-# %%  MATCHED FILTER IN I,Q,U OVER A COORDINATE --------------------------------
+# %%  PATCH OPERATIONS
+
+def arc_min(d):
+    return d.to(u.arcmin).value
+
+def d2pix(d,patch):
+    return (d/patch.pixsize).si.value
+
+def stats_central(patch,fwhm,clip=None,verbose=False):
+
+    """
+    Performs basic statistics around the center of a given patch of the sky.
+    By default, the radii of the rings used for statistics are:
+        - A central circle or radius = 1sigma, for estimating the peak and
+            valley values.
+        - An outer ring for computing mean value and stddev, with
+            - inner radius = 7sigma and
+            - outer radius = image half size - 2*FWHM
+
+
+    Parameters
+    ----------
+    patch : Imagen object (see the Imagen class in sky_images.py)
+        An input patch (either I, Q or U).
+
+    fwhm : astropy.units.quantity.Quantity
+        Beam FWHM. Its value is used to compute the inner an outer
+        radii of the rings used for the analysis.
+
+    clip : bool
+        If True, sigma clipping is used for the statistics
+
+    verbose: bool
+        If True, some control messages are written on screen
+
+
+    Returns
+    -------
+    A dictionary containing:
+
+        - 'MIN' and 'MAX': The minimum and maximum values inside the central
+            circle, once the average value of the outer ring has been removed.
+        - 'MEAN': Average of the pixels within the outer ring
+        - 'STD': Standard deviation of the pixels within the outer ring
+        - 'PEAK', 'BOTTOM': The minimum and maximum of values inside the
+            central circle
+
+    """
+
+    rmin_central = 1*fwhm2sigma*fwhm
+    rmax_central = 3*fwhm2sigma*fwhm
+    rmin_stats   = 7*fwhm2sigma*fwhm
+    rmax_stats   = patch.size[0]*patch.pixsize/2-2*fwhm
+
+    if verbose:
+        print(' Inner radius = {0} arcmin = {1} pixels'.format(arc_min(rmin_central),
+                                                               d2pix(rmin_central,patch)))
+        print(' Inner stat radius = {0} arcmin = {1} pixels'.format(arc_min(rmin_stats),
+                                                                    d2pix(rmin_stats,patch)))
+        print(' Outer stat radius = {0} arcmin = {1} pixels'.format(arc_min(rmax_stats),
+                                                               d2pix(rmax_stats,patch)))
+
+    st1          = patch.stats_in_rings(rmin_central,rmax_central,clip=clip)
+    st2          = patch.stats_in_rings(rmin_stats,rmax_stats,clip=clip)
+
+    return {'MIN'   :st1['min_inside']-st2['mean'],
+            'MAX'   :st1['max_inside']-st2['mean'],
+            'MEAN'  :st2['mean'],
+            'STD'   :st2['std'],
+            'PEAK'  :st1['max_inside'],
+            'BOTTOM':st1['min_inside']}
+
+def peak_info(patch,
+              fwhm,
+              keyname       = 'I',
+              take_positive = False,
+              x             = None,
+              y             = None,
+              clip          = None):
+
+    """
+    Returns a dictionary containing the intensity, rms and position of a
+    local extremum near the center of a patch. If the input parameters X and Y
+    are not None, then the ruotine returns the values for that pixel instead.
+    If take_positive is set to True, then the routine returns either the peak
+    or valley values, depending on which one has the larger absolute value.
+
+
+    Parameters
+    ----------
+    patch : Imagen object (see the Imagen class in sky_images.py)
+        An input patch (either I, Q or U).
+
+    fwhm : astropy.units.quantity.Quantity
+        Beam FWHM. Its value is used to compute the inner an outer
+        radii of the rings used for the analysis.
+
+    keyname : string
+        The name of the quantity that is going to be extracted. It normally
+        will be 'I', 'Q' or 'U'
+
+    take_positive: bool
+        If True, the output will be forced to return the value of the maximum.
+        If False, the output will return either the maximum or the minimum,
+        depending on which one has the largest absolute value
+
+    x,y : integers
+        If None, the routine will find the location of the extremum and
+        return values at that position. If not none, the routine will return
+        values at the pixel [X,Y]
+
+
+    Returns
+    -------
+    A dictionary containing:
+
+        - '<keyname> peak' : The value of the maximum.
+        - '<keyname> err'  : The estimated error of the peak value.
+        - '<keyname> X'    : The X position (pixel) where the peak is measured.
+        - '<keyname> Y'    : The Y position (pixel) where the peak is measured.
+        - '<keyname> coord': The coordinate on the sky where the peak is located.
+
+    """
+
+
+    stats    = stats_central(patch,fwhm,clip=clip)
+    out_dict = {}
+
+    out_dict['{0} err'.format(keyname)]   = stats['STD']
+
+    if x is not None:
+
+        out_dict[keyname]                     = patch.datos[x,y]-stats['MEAN']
+        out_dict['{0} peak'.format(keyname)]  = patch.datos[x,y]
+        out_dict['{0} X'.format(keyname)]     = x
+        out_dict['{0} Y'.format(keyname)]     = y
+        out_dict['{0} coord'.format(keyname)] = patch.pixel_coordinate(x,y)
+
+    else:
+
+        condplus = np.abs(stats['MAX']) >= np.abs(stats['MIN'])
+
+        if take_positive or condplus:
+            pos = np.where(patch.datos  == stats['PEAK'])
+            out_dict[keyname]                     = stats['MAX']
+            out_dict['{0} peak'.format(keyname)]  = stats['PEAK']
+        else:
+            pos = np.where(patch.datos  == stats['BOTTOM'])
+            out_dict[keyname]                     = stats['MIN']
+            out_dict['{0} peak'.format(keyname)]  = stats['BOTTOM']
+
+        i   = pos[0][0]
+        j   = pos[1][0]
+        out_dict['{0} X'.format(keyname)]     = i
+        out_dict['{0} Y'.format(keyname)]     = j
+        out_dict['{0} coord'.format(keyname)] = patch.pixel_coordinate(i,j)
+
+    return out_dict
+
+# %%  MATCHED FILTER AROUND A GIVEN COORDINATE
 
 def filter_coordinate(sky_map,coord,beam='default'):
 
@@ -197,27 +356,17 @@ def filter_coordinate(sky_map,coord,beam='default'):
 
     return patches_dict
 
+# %%  GAUSSIAN FITTING
 
-# %%  PATCH OPERATIONS --------------------------------
-
-def arc_min(d):
-    return d.to(u.arcmin).value
-
-def d2pix(d,patch):
-    return (d/patch.pixsize).si.value
-
-
-def stats_central(patch,fwhm,clip=None,verbose=False):
+def peak_fit(patch,
+             fwhm = None,
+             x    = None,
+             y    = None):
 
     """
-    Performs basic statistics around the center of a given patch of the sky.
-    By default, the radii of the rings used for statistics are:
-        - A central circle or radius = 1sigma, for estimating the peak and
-            valley values.
-        - An outer ring for computing mean value and stddev, with
-            - inner radius = 7sigma and
-            - outer radius = image half size - 2*FWHM
-
+    Fits a 2D Gaussian plus a planar baseline to the central region of a patch.
+    If the FWHM or either one of X,Y keywords are not NONE,
+    then the fit is constrained to that width and/or position.
 
     Parameters
     ----------
@@ -225,107 +374,27 @@ def stats_central(patch,fwhm,clip=None,verbose=False):
         An input patch (either I, Q or U).
 
     fwhm : astropy.units.quantity.Quantity
-        Beam FWHM. Its value is used to compute the inner an outer
-        radii of the rings used for the analysis.
+        Beam FWHM. If None, the fitting routine will try to estimate the FWHM
+        of the central peak. If FWHM is not note, the routine will force the
+        fitting to a Gaussian profile with that precise FWHM.
 
-    clip : bool
-        If True, sigma clipping is used for the statistics
-
-    verbose: bool
-        If True, some control messages are written on screen
+     x,y : integer
+        If set to None, the routine will try to fit the location of the
+        Gaussian peak. If not NONE, the fitting will be forced to happen around
+        the X,Y pixel.
 
 
     Returns
     -------
-    A dictionary containing:
+    fit: Ajuste object (see gauss2dfit.py)
+        An instance of the Ajuste class, it contains not only the fitted
+        parameters, but also copies of the residual, fitted model and
+        synthetic (Gaussian+linear baseline) model.
 
-        - 'MIN' and 'MAX': The minimum and maximum values inside the central
-            circle, once the average value of the outer ring has been removed.
-        - 'MEAN': Average of the pixels within the outer ring
-        - 'STD': Standard deviation of the pixels within the outer ring
-        - 'PEAK', 'BOTTOM': The minimum and maximum of values inside the
-            central circle
+    coord: astropy.SkyCoord
+        Sky coordinate of the fitted peak.
 
     """
-
-    rmin_central = 1*fwhm2sigma*fwhm
-    rmax_central = 3*fwhm2sigma*fwhm
-    rmin_stats   = 7*fwhm2sigma*fwhm
-    rmax_stats   = patch.size[0]*patch.pixsize/2-2*fwhm
-
-    if verbose:
-        print(' Inner radius = {0} arcmin = {1} pixels'.format(arc_min(rmin_central),
-                                                               d2pix(rmin_central,patch)))
-        print(' Inner stat radius = {0} arcmin = {1} pixels'.format(arc_min(rmin_stats),
-                                                                    d2pix(rmin_stats,patch)))
-        print(' Outer stat radius = {0} arcmin = {1} pixels'.format(arc_min(rmax_stats),
-                                                               d2pix(rmax_stats,patch)))
-
-    st1          = patch.stats_in_rings(rmin_central,rmax_central,clip=clip)
-    st2          = patch.stats_in_rings(rmin_stats,rmax_stats,clip=clip)
-
-    return {'MIN'   :st1['min_inside']-st2['mean'],
-            'MAX'   :st1['max_inside']-st2['mean'],
-            'MEAN'  :st2['mean'],
-            'STD'   :st2['std'],
-            'PEAK'  :st1['max_inside'],
-            'BOTTOM':st1['min_inside']}
-
-def peak_info(patch,fwhm,
-              keyname       = 'I',
-              take_positive = False,
-              x             = None,
-              y             = None,
-              clip          = None):
-
-#      Returns a dictionary containing the intensity, rms and position of a
-#  local extremum near the center of a patch. If the input keywords X and Y
-#  are non None, then the ruotine returns the values for that pixel instead.
-#  If take_positive is set to True, then the routine returns either the peak
-#  or valley values, depending on which one has the larger absolute value.
-
-    stats    = stats_central(patch,fwhm,clip=clip)
-    out_dict = {}
-
-    out_dict['{0} err'.format(keyname)]   = stats['STD']
-
-    if x is not None:
-
-        out_dict[keyname]                     = patch.datos[x,y]-stats['MEAN']
-        out_dict['{0} peak'.format(keyname)]  = patch.datos[x,y]
-        out_dict['{0} X'.format(keyname)]     = x
-        out_dict['{0} Y'.format(keyname)]     = y
-        out_dict['{0} coord'.format(keyname)] = patch.pixel_coordinate(x,y)
-
-    else:
-
-        condplus = np.abs(stats['MAX']) >= np.abs(stats['MIN'])
-
-        if take_positive or condplus:
-            pos = np.where(patch.datos  == stats['PEAK'])
-            out_dict[keyname]                     = stats['MAX']
-            out_dict['{0} peak'.format(keyname)]  = stats['PEAK']
-        else:
-            pos = np.where(patch.datos  == stats['BOTTOM'])
-            out_dict[keyname]                     = stats['MIN']
-            out_dict['{0} peak'.format(keyname)]  = stats['BOTTOM']
-
-        i   = pos[0][0]
-        j   = pos[1][0]
-        out_dict['{0} X'.format(keyname)]     = i
-        out_dict['{0} Y'.format(keyname)]     = j
-        out_dict['{0} coord'.format(keyname)] = patch.pixel_coordinate(i,j)
-
-    return out_dict
-
-def peak_fit(patch,
-             fwhm = None,
-             x    = None,
-             y    = None):
-
-#    Fits a 2D Gaussian plus a planar baseline to the central region of a patch.
-# If the FWHM or either one of X,Y keywords are not NONE, then the fit is constrained
-# to that width and/or position
 
     lsize        = 4*u.deg
     lsize_pix    = int((lsize/patch.pixsize).si.value)
@@ -354,7 +423,7 @@ def peak_fit(patch,
     return source_fit,patch_center.pixel_coordinate(source_fit.x,source_fit.y)
 
 
-# %%  I,Q,U ON A COORDINATE --------------------------------
+# %%  POLARIMETRIC ESTIMATOR
 
 def significance_level(image,value):
 
@@ -416,51 +485,65 @@ def P_from_dict(dicc):
             'pol angle fit':pol_angle(dicc['Gaussian fit Q'].amplitude,
                                       dicc['Gaussian fit U'].amplitude)}
 
+# %%  I,Q,U,P ESTIMATION AROUND A GIVEN COORDINATE
+
+def get_IQUP(sky_map,
+             coord,
+             return_abbrv  = False,
+             QU_mode       = 'intensity'):
+
+    """
+    Returns the estimated photometry of a source candidate located at
+    a given coordinate of the sky.
+
+    Parameters
+    ----------
+    sky_map : Fitsmap object (see the Fitsmap class in fits_maps.py)
+        The input LiteBIRD image, as a Fitsmap object.
+
+    coord : astropy.SkyCoord
+        Coordinate around which the sky is being projected.
+
+    return_abbrv : bool
+        If True, the output dictionary is much abbreviated, keeping only
+        essential info.
+
+    QU_mode : string
+        If set to 'intensity', then Q and U are measured exactly at the
+        position where the maximum of the intensity map has been measured. If not,
+        they are measured on the local maxima (or minima) around the centre
+        of the filtered patch.
 
 
-def get_IQUP(mapas,coord,ihorn,ifreq,
-            smoothed_maps = False,
-            ideal_beam    = use_ideal_beams,
-            pre_projected = False,
-            pre_filtered  = False,
-            toplot        = False,
-            return_abbrv  = False,
-            QU_mode       = 'intensity'):
 
-#       If QU_MODE == 'intensity', then Q and U are measured exactly at the
-#   position where the maximum of the intensity map has been measured. If not,
-#   they are measured on the local maxima (or minima) of the filtered patch
+    Returns
+    -------
+    A dictionary containing:
 
-    if pre_filtered:
 
-        patches = {'MF I':Imagen.from_file(patch_name(coord,ihorn,ifreq,0,filtered=True)),
-                   'MF Q':Imagen.from_file(patch_name(coord,ihorn,ifreq,1,filtered=True)),
-                   'MF U':Imagen.from_file(patch_name(coord,ihorn,ifreq,2,filtered=True)),
-                   'FWHM':inst.get_info(ihorn,ifreq,smoothed_maps=smoothed_maps)['Effective map FWHM']}
 
-    else:
+    """
 
-        patches = filter_coordinate(mapas,coord,ihorn,ifreq,
-                      input_from_file = pre_projected,
-                      ideal_beam      = ideal_beam,
-                      save_filtered   = True,
-                      smoothed_maps   = smoothed_maps,
-                      toplot          = False)
+    patches = filter_coordinate(sky_map,coord)
 
-    fwhm                     = patches['FWHM'][0]
-    out_dict                 = {'coord':coord.galactic}
-    out_dict['IHORN']        = ihorn
-    out_dict['IFREQ']        = ifreq
-    out_dict['Smoothed']     = smoothed_maps
-    out_dict['Ideal beams']  = ideal_beam
-    out_dict['QU mode']      = QU_mode
-    out_dict['Iterative MF'] = iterative_MF
+    fwhm                                = patches['FWHM']
+    out_dict                            = {}
+    out_dict['FWHM']                    = fwhm
+    out_dict['Coord']                   = coord
+    out_dict['Ideal beams']             = use_ideal_beams
+    out_dict['QU mode']                 = QU_mode
+    out_dict['Iterative MF']            = iterative_MF
+    out_dict['Image resampling factor'] = image_resampling
+    out_dict['UNIT']                    = patches['UNIT']
+    out_dict['Freq']                    = patches['FREQ']
 
     dictI     = peak_info(patches['MF I'],fwhm,keyname = 'I',take_positive=True)
 
     if QU_mode == 'intensity':
-        dictQ = peak_info(patches['MF Q'],fwhm,keyname = 'Q',x=dictI['I X'],y=dictI['I Y'])
-        dictU = peak_info(patches['MF U'],fwhm,keyname = 'U',x=dictI['I X'],y=dictI['I Y'])
+        dictQ = peak_info(patches['MF Q'],fwhm,keyname = 'Q',
+                          x=dictI['I X'],y=dictI['I Y'])
+        dictU = peak_info(patches['MF U'],fwhm,keyname = 'U',
+                          x=dictI['I X'],y=dictI['I Y'])
     else:
         dictQ = peak_info(patches['MF Q'],fwhm,keyname = 'Q')
         dictU = peak_info(patches['MF U'],fwhm,keyname = 'U')
@@ -469,7 +552,10 @@ def get_IQUP(mapas,coord,ihorn,ifreq,
     out_dict.update(dictQ)
     out_dict.update(dictU)
 
-    psize    = mapas['HORN 1']['FREQ 1'][0].pixel_size
+    psize    = sky_map.pixel_size
+
+    out_dict['Map pixel size']   = psize
+    out_dict['Patch pixel size'] = patches['I'].pixsize
 
     for s in stokes:
         c = out_dict['{0} coord'.format(s)]
@@ -479,6 +565,7 @@ def get_IQUP(mapas,coord,ihorn,ifreq,
     fitI,cI       = peak_fit(patches['I'],fwhm=fwhm)
     fitQ,cI       = peak_fit(patches['Q'],fwhm=fwhm,x=fitI.x,y=fitI.y)
     fitU,cI       = peak_fit(patches['U'],fwhm=fwhm,x=fitI.x,y=fitI.y)
+
     out_dict['Gaussian fit I']      = fitI
     out_dict['Gaussian fit Q']      = fitQ
     out_dict['Gaussian fit U']      = fitU
@@ -514,11 +601,8 @@ def get_IQUP(mapas,coord,ihorn,ifreq,
     out_dict['Patch P'].image_header['TTYPE1'] = 'P POLARIZATION'
     fitP,cP                    = peak_fit(out_dict['Patch P'],fwhm=fwhm,x=fitI.x,y=fitI.y)
     out_dict['Gaussian fit P'] = fitP
-    out_dict['Gaussian fit P significance level'] = 1-np.count_nonzero(fitP.residual>=fitP.amplitude)/fitP.residual.size
-
-    out_dict.update(inst.get_info(ihorn,ifreq,smoothed_maps=smoothed_maps))
-
-    out_dict['UNIT'] = mapas['HORN {0}'.format(ihorn+1)]['FREQ {0}'.format(ifreq+1)].header['TUNIT1']
+    out_dict['Gaussian fit P significance level'] = (1 -
+        np.count_nonzero(fitP.residual>=fitP.amplitude)/fitP.residual.size)
 
     summary = {'I':out_dict['I'],
                'fit I':fitI.amplitude,
