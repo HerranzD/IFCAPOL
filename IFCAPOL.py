@@ -352,6 +352,7 @@ def filter_coordinate(sky_map,coord,beam='default'):
             r,fp = patch.iter_matched(fwhm=fwhm)
         else:
             fp   = patch.matched(fwhm=fwhm)
+        h = fp.header
         patches_dict['MF {0}'.format(stokes)] = fp
 
     return patches_dict
@@ -519,8 +520,21 @@ def get_IQUP(sky_map,
     Returns
     -------
     A dictionary containing:
-
-
+        - Parent map info: units, central frequency, FWHM, pixel size.
+        - Configuration parameters: image resampling factor, iterative matched
+            filtering, QU mode, ideal beams.
+        - Central coordinate of the patch.
+        - For Stokes' parameters I,Q,U:
+            - The original patch.
+            - The matched filtered patch.
+            - Value, position and coordinate of the peak.
+            - Rms calculated in a ring around the peak.
+            - Separation of the peak with respect to the geometrical center
+                of the patch.
+            - Gaussian fit to the peak.
+        - For polarization P: the same information as for I,Q,U plus:
+            - Debiased estimation of P.
+            - Significance level of the P detection.
 
     """
 
@@ -554,8 +568,8 @@ def get_IQUP(sky_map,
 
     psize    = sky_map.pixel_size
 
-    out_dict['Map pixel size']   = psize
-    out_dict['Patch pixel size'] = patches['I'].pixsize
+    out_dict['Map pixel size']   = psize.to(u.arcmin)
+    out_dict['Patch pixel size'] = patches['I'].pixsize.to(u.arcmin)
 
     for s in stokes:
         c = out_dict['{0} coord'.format(s)]
@@ -581,12 +595,12 @@ def get_IQUP(sky_map,
     out_dict['Free Gaussian fit U'] = free_fitU
     out_dict['Free Gaussian fit coord'] = cIf
 
-    out_dict['Patch I']    = patches['I']
-    out_dict['Patch Q']    = patches['Q']
-    out_dict['Patch U']    = patches['U']
-    out_dict['Patch MF I'] = patches['MF I']
-    out_dict['Patch MF Q'] = patches['MF Q']
-    out_dict['Patch MF U'] = patches['MF U']
+    out_dict['Patch I']    = patches['I'].copy()
+    out_dict['Patch Q']    = patches['Q'].copy()
+    out_dict['Patch U']    = patches['U'].copy()
+    out_dict['Patch MF I'] = patches['MF I'].copy()
+    out_dict['Patch MF Q'] = patches['MF Q'].copy()
+    out_dict['Patch MF U'] = patches['MF U'].copy()
 
 #      P from the matched filtered Q and U maps
 
