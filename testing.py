@@ -36,7 +36,7 @@ if os.path.isfile(totmap_file):
     total = survey.load_LiteBIRD_map(totmap_file,chan_name=chan_name)
 else:
     total   = signal+noise+radiops
-    total.write(totmap_file)
+    total.write(totmap_file,overwrite=True)
 
 # %% --- POINT SOURCE MOCK CATALOGUE FOR TESTING
 

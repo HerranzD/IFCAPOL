@@ -43,7 +43,7 @@ for k in IMO.keys():    # add physical units to the IMO dictionary.
 
 # %% --- BASIC MAP INPUT
 
-def load_LiteBIRD_map(fname,chan_name=None,fwhm=None,freq=None,units_string='mK_CMB'):
+def load_LiteBIRD_map(fname,chan_name=None,fwhm=None,freq=None,units_string='uK_CMB'):
 
     """
 

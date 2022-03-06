@@ -543,6 +543,7 @@ def get_IQUP(sky_map,
     fwhm                                = patches['FWHM']
     out_dict                            = {}
     out_dict['FWHM']                    = fwhm
+    out_dict['Beam area']               = sky_map.beam_area[0]
     out_dict['Coord']                   = coord
     out_dict['Ideal beams']             = use_ideal_beams
     out_dict['QU mode']                 = QU_mode
@@ -675,50 +676,35 @@ class Photometry:
                           self.significance,
                           self.outer)
 
-# %%  DETECTORSOURCE CLASS  --------------------------------
+# %%  SOURCE CLASS  --------------------------------
 
-class DetectorSource:
+class Source:
 
     def __init__(self,diccio):
         self.diccio = diccio
 
     def copy(self):
         x = self.diccio.copy()
-        return DetectorSource(x)
+        return Source(x)
 
 # %% -- properties
 
     @property
     def coord(self):
-        return self.diccio['coord']
+        return self.diccio['Coord']
 
     @property
     def fwhm(self):
-        return self.diccio['Effective map FWHM'].to(u.deg)
+        return self.diccio['FWHM'].to(u.deg)
 
     @property
     def area(self):
-        return self.diccio['Effective beam area'].to(u.sr)
+        return self.diccio['Beam area'].to(u.sr)
 
     @property
     def nu(self):
         return self.diccio['Freq'].to(u.GHz)
 
-    @property
-    def int_GHz(self):
-        return self.diccio['GHz']
-
-    @property
-    def ifreq(self):
-        return self.diccio['IFREQ']
-
-    @property
-    def ihorn(self):
-        return self.diccio['IHORN']
-
-    @property
-    def channel(self):
-        return inst.ihorn_ifreq_to_detector_number(self.ihorn,self.ifreq)
 
     @property
     def unit(self):
@@ -750,13 +736,13 @@ class DetectorSource:
         plt.figure(figsize=(16,12))
         plt.subplot(221)
         self.diccio['Patch I'].draw()
-        plt.title('I [mK]')
+        plt.title('I [{0}]'.format(self.unit))
         plt.subplot(222)
         self.diccio['Patch Q'].draw()
-        plt.title('Q [mK]')
+        plt.title('Q [{0}]'.format(self.unit))
         plt.subplot(223)
         self.diccio['Patch U'].draw()
-        plt.title('U [mK]')
+        plt.title('U [{0}]'.format(self.unit))
         if tofile is not None:
             plt.savefig(tofile)
 
@@ -765,13 +751,13 @@ class DetectorSource:
         plt.figure(figsize=(16,12))
         plt.subplot(221)
         self.diccio['Patch MF I'].draw()
-        plt.title('MF I [mK]')
+        plt.title('MF I [{0}]'.format(self.unit))
         plt.subplot(222)
         self.diccio['Patch MF Q'].draw()
-        plt.title('MF Q [mK]')
+        plt.title('MF Q [{0}]'.format(self.unit))
         plt.subplot(223)
         self.diccio['Patch MF U'].draw()
-        plt.title('MF U [mK]')
+        plt.title('MF U [{0}]'.format(self.unit))
         if tofile is not None:
             plt.savefig(tofile)
 
@@ -873,705 +859,15 @@ class DetectorSource:
 # %% -- input/output
 
     @classmethod
-    def from_coordinate(self,coordinate,ihorn,ifreq,mapas=None,smoothed_maps=False):
-        if mapas is not None:
-            d = get_IQUP(mapas,coordinate,
-                         ihorn,
-                         ifreq,
-                         smoothed_maps = smoothed_maps)
-        else:
-            maps = survey.get_current_maps(smoothed_maps=smoothed_maps)
-            d    = get_IQUP(maps,coordinate,
-                            ihorn,
-                            ifreq,
-                            smoothed_maps = smoothed_maps)
-        return DetectorSource(d)
+    def from_coordinate(self,sky_map,coordinate):
+        d = get_IQUP(sky_map,coordinate)
+        return Source(d)
 
     @classmethod
-    def from_name(self,name,ihorn,ifreq,mapas=None,smoothed_maps=False):
+    def from_name(self,sky_map,name):
         coordinate = SkyCoord.from_name(name)
-        return self.from_coordinate(coordinate,ihorn,ifreq,mapas=mapas,smoothed_maps=smoothed_maps)
+        return self.from_coordinate(sky_map,coordinate)
 
-    @property
-    def suffix(self):
-        return ' CHAN_{0} ({1} GHz)'.format(self.channel,self.int_GHz)
 
-    @property
-    def output(self):
-        dic = {'RA':self.coord.icrs.ra.deg*u.deg,
-               'DEC':self.coord.icrs.dec.deg*u.deg,
-               'GLON':self.coord.galactic.l.deg*u.deg,
-               'GLAT':self.coord.galactic.b.deg*u.deg,
-               'I'+self.suffix:self.I.Jy.value*u.Jy,
-               'I err'+self.suffix:self.I.Jy.error*u.Jy,
-               'I SNR'+self.suffix:self.I.snr,
-               'Q'+self.suffix:self.Q.Jy.value*u.Jy,
-               'Q err'+self.suffix:self.Q.Jy.error*u.Jy,
-               'U'+self.suffix:self.U.Jy.value*u.Jy,
-               'U err'+self.suffix:self.U.Jy.error*u.Jy,
-               'P'+self.suffix:self.P.Jy.value*u.Jy,
-               'P err'+self.suffix:self.P.Jy.error*u.Jy,
-               'P significance'+self.suffix:self.P.significance,
-               'pol angle'+self.suffix:self.angle.value,
-               'pol angle err'+self.suffix:self.angle.error,
-               'pol fraction'+self.suffix:self.polfrac.value,
-               'pol fraction err'+self.suffix:self.polfrac.error}
-        return QTable([dic])
 
-    def save(self,fname):
-        t = self.output
-        t.write(fname,overwrite=True)
 
-
-    def pkl_name(self,ID):
-
-        fname = id_chan_name(ID,self.channel)
-
-        return fname
-
-
-    def full_save(self,ID=None):
-
-        if ID is None:
-            file_in = self.pkl_name(coord2healpix(survey.nside,self.coord))
-        else:
-            file_in = self.pkl_name(ID)
-
-        d = self.diccio.copy()
-        with open(file_in, "wb") as f:
-            pickle.dump(len(d), f)
-            for value in d:
-                pickle.dump(value,f)
-            for value in d:
-                pickle.dump(d[value],f)
-
-    @classmethod
-    def from_pickle(self,fname):
-        d = {}
-        k = []
-        with open(fname, "rb") as f:
-            n = pickle.load(f)
-            for i in range(n):
-                k.append(pickle.load(f))
-            for i in range(n):
-                d[k[i]] = pickle.load(f)
-        return DetectorSource(d)
-
-
-
-# %%  SOURCE CLASS  --------------------------------
-
-class Source:
-
-    def __init__(self,detector_list):
-        self.detector_list = detector_list
-
-    def copy(self):
-        x = self.detector_list.copy()
-        return Source(x)
-
-# %% -- individual sources
-
-    def from_chan_name(self,name):
-        found = False
-        for x in self.detector_list:
-            if x.channel == name:
-                y     = x.copy()
-                found = True
-        if found == False:
-            print(' --- Warning: channel name not found in Source')
-            y = None
-        return y
-
-    def from_index(self,index):
-        return self.detector_list[index]
-
-# %% -- properties
-
-    @property
-    def coord(self):
-        return self.detector_list[0].coord
-
-    @property
-    def channel_list(self):
-        return [x.channel for x in self.detector_list]
-
-# %% -- input
-
-    @classmethod
-    def from_coordinate(self,coordinate,maps=None,smoothed=False):
-
-        list_channels = []
-
-        if maps is None:
-            mapas = survey.get_current_maps(smoothed_maps=smoothed)
-        else:
-            mapas = maps.copy()
-
-        for ihorn in range(1,4):
-            for ifreq in range(2):
-                list_channels.append(DetectorSource.from_coordinate(coordinate,
-                                                                    ihorn,
-                                                                    ifreq,
-                                                                    mapas=mapas,
-                                                                    smoothed_maps=smoothed))
-
-        return Source(list_channels)
-
-    @classmethod
-    def from_name(self,name,maps=None,smoothed=False):
-        coordinate = SkyCoord.from_name(name)
-        return Source.from_coordinate(coordinate,maps=maps,smoothed=smoothed)
-
-# %% -- photometry
-
-    def channels(self,freq):
-        return [x for x in self.channel_list if self.from_chan_name(x).int_GHz==freq]
-
-    def best_I_chan(self,freq):
-        chans = self.channels(freq)
-        if len(chans) == 1:
-            chname = chans[0]
-        else:
-            if self.from_chan_name(chans[0]).has_better_SNR(self.from_chan_name(chans[1])):
-                chname = chans[0]
-            else:
-                chname = chans[1]
-        return chname
-
-    def best_I(self,freq):
-        return self.from_chan_name(self.best_I_chan(freq)).I
-
-    def best_Q(self,freq):
-        return self.from_chan_name(self.best_I_chan(freq)).Q
-
-    def best_U(self,freq):
-        return self.from_chan_name(self.best_I_chan(freq)).U
-
-    def best_P(self,freq):
-        return self.from_chan_name(self.best_I_chan(freq)).P
-
-    def best_angle(self,freq):
-        return self.from_chan_name(self.best_I_chan(freq)).angle
-
-    def best_polfrac(self,freq):
-        return self.from_chan_name(self.best_I_chan(freq)).polfrac
-
-    @property
-    def best_freqs(self):
-        return np.array([self.from_chan_name(self.best_I_chan(freq)).nu.value for freq in [11,13,17,19]])
-
-    @property
-    def Jyphot_I(self):
-        f = [11,13,17,19]
-        p =  {'channel'  :[self.best_I_chan(nu) for nu in f],
-              'photo'    :[self.best_I(nu).Jy.value for nu in f],
-              'photo err':[self.best_I(nu).Jy.error for nu in f],
-              'sp index' : self.spectral_index_I}
-        return p
-
-    @property
-    def Jyphot_P(self):
-        f = [11,13,17,19]
-        p =  {'channel'  :[self.best_I_chan(nu) for nu in f],
-              'photo'    :[self.best_P(nu).Jy.value for nu in f],
-              'photo err':[self.best_P(nu).Jy.error for nu in f],
-              'sp index' : self.spectral_index_P}
-        return p
-
-# %% -- spectral index
-
-    @property
-    def fit_spectral_index_I(self):
-        x      = self.best_freqs
-        y      = np.array([self.best_I(nu).Jy.value for nu in [11,13,17,19]])
-        sy     = np.array([self.best_I(nu).Jy.error for nu in [11,13,17,19]])
-        w      = 1/sy
-        m_init = PowerLaw1D(amplitude=y.mean(),x_0=15,alpha=0)
-        m_init.x_0.fixed = True
-        fit_pl = fitting.LevMarLSQFitter()
-        f      = fit_pl(m_init,x,y,weights=w)
-        return f,fit_pl
-
-    @property
-    def fit_cc_spectral_index_I(self):
-        x      = self.best_freqs
-        d      = self.colour_correct_I
-        y      = d['photo']
-        sy     = d['photo err']
-        w      = 1/sy
-        m_init = PowerLaw1D(amplitude=y.mean(),x_0=15,alpha=0)
-        m_init.x_0.fixed = True
-        fit_pl = fitting.LevMarLSQFitter()
-        f      = fit_pl(m_init,x,y,weights=w)
-        return f,fit_pl
-
-    def spI(self,cc=False):
-
-        if cc:
-            f,g = self.fit_cc_spectral_index_I
-        else:
-            f,g = self.fit_spectral_index_I
-        try:
-            c   = g.fit_info['param_cov']
-            return f.alpha.value,np.sqrt(c[1,1])
-        except TypeError:
-            return f.alpha.value,np.abs(self.spectral_index_I)
-
-    @property
-    def spectral_index_I(self):
-        f,g = self.fit_spectral_index_I
-        return f.alpha.value
-
-    @property
-    def spectral_index_I_err(self):
-        f,g = self.fit_spectral_index_I
-        try:
-            c   = g.fit_info['param_cov']
-            return np.sqrt(c[1,1])
-        except TypeError:
-            return np.abs(self.spectral_index_I)
-
-    @property
-    def spectral_cc_index_I(self):
-        f,g = self.fit_cc_spectral_index_I
-        return f.alpha.value
-
-    @property
-    def spectral_cc_index_I_err(self):
-        f,g = self.fit_cc_spectral_index_I
-        try:
-            c   = g.fit_info['param_cov']
-            return np.sqrt(c[1,1])
-        except TypeError:
-            return np.abs(self.spectral_index_I)
-
-
-    def predict_I_at_freq_Jy(self,freq,m=1000,cc=False):
-
-        if cc:
-            f,g = self.fit_cc_spectral_index_I
-        else:
-            f,g  = self.fit_spectral_index_I
-
-        mean = np.array([f.amplitude.value,f.alpha.value])
-        cov  = g.fit_info['param_cov']
-        x    = freq.to(u.GHz).value
-        p    = np.random.multivariate_normal(mean,cov,m)
-
-        if np.isscalar(x):
-            n = 1
-        else:
-            n = x.size
-
-        y = np.zeros((n,m))
-
-        for i in range(m):
-            model  = PowerLaw1D(amplitude=p[i,0],x_0=15,alpha=p[i,1])
-            y[:,i] = model(x)
-
-        s     = y.std(axis=1)
-        model = PowerLaw1D(amplitude=mean[0],x_0=15,alpha=mean[1])
-        y0    = model(x)
-
-        if np.isscalar(x):
-            return y0,s[0]
-        else:
-            return y0,s
-
-
-    def plot_spectral_shades_I(self,x_vec,n=100,m=1000,alpha=0.25,cc=False):
-
-        x     = np.linspace(x_vec.min(),x_vec.max(),n)*u.GHz
-
-        y0,s  = self.predict_I_at_freq_Jy(x,m=m,cc=cc)
-        plt.fill_between(x,y0+s,y0-s,alpha=alpha)
-
-    @property
-    def fit_spectral_index_P(self):
-        x      = self.best_freqs
-        y      = np.array([self.best_P(nu).Jy.value for nu in [11,13,17,19]])
-        sy     = np.array([self.best_P(nu).Jy.error for nu in [11,13,17,19]])
-        w      = 1/sy
-        m_init = PowerLaw1D(amplitude=y.mean(),x_0=15,alpha=0)
-        m_init.x_0.fixed = True
-        fit_pl = fitting.LevMarLSQFitter()
-        f      = fit_pl(m_init,x,y,weights=w)
-        return f,fit_pl
-
-    @property
-    def fit_cc_spectral_index_P(self):
-        x      = self.best_freqs
-        d      = self.colour_correct_P
-        y      = d['photo']
-        sy     = d['photo err']
-        w      = 1/sy
-        m_init = PowerLaw1D(amplitude=y.mean(),x_0=15,alpha=0)
-        m_init.x_0.fixed = True
-        fit_pl = fitting.LevMarLSQFitter()
-        f      = fit_pl(m_init,x,y,weights=w)
-        return f,fit_pl
-
-    @property
-    def spectral_index_P(self):
-        f,g = self.fit_spectral_index_P
-        return f.alpha.value
-
-    @property
-    def spectral_cc_index_P(self):
-        f,g = self.fit_cc_spectral_index_P
-        return f.alpha.value
-
-    @property
-    def spectral_index_P_err(self):
-        f,g = self.fit_spectral_index_P
-        try:
-            c   = g.fit_info['param_cov']
-            return np.sqrt(c[1,1])
-        except TypeError:
-            return np.abs(self.spectral_index_P)
-
-    @property
-    def spectral_cc_index_P_err(self):
-        f,g = self.fit_cc_spectral_index_P
-        try:
-            c   = g.fit_info['param_cov']
-            return np.sqrt(c[1,1])
-        except TypeError:
-            return np.abs(self.spectral_index_P)
-
-    def spP(self,cc=False):
-
-        if cc:
-            f,g = self.fit_cc_spectral_index_P
-        else:
-            f,g = self.fit_spectral_index_P
-        try:
-            c   = g.fit_info['param_cov']
-            return f.alpha.value,np.sqrt(c[1,1])
-        except TypeError:
-            return f.alpha.value,np.abs(self.spectral_index_P)
-
-    def predict_P_at_freq_Jy(self,freq,m=1000,cc=False):
-
-        if cc:
-            f,g = self.fit_cc_spectral_index_P
-        else:
-            f,g  = self.fit_spectral_index_P
-
-        mean = np.array([f.amplitude.value,f.alpha.value])
-        cov  = g.fit_info['param_cov']
-        x    = freq.to(u.GHz).value
-        p    = np.random.multivariate_normal(mean,cov,m)
-
-        if np.isscalar(x):
-            n = 1
-        else:
-            n = x.size
-
-        y = np.zeros((n,m))
-
-        for i in range(m):
-            model  = PowerLaw1D(amplitude=p[i,0],x_0=15,alpha=p[i,1])
-            y[:,i] = model(x)
-
-        s     = y.std(axis=1)
-        model = PowerLaw1D(amplitude=mean[0],x_0=15,alpha=mean[1])
-        y0    = model(x)
-
-        if np.isscalar(x):
-            return y0,s[0]
-        else:
-            return y0,s
-
-    def plot_spectral_shades_P(self,x_vec,n=100,m=1000,alpha=0.25,cc=False):
-
-        x     = np.linspace(x_vec.min(),x_vec.max(),n)*u.GHz
-
-        y0,s  = self.predict_P_at_freq_Jy(x,m=m,cc=cc)
-
-        plt.fill_between(x,y0+s,y0-s,alpha=alpha)
-
-# %% -- colour corrections
-
-    @property
-    def colour_correct_I(self):
-
-        initial_photometry = self.Jyphot_I
-        dout              = colour_correction_source(initial_photometry,return_n=True)
-
-        return dout
-
-    @property
-    def colour_correct_P(self):
-
-        initial_photometry = self.Jyphot_P
-        dout               = colour_correction_source(initial_photometry,return_n=True)
-
-        return dout
-
-# %% -- oputput
-
-    def output(self,source_ID=None):
-
-        dic = {'RA'  :self.coord.icrs.ra.deg*u.deg,
-               'DEC' :self.coord.icrs.dec.deg*u.deg,
-               'GLON':self.coord.galactic.l.deg*u.deg,
-               'GLAT':self.coord.galactic.b.deg*u.deg}
-
-        if source_ID is not None:
-            dic['ID'] = source_ID
-
-        for f in [11,13,17,19]:
-
-            dic['Best chan ({0} GHz)'.format(f)]     = self.best_I_chan(f)
-
-            dic['I ({0} GHz)'.format(f)]             = self.best_I(f).Jy.value*u.Jy
-            dic['I err ({0} GHz)'.format(f)]         = self.best_I(f).Jy.error*u.Jy
-            dic['I SNR ({0} GHz)'.format(f)]         = self.best_I(f).snr
-
-            dic['Q ({0} GHz)'.format(f)]             = self.best_Q(f).Jy.value*u.Jy
-            dic['Q err ({0} GHz)'.format(f)]         = self.best_Q(f).Jy.error*u.Jy
-
-            dic['U ({0} GHz)'.format(f)]             = self.best_U(f).Jy.value*u.Jy
-            dic['U err ({0} GHz)'.format(f)]         = self.best_U(f).Jy.error*u.Jy
-
-            dic['P ({0} GHz)'.format(f)]             = self.best_P(f).Jy.value*u.Jy
-            dic['P err ({0} GHz)'.format(f)]         = self.best_P(f).Jy.error*u.Jy
-            dic['P signif ({0} GHz)'.format(f)]      = self.best_P(f).significance
-
-            dic['Pol angle ({0} GHz)'.format(f)]     = self.best_angle(f).value
-            dic['Pol angle err ({0} GHz)'.format(f)] = self.best_angle(f).error
-
-            dic['Pol frac ({0} GHz)'.format(f)]      = self.best_polfrac(f).value
-            dic['Pol frac err ({0} GHz)'.format(f)]  = self.best_polfrac(f).error
-
-            dic['Spectral index I']                  = self.spectral_index_I
-            dic['Spectral index err I']              = self.spectral_index_I_err
-
-            dic['Spectral index P']                  = self.spectral_index_P
-            dic['Spectral index err P']              = self.spectral_index_P_err
-
-        return QTable([dic])
-
-    def save(self,fname,source_ID=None):
-        t = self.output(source_ID=source_ID)
-        t.write(fname,overwrite=True)
-
-    def full_save(self,ID=None):
-        for d in self.detector_list:
-            d.full_save(ID=ID)
-        fname = self.detector_list[0].pkl_name(ID)
-        dire  = fname.split('source')[0]
-        fname = dire+'source_{0}.fits'.format(ID)
-        self.save(fname,source_ID=ID)
-
-    @classmethod
-    def from_pickle(self,ID=None):
-
-        l = []
-
-        patchdir  = QUIJOTE_dir+'Source_Extraction/Results/Patches/{0}_{1}/'.format(inst.instrument_name,
-                                                                                    inst.instrument_version)
-        if not os.path.exists(patchdir):
-            os.mkdir(patchdir)
-
-        patchdir += '{0}/'.format(survey.map_version.upper())
-        if not os.path.exists(patchdir):
-            os.mkdir(patchdir)
-
-        patchdir += 'Source_{0}/'.format(ID)
-        if not os.path.exists(patchdir):
-            os.mkdir(patchdir)
-
-        for ihorn in range(1,4):
-            for ifreq in range(2):
-                fname = patchdir + 'source_{0}_{1}.pkl'.format(ID,inst.ihorn_ifreq_to_detector_number(ihorn,ifreq))
-                l.append(DetectorSource.from_pickle(fname))
-
-        return Source(l)
-
-
-# %% -- plotting
-
-    def plot_I(self,
-               tofile          = None,
-               source_ID       = None,
-               newfig          = True,
-               plot_powlaw     = False,
-               color_corrected = False,
-               overlay         = False):
-
-        if newfig:
-            plt.figure()
-
-        t  = self.output(source_ID=source_ID)
-        x  = np.array([11,13,17,19])
-        y  = np.array([t['I ({0} GHz)'.format(n)][0].value for n in x])
-        sy = np.array([t['I err ({0} GHz)'.format(n)][0].value for n in x])
-        x  = self.best_freqs
-
-        if color_corrected:
-            d   = self.colour_correct_I
-
-        if color_corrected:
-            if overlay:
-                plt.errorbar(x,y,yerr=sy,fmt='o',capsize=2,label='not colour corrected')
-                plt.errorbar(x+0.1,d['photo'],yerr=d['photo err'],fmt='o',capsize=2,label='colour corrected')
-            else:
-                plt.errorbar(x,d['photo'],yerr=d['photo err'],fmt='o',capsize=2,label='colour corrected')
-            plt.legend()
-        else:
-            plt.errorbar(x,y,yerr=sy,fmt='o',capsize=2,label='not colour corrected')
-
-        plt.xlabel('Freq [GHz]')
-        plt.ylabel('I [Jy]')
-        if source_ID is not None:
-            plt.title(source_ID)
-
-        if plot_powlaw:
-
-            if color_corrected:
-
-                if overlay:
-
-                    f,g  = self.fit_spectral_index_I
-                    x    = np.linspace(x.min(),x.max(),1000)
-                    y    = f(x)
-                    plt.plot(x,y)
-                    self.plot_spectral_shades_I(x)
-
-                    f,g  = self.fit_cc_spectral_index_I
-                    y    = f(x)
-                    plt.plot(x,y)
-                    self.plot_spectral_shades_I(x,cc=True)
-
-                else:
-
-                    f,g  = self.fit_cc_spectral_index_I
-                    x    = np.linspace(x.min(),x.max(),1000)
-                    y    = f(x)
-                    plt.plot(x,y)
-                    self.plot_spectral_shades_I(x,cc=True)
-
-            else:
-
-                f,g  = self.fit_spectral_index_I
-                x    = np.linspace(x.min(),x.max(),1000)
-                y    = f(x)
-                plt.plot(x,y)
-                self.plot_spectral_shades_I(x)
-
-        if tofile is not None:
-            plt.savefig(tofile)
-
-    def plot_P(self,
-               tofile          = None,
-               source_ID       = None,
-               newfig          = True,
-               plot_powlaw     = False,
-               color_corrected = False,
-               overlay         = False):
-
-        if newfig:
-            plt.figure()
-
-        t  = self.output(source_ID=source_ID)
-        x  = np.array([11,13,17,19])
-        y  = np.array([t['P ({0} GHz)'.format(n)][0].value for n in x])
-        sy = np.array([t['P err ({0} GHz)'.format(n)][0].value for n in x])
-        x  = self.best_freqs
-
-        if color_corrected:
-            d   = self.colour_correct_P
-
-        if color_corrected:
-            if overlay:
-                plt.errorbar(x,y,yerr=sy,fmt='o',capsize=2,label='not colour corrected')
-                plt.errorbar(x+0.1,d['photo'],yerr=d['photo err'],fmt='o',capsize=2,label='colour corrected')
-            else:
-                plt.errorbar(x,d['photo'],yerr=d['photo err'],fmt='o',capsize=2,label='colour corrected')
-            plt.legend()
-        else:
-            plt.errorbar(x,y,yerr=sy,fmt='o',capsize=2,label='not colour corrected')
-
-        plt.xlabel('Freq [GHz]')
-        plt.ylabel('P [Jy]')
-        if source_ID is not None:
-            plt.title(source_ID)
-
-        if plot_powlaw:
-
-            if color_corrected:
-
-                if overlay:
-
-                    f,g  = self.fit_spectral_index_P
-                    x    = np.linspace(x.min(),x.max(),1000)
-                    y    = f(x)
-                    plt.plot(x,y)
-                    self.plot_spectral_shades_P(x)
-
-                    f,g  = self.fit_cc_spectral_index_P
-                    y    = f(x)
-                    plt.plot(x,y)
-                    self.plot_spectral_shades_P(x,cc=True)
-
-                else:
-
-                    f,g  = self.fit_cc_spectral_index_P
-                    x    = np.linspace(x.min(),x.max(),1000)
-                    y    = f(x)
-                    plt.plot(x,y)
-                    self.plot_spectral_shades_P(x,cc=True)
-
-            else:
-
-                f,g  = self.fit_spectral_index_P
-                x    = np.linspace(x.min(),x.max(),1000)
-                y    = f(x)
-                plt.plot(x,y)
-                self.plot_spectral_shades_P(x)
-
-        if tofile is not None:
-            plt.savefig(tofile)
-
-    def plot_Polfrac(self,tofile=None,source_ID=None,newfig=True):
-
-        if newfig:
-            plt.figure()
-
-        t  = self.output(source_ID=source_ID)
-        x  = np.array([11,13,17,19])
-        y  = np.array([t['Pol frac ({0} GHz)'.format(n)][0] for n in x])
-        sy = np.array([t['Pol frac err ({0} GHz)'.format(n)][0] for n in x])
-        x  = self.best_freqs
-
-        plt.errorbar(x,y,yerr=sy,fmt='o',capsize=2)
-        plt.xlabel('Freq [GHz]')
-        plt.ylabel('Polarization fraction [%]')
-        if source_ID is not None:
-            plt.title(source_ID)
-
-        if tofile is not None:
-            plt.savefig(tofile)
-
-    def plot_ang(self,tofile=None,source_ID=None,newfig=True):
-
-        if newfig:
-            plt.figure()
-
-        t  = self.output(source_ID=source_ID)
-        x  = np.array([11,13,17,19])
-        y  = np.array([t['Pol angle ({0} GHz)'.format(n)][0].value for n in x])
-        sy = np.array([t['Pol angle err ({0} GHz)'.format(n)][0].value for n in x])
-        x  = self.best_freqs
-
-        plt.errorbar(x,y,yerr=sy,fmt='o',capsize=2)
-        plt.xlabel('Freq [GHz]')
-        plt.ylabel('Polarization angle [deg]')
-        if source_ID is not None:
-            plt.title(source_ID)
-
-        if tofile is not None:
-            plt.savefig(tofile)
