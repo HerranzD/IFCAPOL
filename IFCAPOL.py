@@ -20,14 +20,10 @@ import astropy.units            as     u
 import healpy                   as     hp
 
 from astropy.coordinates        import SkyCoord
-from myutils                    import coord2healpix
 from myutils                    import fwhm2sigma,sigma2fwhm
 from sky_images                 import Imagen
 from gauss2dfit                 import fit_single_peak
 from unit_conversions           import parse_unit,convert_factor
-from astropy.table              import QTable
-from astropy.modeling.powerlaws import PowerLaw1D
-from astropy.modeling           import fitting
 
 # %%  Inherited experiment characteristics (liteBIRD)
 
