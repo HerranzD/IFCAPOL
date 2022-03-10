@@ -806,14 +806,13 @@ class Source:
     def draw(self,tofile=None):
 
         plt.figure(figsize=(16,12))
-        plt.subplot(221)
-        self.diccio['Patch I'].draw()
+        self.diccio['Patch I'].draw(pos=221)
         plt.title('I [{0}]'.format(self.unit))
         plt.subplot(222)
-        self.diccio['Patch Q'].draw()
+        self.diccio['Patch Q'].draw(pos=222)
         plt.title('Q [{0}]'.format(self.unit))
         plt.subplot(223)
-        self.diccio['Patch U'].draw()
+        self.diccio['Patch U'].draw(pos=223)
         plt.title('U [{0}]'.format(self.unit))
         if tofile is not None:
             plt.savefig(tofile)
@@ -822,16 +821,16 @@ class Source:
 
         plt.figure(figsize=(16,12))
         plt.subplot(221)
-        self.diccio['Patch MF I'].draw()
+        self.diccio['Patch MF I'].draw(pos=221)
         plt.title('MF I [{0}]'.format(self.unit))
         plt.subplot(222)
-        self.diccio['Patch MF Q'].draw()
+        self.diccio['Patch MF Q'].draw(pos=222)
         plt.title('MF Q [{0}]'.format(self.unit))
         plt.subplot(223)
-        self.diccio['Patch MF U'].draw()
+        self.diccio['Patch MF U'].draw(pos=223)
         plt.title('MF U [{0}]'.format(self.unit))
         plt.subplot(224)
-        self.diccio['Patch MF P'].draw()
+        self.diccio['Patch MF P'].draw(pos=224)
         plt.title('MF P [{0}]'.format(self.unit))
         if tofile is not None:
             plt.savefig(tofile)
