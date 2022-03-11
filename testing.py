@@ -22,6 +22,8 @@ chan_name    = 'LB_LFT_40'
 
 test_plotf   = '/Users/herranz/Desktop/testplot.jpg'
 
+testdir      = '/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/Tests/'
+
 # %% --- COMPONENT MAPS
 
 signal  = survey.load_LiteBIRD_map(coadded_file,chan_name=chan_name)
@@ -90,3 +92,84 @@ def test_fwhms(ntest=100):
     f = np.array(f)*patch.pixsize
 
     return f
+
+# %% --- PHOTOMETRY TESTING
+
+def test_photometry(nsources,outfile):
+
+    import IFCAPOL as pol
+
+    lista = []
+
+    for i in range(nsources):
+
+        dic        = {}
+        dic['RA']  = epeaks['RA'][i]
+        dic['DEC'] = epeaks['DEC'][i]
+        dic['I0']  = epeaks['I'][i]
+        dic['Q0']  = epeaks['Q'][i]
+        dic['U0']  = epeaks['U'][i]
+        dic['P0']  = np.sqrt(epeaks['Q'][i]**2+epeaks['U'][i]**2)
+        dic['A0']  = pol.pol_angle(epeaks['Q'][i], epeaks['U'][i])
+
+        coord      = total.pixel_to_coordinates(epeaks['Ipix'][i])
+        source     = pol.Source.from_coordinate(total, coord)
+
+        dic['I']   = source.I.value
+        dic['Q']   = source.Q.value
+        dic['U']   = source.U.value
+        dic['P']   = source.P.value
+        dic['A']   = source.angle.value
+
+        dic['Ie']  = source.I.error
+        dic['Qe']  = source.Q.error
+        dic['Ue']  = source.U.error
+        dic['Pe']  = source.P.error
+        dic['Ae']  = source.angle.error
+
+        lista.append(dic)
+
+    tabla = Table(lista)
+    tabla.write(testdir+outfile,overwrite=True)
+
+def study_test(cantidad,ntop):
+
+    import matplotlib.pyplot as plt
+    from astropy.modeling import models, fitting
+
+    test_nopix = Table.read(testdir+'test_fotometria_nopixel.fits')
+    test_sipix = Table.read(testdir+'test_fotometria_sipixel.fits')
+
+    x  = test_nopix['{0}0'.format(cantidad)][0:ntop]
+    y  = test_nopix['{0}'.format(cantidad)][0:ntop]
+    s  = test_nopix['{0}e'.format(cantidad)][0:ntop]
+
+    fit = fitting.LinearLSQFitter()
+    line_init = models.Linear1D()
+    fitted_line = fit(line_init, x, y, weights=1.0/s)
+
+    plt.figure(figsize=(8,10))
+    plt.errorbar(x, y, yerr=s, fmt='ko', label='Data, no pixel window')
+    plt.plot(x, fitted_line(x), 'k-', label='Fitted Model, no pixel window')
+
+
+    xs = test_sipix['{0}0'.format(cantidad)][0:ntop]
+    ys = test_sipix['{0}'.format(cantidad)][0:ntop]
+    ss = test_sipix['{0}e'.format(cantidad)][0:ntop]
+
+    fits         = fitting.LinearLSQFitter()
+    line_inits   = models.Linear1D()
+    fitted_lines = fits(line_inits, xs, ys, weights=1.0/ss)
+
+    plt.errorbar(xs, ys, yerr=ss, fmt='bo', label='Data, with pixel window')
+    plt.plot(xs, fitted_lines(x), 'b-', label='Fitted Model, with pixel window')
+
+    plt.xlabel('Input {0}'.format(cantidad))
+    plt.ylabel('Estimated {0}'.format(cantidad))
+    plt.legend()
+    if cantidad == 'I':
+        plt.loglog()
+    if cantidad == 'P':
+        plt.loglog()
+
+    return fitted_line,fitted_lines
