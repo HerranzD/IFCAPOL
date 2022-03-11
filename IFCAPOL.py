@@ -38,7 +38,7 @@ warnings.filterwarnings("ignore")
 
 stokes           = ['I','Q','U']   # Names of the Stokes parameters
 use_ideal_beams  = True            # Use or not ideal Gaussian beam PSF
-use_pixel_window = False           # Add or not the pixel effective beam to
+use_pixel_window = True            # Add or not the pixel effective beam to
                                    #    the beam FWHM for filtering effects
 signif_border    = 10              # Number of border pixels to exclude
                                    #    for the calculation of P significance
