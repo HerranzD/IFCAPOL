@@ -135,34 +135,42 @@ def test_photometry(nsources,outfile):
     tabla = Table(lista)
     tabla.write(testdir+outfile,overwrite=True)
 
-def study_test(cantidad,ntop):
+def study_test(cantidad,snrcut=5):
 
     import matplotlib.pyplot as plt
     from astropy.modeling import models, fitting
+    from astropy.stats import sigma_clip
 
     test_nopix = Table.read(testdir+'test_fotometria_nopixel_{0}.fits'.format(chan_name))
     test_sipix = Table.read(testdir+'test_fotometria_sipixel_{0}.fits'.format(chan_name))
 
-    x  = test_nopix['{0}0'.format(cantidad)][0:ntop]
-    y  = test_nopix['{0}'.format(cantidad)][0:ntop]
-    s  = test_nopix['{0}e'.format(cantidad)][0:ntop]
+    test_sipix['I SNR'] = test_sipix['I']/test_sipix['Ie']
+    mask = test_sipix['I SNR'] >= snrcut
+    print(' ')
+    print(' {0} sources with SNR >= {1}'.format(np.count_nonzero(mask),snrcut))
+
+    x  = test_nopix['{0}0'.format(cantidad)][mask]
+    y  = test_nopix['{0}'.format(cantidad)][mask]
+    s  = test_nopix['{0}e'.format(cantidad)][mask]
 
     fit = fitting.LinearLSQFitter()
-    line_init = models.Linear1D()
-    fitted_line = fit(line_init, x, y, weights=1.0/s)
+    sfit = fitting.FittingWithOutlierRemoval(fit, sigma_clip, niter=3, sigma=3.0)
+    line_init = models.Linear1D(fixed={'intercept':True})
+    fitted_line,m = sfit(line_init, x, y, weights=1.0/s)
 
     plt.figure(figsize=(8,10))
     plt.errorbar(x, y, yerr=s, fmt='ko', label='Data, no pixel window')
     plt.plot(x, fitted_line(x), 'k-', label='Fitted Model, no pixel window')
 
 
-    xs = test_sipix['{0}0'.format(cantidad)][0:ntop]
-    ys = test_sipix['{0}'.format(cantidad)][0:ntop]
-    ss = test_sipix['{0}e'.format(cantidad)][0:ntop]
+    xs = test_sipix['{0}0'.format(cantidad)][mask]
+    ys = test_sipix['{0}'.format(cantidad)][mask]
+    ss = test_sipix['{0}e'.format(cantidad)][mask]
 
-    fits         = fitting.LinearLSQFitter()
-    line_inits   = models.Linear1D()
-    fitted_lines = fits(line_inits, xs, ys, weights=1.0/ss)
+    fit          = fitting.LinearLSQFitter()
+    sfits        = fitting.FittingWithOutlierRemoval(fit, sigma_clip, niter=3, sigma=3.0)
+    line_inits   = models.Linear1D(fixed={'intercept':True})
+    fitted_lines,sm = sfits(line_inits, xs, ys, weights=1.0/ss)
 
     plt.errorbar(xs, ys, yerr=ss, fmt='bo', label='Data, with pixel window')
     plt.plot(xs, fitted_lines(x), 'b-', label='Fitted Model, with pixel window')
