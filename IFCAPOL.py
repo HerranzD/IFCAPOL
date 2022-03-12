@@ -695,28 +695,31 @@ class Source:
     copy()
         Makes a copy of the Source instance.
 
-    coord()
+    coord
         Returns the central coordinate of the sky patch where the source is
         located.
 
-    fwhm()
+    fwhm
         Returns the FWHM used for source detection and photometry.
 
-    estimated_fwhm()
+    estimated_fwhm
         Returns the fwhm estimated by a Gaussian fitting
         near the center of the image.
 
     area()
         Returns the area of the beam assumed fot the source.
 
-    nu()
+    nu
         Returns the observing frequency.
 
-    unit()
+    unit
         Returns the units of the maps used for detecting the source.
 
-    to_Jy()
+    to_Jy
         Returns the conversion factor from the units of the maps to Jy.
+
+    print_date
+        Writes the date of creation of this Source instance.
 
     has_better_SNR(other)
         Checks if this source has better signal to noise ratio in intensity
