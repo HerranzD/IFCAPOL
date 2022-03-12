@@ -701,6 +701,10 @@ class Source:
     fwhm()
         Returns the FWHM used for source detection and photometry.
 
+    estimated_fwhm()
+        Returns the fwhm estimated by a Gaussian fitting
+        near the center of the image.
+
     area()
         Returns the area of the beam assumed fot the source.
 
