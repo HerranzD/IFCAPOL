@@ -38,7 +38,7 @@ warnings.filterwarnings("ignore")
 
 stokes           = ['I','Q','U']   # Names of the Stokes parameters
 use_ideal_beams  = True            # Use or not ideal Gaussian beam PSF
-use_pixel_window = True            # Add or not the pixel effective beam to
+use_pixel_window = True           # Add or not the pixel effective beam to
                                    #    the beam FWHM for filtering effects
 signif_border    = 10              # Number of border pixels to exclude
                                    #    for the calculation of P significance
@@ -767,7 +767,7 @@ class Source:
 
     @property
     def fwhm(self):
-        return self.diccio['FWHM'].to(u.deg)
+        return self.diccio['FWHM'].to(u.arcmin)
 
     @property
     def area(self):
@@ -785,6 +785,10 @@ class Source:
     @property
     def to_Jy(self):
         return convert_factor(self.unit,u.Jy,nu=self.nu,beam_area=self.area)
+
+    @property
+    def estimated_fwhm(self):
+        return self.diccio['Free Gaussian fit I'].sigma*sigma2fwhm*self.diccio['Patch I'].pixsize.to(u.arcmin)
 
 # %% -- comparisons
 
