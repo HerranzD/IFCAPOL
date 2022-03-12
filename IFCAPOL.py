@@ -14,6 +14,7 @@ import os
 import pickle
 import tarfile
 import shutil
+import datetime
 import numpy                    as     np
 import matplotlib.pyplot        as     plt
 import astropy.units            as     u
@@ -794,6 +795,14 @@ class Source:
     def estimated_fwhm(self):
         return self.diccio['Free Gaussian fit I'].sigma*sigma2fwhm*self.diccio['Patch I'].pixsize.to(u.arcmin)
 
+    @property
+    def print_date(self):
+        try:
+            t = self.diccio['Creation time']
+            print(t)
+        except KeyError:
+            pass
+
 # %% -- comparisons
 
     def has_better_SNR(self,other):
@@ -943,6 +952,8 @@ class Source:
     @classmethod
     def from_coordinate(self,sky_map,coordinate):
         d = get_IQUP(sky_map,coordinate)
+        d['Parent map FWHM'] = sky_map.fwhm[0].to(u.arcmin)
+        d['Creation time']   = datetime.datetime.now()
         return Source(d)
 
     @classmethod
