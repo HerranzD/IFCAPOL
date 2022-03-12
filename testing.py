@@ -14,11 +14,14 @@ import os
 from astropy.table  import Table
 from myutils        import sigma2fwhm
 
-coadded_file = survey.data_dir+'LB_LFT_40_coadd_signal_map_0000_PTEP_20200915_compsep.fits'
-noise_file   = survey.data_dir+'LB_LFT_40_noise_FULL_0000_PTEP_20200915_compsep.fits'
-ps_file      = survey.data_dir+'radio_sources_LFT_40_uKcmb_nside512.fits'
-
 chan_name    = 'LB_LFT_40'
+#chan_name    = 'LB_HFT_337'
+
+coadded_file = survey.data_dir+chan_name+'_coadd_signal_map_0000_PTEP_20200915_compsep.fits'
+noise_file   = survey.data_dir+chan_name+'_noise_FULL_0000_PTEP_20200915_compsep.fits'
+ps_file      = survey.data_dir+'radio_sources_'+chan_name[3:]+'_uKcmb_nside512.fits'
+
+
 
 test_plotf   = '/Users/herranz/Desktop/testplot.jpg'
 
@@ -32,17 +35,17 @@ radiops = survey.load_LiteBIRD_map(ps_file,chan_name=chan_name)
 
 # %% --- TOTAL MAP
 
-totmap_file = survey.data_dir+'LB_LFT_40_testing_map_0000_PTEP_20200915_compsep.fits'
+totmap_file = survey.data_dir+chan_name+'_testing_map_0000_PTEP_20200915_compsep.fits'
 
 if os.path.isfile(totmap_file):
     total = survey.load_LiteBIRD_map(totmap_file,chan_name=chan_name)
 else:
     total   = signal+noise+radiops
-    total.write(totmap_file,overwrite=True)
+    total.write(totmap_file)
 
 # %% --- POINT SOURCE MOCK CATALOGUE FOR TESTING
 
-mock_catalogue_fname = survey.data_dir+'mock_ps_catalogue_LFT_40_uKcmb_nside512.fits'
+mock_catalogue_fname = survey.data_dir+'mock_ps_catalogue_'+chan_name[3:]+'_uKcmb_nside512.fits'
 
 def create_mock_point_source_catalogue():
 
@@ -137,8 +140,8 @@ def study_test(cantidad,ntop):
     import matplotlib.pyplot as plt
     from astropy.modeling import models, fitting
 
-    test_nopix = Table.read(testdir+'test_fotometria_nopixel.fits')
-    test_sipix = Table.read(testdir+'test_fotometria_sipixel.fits')
+    test_nopix = Table.read(testdir+'test_fotometria_nopixel_{0}.fits'.format(chan_name))
+    test_sipix = Table.read(testdir+'test_fotometria_sipixel_{0}.fits'.format(chan_name))
 
     x  = test_nopix['{0}0'.format(cantidad)][0:ntop]
     y  = test_nopix['{0}'.format(cantidad)][0:ntop]
