@@ -823,35 +823,99 @@ class Source:
 
 # %% -- plotting
 
-    def draw(self,tofile=None):
+    def draw(self,lsize=None,tofile=None):
+
+        """
+        Plots the I,Q,U patches from which the Source has been
+        extracted.
+
+        Parameters
+        ----------
+        lsize : int or None
+            If None, the method plots the entire patch. If it is an integer,
+            then the method plots a (lsize,lsize) poststamp centered
+            at the coordinate of the Source.
+
+        tofile: string or None
+            If not note, writes the plot to the given file name.
+        """
 
         plt.figure(figsize=(16,12))
-        self.diccio['Patch I'].draw(pos=221)
-        plt.title('I [{0}]'.format(self.unit))
-        plt.subplot(222)
-        self.diccio['Patch Q'].draw(pos=222)
-        plt.title('Q [{0}]'.format(self.unit))
-        plt.subplot(223)
-        self.diccio['Patch U'].draw(pos=223)
-        plt.title('U [{0}]'.format(self.unit))
+
+        if lsize is not None:
+
+            self.diccio['Patch I'].stamp_central_region(lsize).draw(pos=221)
+            plt.title('I [{0}]'.format(self.unit))
+            plt.subplot(222)
+            self.diccio['Patch Q'].stamp_central_region(lsize).draw(pos=222)
+            plt.title('Q [{0}]'.format(self.unit))
+            plt.subplot(223)
+            self.diccio['Patch U'].stamp_central_region(lsize).draw(pos=223)
+            plt.title('U [{0}]'.format(self.unit))
+
+        else:
+
+            self.diccio['Patch I'].draw(pos=221)
+            plt.title('I [{0}]'.format(self.unit))
+            plt.subplot(222)
+            self.diccio['Patch Q'].draw(pos=222)
+            plt.title('Q [{0}]'.format(self.unit))
+            plt.subplot(223)
+            self.diccio['Patch U'].draw(pos=223)
+            plt.title('U [{0}]'.format(self.unit))
+
         if tofile is not None:
             plt.savefig(tofile)
 
-    def mfdraw(self,tofile=None):
+    def mfdraw(self,lsize=None,tofile=None):
+        """
+        Plots the I,Q,U,P matched filtered patches from which the Source
+        has been extracted.
+
+        Parameters
+        ----------
+        lsize : int or None
+            If None, the method plots the entire patch. If it is an integer,
+            then the method plots a (lsize,lsize) poststamp centered
+            at the coordinate of the Source.
+
+        tofile: string or None
+            If not note, writes the plot to the given file name.
+        """
 
         plt.figure(figsize=(16,12))
-        plt.subplot(221)
-        self.diccio['Patch MF I'].draw(pos=221)
-        plt.title('MF I [{0}]'.format(self.unit))
-        plt.subplot(222)
-        self.diccio['Patch MF Q'].draw(pos=222)
-        plt.title('MF Q [{0}]'.format(self.unit))
-        plt.subplot(223)
-        self.diccio['Patch MF U'].draw(pos=223)
-        plt.title('MF U [{0}]'.format(self.unit))
-        plt.subplot(224)
-        self.diccio['Patch MF P'].draw(pos=224)
-        plt.title('MF P [{0}]'.format(self.unit))
+
+        if lsize is not None:
+
+            plt.subplot(221)
+            self.diccio['Patch MF I'].stamp_central_region(lsize).draw(pos=221)
+            plt.title('MF I [{0}]'.format(self.unit))
+            plt.subplot(222)
+            self.diccio['Patch MF Q'].stamp_central_region(lsize).draw(pos=222)
+            plt.title('MF Q [{0}]'.format(self.unit))
+            plt.subplot(223)
+            self.diccio['Patch MF U'].stamp_central_region(lsize).draw(pos=223)
+            plt.title('MF U [{0}]'.format(self.unit))
+            plt.subplot(224)
+            self.diccio['Patch MF P'].stamp_central_region(lsize).draw(pos=224)
+            plt.title('MF P [{0}]'.format(self.unit))
+
+        else:
+
+            plt.subplot(221)
+            self.diccio['Patch MF I'].draw(pos=221)
+            plt.title('MF I [{0}]'.format(self.unit))
+            plt.subplot(222)
+            self.diccio['Patch MF Q'].draw(pos=222)
+            plt.title('MF Q [{0}]'.format(self.unit))
+            plt.subplot(223)
+            self.diccio['Patch MF U'].draw(pos=223)
+            plt.title('MF U [{0}]'.format(self.unit))
+            plt.subplot(224)
+            self.diccio['Patch MF P'].draw(pos=224)
+            plt.title('MF P [{0}]'.format(self.unit))
+
+
         if tofile is not None:
             plt.savefig(tofile)
 
