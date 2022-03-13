@@ -1140,7 +1140,63 @@ class Source:
         make_tarfile(fname,'Tempdir')
         shutil.rmtree('Tempdir')
 
+    def info(self,include_coords=True,ID=None):
+        """
+        Returns a simplified dictionary with the essential information of
+        the Source.
 
+        Parameters
+        ----------
+        include_coords : bool, optional
+            Whether to include coordinates in the output.
+            The default is True.
+
+        ID : int or string, optional
+            If not None, adds an identificator to the output dictionary.
+
+        Returns
+        -------
+        A dictionary containing the essential parameters of the Source.
+
+        """
+
+        odic = {}
+
+        if ID is not None:
+            odic['ID'] = ID
+
+        if include_coords:
+            odic['RA [deg]']   = self.coord.icrs.ra.deg
+            odic['DEC [deg]']  = self.coord.icrs.dec.deg
+            odic['GLON [deg]'] = self.coord.galactic.l.deg
+            odic['GLAT [deg]'] = self.coord.galactic.b.deg
+
+        # intensity
+
+        odic['I [{0}]'.format(self.unit.to_string())]     = self.I.value
+        odic['I err [{0}]'.format(self.unit.to_string())] = self.I.error
+        odic['I [Jy]']                                    = self.I.Jy.value
+        odic['I err [Jy]']                                = self.I.Jy.error
+        odic['I SNR']                                     = self.I.snr
+
+        # polarization
+
+        odic['P [{0}]'.format(self.unit.to_string())]     = self.P.value
+        odic['P err [{0}]'.format(self.unit.to_string())] = self.P.error
+        odic['P [Jy]']                                    = self.P.Jy.value
+        odic['P err [Jy]']                                = self.P.Jy.error
+        odic['Angle [deg]']                               = self.angle.value.value
+        odic['Angle err [deg]']                           = self.angle.error.value
+        odic['P significance']                            = self.P.significance
+        odic['Polarization fraction [%]']                 = self.polfrac.value
+        odic['Polarization fraction error [%]']           = self.polfrac.error
+
+        # flags
+
+        odic['Extended flag']                             = self.flag_extension
+        odic['Photometry flag']                           = self.flag_photometry
+
+        return odic
 
 
 
