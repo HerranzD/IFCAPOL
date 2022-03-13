@@ -820,6 +820,60 @@ class Source:
         else:
             return False
 
+# %% -- quality checks
+
+    @property
+    def flag_photometry(self,tol=0.1):
+        """
+        Defines a quality flag depending on the agreement between
+        the matched filter and Gaussian fitting photometric estimators
+        for total intensity I.
+
+        Parameters
+        ----------
+        tol : float, optional
+            The tolerance for the discrepancy. The default is 0.1.
+
+        Returns
+        -------
+        bool:
+            True if the matched filter and the Gaussian fitting photometric
+            estimators disagree by a relative factor greater than tol.
+            False otherwise
+
+        """
+
+        rel = np.abs((self.I.value-self.Ifit.value)/self.I.value)
+        if rel > tol:
+            return True
+        else:
+            return False
+
+
+    @property
+    def flag_extension(self,tol=0.1):
+        """
+        Defines a quality flag depending on the agreement between
+        the pre-defined beam FWHM and the Gaussian fitted FWHM.
+
+        Parameters
+        ----------
+        tol : float, optional
+            The tolerance for the discrepancy. The default is 0.1.
+
+        Returns
+        -------
+        bool:
+            True if both FWHMs disagree by more than tol (in relative)
+            terms. False otherwise.
+
+        """
+
+        rel = np.abs((self.fwhm-self.estimated_fwhm)/self.fwhm).si.value
+        if rel > tol:
+            return True
+        else:
+            return False
 
 # %% -- plotting
 
