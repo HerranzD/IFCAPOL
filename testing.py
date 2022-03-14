@@ -184,3 +184,78 @@ def study_test(cantidad,snrcut=5):
         plt.loglog()
 
     return fitted_line,fitted_lines
+
+# %% --- PATCHING SCHEME
+
+def nparches():
+    """
+    Calculates how many patches (in the default LiteBIRD configuration)
+    are needed to cover at least once the whole sky.
+
+    Returns
+    -------
+    N : int
+        The minimum number of patches that would cover the sphere, if the
+        patching was 100% efficient.
+
+    """
+
+    import IFCAPOL as pol
+    import astropy.units as u
+
+    sky = 4*np.pi*u.sr
+    s   = pol.Source.from_coordinate(total,
+                                 total.pixel_to_coordinates(epeaks['Ipix'][0]))
+
+    parea = (s.diccio['Patch I'].size[0]*s.diccio['Patch I'].pixsize)**2
+
+    N = (sky/parea).si.value
+
+    return N
+
+def study_coverage(nside):
+    """
+    Write a hits map for a given nside basis of sky patching
+
+    Parameters
+    ----------
+    nside : int
+        The NSIDE parameter of the patching scheme.
+
+    Returns
+    -------
+    mapa : Fitsmap
+        Hits map in the default LiteBIRD nside
+
+    """
+
+    from fits_maps import Fitsmap
+
+    mapa = total[0].copy()
+    vac  = Fitsmap.empty(nside)
+
+    lpix = []
+
+    for ic in range(vac.npix):
+        coord = vac.pixel_to_coordinates(ic)
+        patch = mapa.patch(coord)
+        size  = patch.size
+        i,j   = np.meshgrid(np.arange(size[0]),np.arange(size[1]))
+        pcoo  = patch.pixel_coordinate(i,j)
+        ipix  = mapa.coordinates_to_pixel(pcoo)
+        lpix  = lpix + list(ipix.flatten())
+
+    listap = np.array(lpix)
+    cuenta = np.zeros(mapa.npix)
+    for pixel in range(mapa.npix):
+        cuenta[pixel] = np.count_nonzero(listap==pixel)
+
+    mapa.data = cuenta
+
+    mapa.write(testdir+'counts_nside{0}.fits'.format(nside))
+
+    return mapa
+
+
+
+
