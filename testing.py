@@ -6,13 +6,15 @@ Created on Thu Mar  3 18:45:31 2022
 @author: herranz
 """
 
-import numpy        as np
-import survey_model as survey
-import healpy       as hp
+import numpy             as np
+import survey_model      as survey
+import healpy            as hp
+import astropy.units     as u
+import matplotlib.pyplot as plt
 import os
 
 from astropy.table  import Table
-from myutils        import sigma2fwhm
+from myutils        import sigma2fwhm,table2skycoord
 
 chan_name    = 'LB_LFT_40'
 #chan_name    = 'LB_HFT_337'
@@ -256,6 +258,185 @@ def study_coverage(nside):
 
     return mapa
 
+# %% --- NON-BLIND AND BLIND CATALOGUES:
+
+fname_nonblind = testdir+chan_name+'_full_catalogue.fits'
+
+def make_catalogue_test():
+
+    from IFCAPOL_catalogue   import blind_survey,non_blind_survey
+    from astropy.coordinates import SkyCoord
+    import IFCAPOL           as     pol
+    import astropy.units     as     u
+
+    s         = pol.Source.from_coordinate(total, SkyCoord(0,0,frame='icrs',unit=u.deg))
+    fwhm      = s.fwhm
+
+    blind     = blind_survey(total[0], fwhm, fname_nonblind, verbose=True)
+
+    print(' ')
+
+    nonblinda = non_blind_survey(total, fname_nonblind,
+                                clean_mode = 'after',
+                                verbose=True)
+
+    nonblindb = non_blind_survey(total, fname_nonblind,
+                                clean_mode = 'before',
+                                verbose=True)
 
 
+    return blind,nonblindb,nonblinda
+
+fname_testing     = '/Users/herranz/Dropbox/Trabajo/LiteBird/'
+fname_testing    += 'Source_Extractor/Catalogs/Output/'
+fname_testing    += '40GHz_output_catalogue_IFCAPOL.fits'
+testing_catalogue = Table.read(fname_testing)
+
+def catalogue_assesment(input_catalogue       = testing_catalogue,
+                        reference_catalogue   = peaks,
+                        match_radius          = 10*u.arcmin,
+                        input_ra              = 'RA [deg]',
+                        input_dec             = 'DEC [deg]',
+                        ref_ra                = 'RA',
+                        ref_dec               = 'DEC',
+                        input_flux            = 'I [uK_CMB]',
+                        input_snr             = 'I SNR',
+                        ref_flux              = 'I',
+                        input_snrcut          = 4.0,
+                        ref_fluxcut           = 100.0,
+                        galcut_deg            = 20.0):
+
+    from catalogue_tools import cat1_in_cat2,cat1_not_in_cat2,cat_match
+
+    # Cutting input catalogue by SNR
+    cat1 = input_catalogue[input_catalogue[input_snr]>=input_snrcut].copy()
+    cat1.sort(keys=input_snr,reverse=True)
+
+    # Reference catalogue
+    cat2 = reference_catalogue.copy()
+
+
+    # Adding formatted coordinates
+    if 'RA' not in cat1:
+        cat1['RA']  = cat1[input_ra].copy()
+        cat1['DEC'] = cat1[input_dec].copy()
+
+    if 'RA' not in cat2:
+        cat2['RA']  = cat2[ref_ra].copy()
+        cat2['DEC'] = cat2[ref_dec].copy()
+
+    # Galactic band cut
+    c1   = table2skycoord(cat1)
+    cat1 = cat1[np.abs(c1.galactic.b.deg)>=galcut_deg]
+    c2   = table2skycoord(cat2)
+    cat2 = cat2[np.abs(c2.galactic.b.deg)>=galcut_deg]
+
+    # Spurious sources:
+    spurious = cat1_not_in_cat2(cat1,cat2,match_radius)
+
+    # Missing sources:
+    missing  = cat1_not_in_cat2(cat2,cat1,match_radius)
+
+    # Matched sources
+    matched  = cat_match(cat2,cat1,match_radius)
+
+    # Completeness
+    mthr     = np.count_nonzero(matched[ref_flux]>=ref_fluxcut)
+    tthr     = np.count_nonzero(cat2[ref_flux]>=ref_fluxcut)
+    try:
+        compl = mthr/tthr
+    except ZeroDivisionError:
+        compl = np.nan
+
+    # Purity
+    sthr      = np.count_nonzero(spurious[input_flux]>=ref_fluxcut)
+    try:
+        purit = 1.0-sthr/tthr
+    except ZeroDivisionError:
+        purit = np.nan
+
+    # Unit conversion
+    if 'I [uK_CMB]' in cat1.colnames:
+        if 'I [Jy]' in cat1.colnames:
+            r         = cat1['I [Jy]']/cat1['I [uK_CMB]']
+            unit_conv = r.mean()
+        else:
+            unit_conv = 1.0
+    else:
+        unit_conv = 1.0
+
+    return {'matched':matched[matched[ref_flux]>=ref_fluxcut],
+            'spurious':spurious[spurious[input_flux]>=ref_fluxcut],
+            'missing':missing[missing[ref_flux]>=ref_fluxcut],
+            'completeness':compl,
+            'purity':purit,
+            'unit conversion':unit_conv}
+
+def plot_overlay_catalogue(catalogue,mapa,title=''):
+
+    plt.figure()
+    mapa.moll(norm='hist',cbar=False,flip='astro')
+    c = table2skycoord(catalogue)
+    x = c.galactic.l.deg
+    y = c.galactic.b.deg
+    hp.projscatter(x, y, lonlat=True, coord='G',color='r',marker='o')
+    plt.title(title)
+
+def plots_quality():
+
+    S0   = np.linspace(10,1000,100)
+    comp = []
+    pur  = []
+    flux = []
+
+    for S in S0:
+        d = catalogue_assesment(ref_fluxcut=S)
+        flux.append(S*d['unit conversion'])
+        comp.append(d['completeness'])
+        pur.append(d['purity'])
+
+    plt.figure()
+    plt.plot(flux,comp,label='Completeness')
+    plt.plot(flux,pur,label='Purity')
+    plt.xlabel('Flux density [Jy]')
+    plt.legend()
+
+    return flux,comp,pur
+
+def flux_comparison(dicc):
+
+    from astropy.modeling import models, fitting
+    from astropy.stats import sigma_clip
+
+    x  = dicc['matched']['I']*dicc['unit conversion']
+    y  = dicc['matched']['I [uK_CMB]']*dicc['unit conversion']
+    sy = dicc['matched']['I err [uK_CMB]']*dicc['unit conversion']
+
+    plt.figure()
+    plt.errorbar(x, y, yerr=sy, fmt='o')
+
+    fit         = fitting.LinearLSQFitter()
+    or_fit      = fitting.FittingWithOutlierRemoval(fit,
+                                                    sigma_clip,
+                                                    niter=3,
+                                                    sigma=3.0)
+
+    line_init   = models.Linear1D()
+    line_initf   = models.Linear1D(intercept=0,fixed={'intercept':True})
+    fitted_line = fit(line_init, x, y, weights=1.0/sy)
+    fitted_line2, mask = or_fit(line_init, x, y, weights=1.0/sy)
+    fitted_line3 = fit(line_initf, x, y, weights=1.0/sy)
+    line_orig   = models.Linear1D(slope=1.0, intercept=0.0)
+
+    plt.plot(x, line_orig(x), 'b-', label='y=x')
+    plt.plot(x, fitted_line(x), 'k-', label='Fitted Model')
+    plt.plot(x, fitted_line2(x), 'r:', label='Fitted Model, sigma clipping')
+    plt.plot(x, fitted_line3(x), 'g-.', label='Fitted Model, no intercept')
+
+    plt.loglog()
+    plt.xlabel('Flux density [Jy]')
+    plt.ylabel('Estimated flux density [Jy]')
+    plt.legend()
+
+    return fitted_line,fitted_line2,fitted_line3
 
