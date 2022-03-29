@@ -202,6 +202,32 @@ def remove_repeated_positions(input_table,radius):
 # %%  BLIND SEARCH ACROSS ALL THE SKY
 
 def blind_survey(sky_map,fwhm,fname,threshold=3.0,verbose=False):
+    """
+    Runs a blind search for sources of a given FWHM and over a certain
+    signal-to-noise ratio on a given sky map.
+
+    Parameters
+    ----------
+    sky_map : `Fitsmap`
+        Input sky map (only temperature)
+    fwhm : `~astropy.Quantity`
+        The FWHM of the compact sources.
+    fname : string
+        File name for the output catalogue od detections.
+    threshold : float, optional
+        The sigma (signal-to-noise) detection threshold. The default is 3.0.
+    verbose : bool, optional
+        If True, the routine writes some basic information during runtime.
+        The default is False.
+
+    Returns
+    -------
+    out_table : `~astropy.Table`
+        An ``~astropy.Table` containing astrometric and photometric information
+        about the detections. See `patch_analysis` documentation for more
+        information about the format of and columns of this table.
+
+    """
 
     from fits_maps import Fitsmap
 
@@ -232,6 +258,42 @@ def non_blind_survey(sky_map,blind_survey_fname,
                      xclean     = 2.0,
                      clean_mode = 'after',
                      verbose    = False):
+    """
+    Runs a non-blind polarization detection/estimation pipeline on a
+    list of previously selected targets.
+
+    Parameters
+    ----------
+    sky_map : `Fitsmap`
+        Input sky map (I,Q,U)
+    blind_survey_fname : str
+        The file name of the table of targets. An ouput table is automatically
+        generated using the same file name but adding the '_IFCAPOL' string
+        at the end of the file name.
+    xclean : float, optional
+        The radius employed for cleaning the output catalogue of overlapping
+        repetitions is defined as source profile sigma times `xclean`.
+        The default is 2.0.
+    clean_mode : str, optional
+        Can take values in {'after','before'}. If 'before', the overlap cleaning
+        is performed before the non-blind analysis. If 'after', the cleaning
+        is performed after the non-blind analysis, using the new signal-to-noise
+        ratio as reference. The default is 'after'.
+    verbose : bool, optional
+        If True, some basic info is written on screen during runtime.
+        The default is False.
+
+    Returns
+    -------
+    out_tabl : `~astropy.Table`
+        A Table containing the non-blind catalogue. See the `IFCAPOL.Source.info`
+        documentation for additional information on the format and columns
+        of this output table. The Table is automatically saved to a file
+        named as the `blind_survey_fname` parameter, but adding the '_IFCAPOL'
+        string at the end of the file name.
+
+    """
+
 
     import IFCAPOL as pol
 
