@@ -351,7 +351,7 @@ def catalogue_assesment(input_catalogue       = testing_catalogue,
     # Purity
     sthr      = np.count_nonzero(spurious[input_flux]>=ref_fluxcut)
     try:
-        purit = 1.0-sthr/tthr
+        purit = 1.0-sthr/(mthr+sthr)
     except ZeroDivisionError:
         purit = np.nan
 
