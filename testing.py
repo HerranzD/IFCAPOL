@@ -440,3 +440,51 @@ def flux_comparison(dicc):
 
     return fitted_line,fitted_line2,fitted_line3
 
+# %% --- FULL RUN OF THE CATALOGUES OVER THE 100 SIMULATIONS AT 40 GHz:
+
+def run_blinds_40GHz_simulations():
+
+    from IFCAPOL_catalogue   import blind_survey,non_blind_survey
+    from astropy.coordinates import SkyCoord
+    import IFCAPOL           as     pol
+    import astropy.units     as     u
+
+    s         = pol.Source.from_coordinate(total, SkyCoord(0,0,frame='icrs',unit=u.deg))
+    fwhm      = s.fwhm
+
+    subdirs   = [f'{i:04d}' for i in range(100)]
+    localdir  = '/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/Data/'
+    catsdir   = '/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/Catalogs/Output/'
+    keyfile   = 'LB_LFT_40'
+    total_dir = localdir+'total_sims/'
+
+    for subdir in subdirs:
+
+        total_subdir = total_dir+subdir+'/'
+        total_fname  = total_subdir+keyfile+'_{0}_'.format(subdir)+'full_sim.fits'
+
+        catal_subdir = catsdir+subdir+'/'
+        if not os.path.isdir(catal_subdir):
+            os.mkdir(catal_subdir)
+        catal_fname  = catal_subdir+keyfile+'_{0}_'.format(subdir)+'catalogue.fits'
+
+        print(' Extracting catalogue from simulation number {0}...'.format(subdir))
+
+        simulation = survey.load_LiteBIRD_map(total_fname,chan_name=keyfile)
+
+        print('     Extracting blind catalogue...')
+        blind      = blind_survey(simulation[0],
+                                  fwhm,
+                                  catal_fname,
+                                  verbose=False)
+        print('         {0} targets in the blind catalogue.'.format(len(blind)))
+
+
+        print('     Obtaining non-blind catalogue...')
+        nonblind   = non_blind_survey(simulation,
+                                      catal_fname,
+                                      clean_mode = 'after',
+                                      verbose=False)
+        print('         {0} sources in the non-blind catalogue.'.format(len(nonblind)))
+
+        print(' ')
