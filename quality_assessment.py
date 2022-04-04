@@ -6,6 +6,7 @@ Created on Mon Apr  4 19:46:01 2022
 @author: herranz
 """
 
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import astropy.units     as u
@@ -107,7 +108,7 @@ def catalogue_assessment(input_catalogue       = ref_catalogue,
     """
 
     from catalogue_tools import cat1_not_in_cat2,cat_match
-    from mytools         import table2skycoord
+    from myutils         import table2skycoord
 
     # Cutting input catalogue by SNR
     cat1 = input_catalogue[input_catalogue[input_snr]>=input_snrcut].copy()
@@ -238,3 +239,29 @@ def completeness_purity(input_catalogue,
         plt.legend()
 
     return Table(tout)
+
+def make_tables():
+
+    tables = []
+
+    for d in subdirs:
+
+        print(' Test '+d)
+
+        fname  = cat_dir+d+'/'+chan_name
+        fname += '_{0}_catalogue_after_IFCAPOL.fits'.format(d)
+
+        input_catalogue = Table.read(fname)
+
+        tables.append(completeness_purity(input_catalogue,
+                                          ref_catalogue))
+
+    fname = cat_dir+'QA.pkl'
+
+    file = open(fname,'wb')
+    pickle.dump(tables, file)
+    file.close()
+
+    return tables
+
+
