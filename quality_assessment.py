@@ -181,6 +181,7 @@ def completeness_purity(input_catalogue,
                         smin   = 10,
                         smax   = 1000,
                         rmatch = 30*u.arcmin,
+                        galcut = 20.0,
                         toplot = False):
     """
     Returns a table with the completeness and purity of a catalogue, with respect
@@ -240,7 +241,7 @@ def completeness_purity(input_catalogue,
 
     return Table(tout)
 
-def make_tables():
+def make_tables(galcut=20,rmatch=1.0*u.deg):
 
     tables = []
 
@@ -254,7 +255,9 @@ def make_tables():
         input_catalogue = Table.read(fname)
 
         tables.append(completeness_purity(input_catalogue,
-                                          ref_catalogue))
+                                          ref_catalogue,
+                                          rmatch=rmatch,
+                                          galcut=galcut))
 
     fname = cat_dir+'QA.pkl'
 
@@ -263,5 +266,36 @@ def make_tables():
     file.close()
 
     return tables
+
+def process_table():
+
+    fname = cat_dir+'QA.pkl'
+    file  = open(fname,'rb')
+    tabs  = pickle.load(file)
+    file.close()
+
+    L = len(tabs)
+
+    F = np.asarray([tabs[i]['flux'] for i in range(L)])
+    C = np.asarray([tabs[i]['completeness'] for i in range(L)])
+    P = np.asarray([tabs[i]['purity'] for i in range(L)])
+
+    flux  = F.mean(axis=0)
+    comp  = C.mean(axis=0)
+    comps = C.std(axis=0)
+    puri  = P.mean(axis=0)
+    puris = P.std(axis=0)
+
+    plt.figure()
+    plt.errorbar(flux, comp, yerr=comps,label='completeness',capsize=2)
+    plt.errorbar(flux, puri, yerr=puris,label='purity',capsize=2)
+    plt.xlabel('Flux density [Jy]')
+    plt.legend()
+
+    plt.grid()
+
+
+
+
 
 
