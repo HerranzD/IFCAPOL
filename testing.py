@@ -369,7 +369,6 @@ def run_blinds_40GHz_simulations(starts=0,ends=100):
     from IFCAPOL_catalogue   import blind_survey,non_blind_survey
     from astropy.coordinates import SkyCoord
     import IFCAPOL           as     pol
-    import astropy.units     as     u
     import gc
 
     s         = pol.Source.from_coordinate(total, SkyCoord(0,0,frame='icrs',unit=u.deg))

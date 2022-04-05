@@ -39,7 +39,7 @@ warnings.filterwarnings("ignore")
 
 stokes           = ['I','Q','U']   # Names of the Stokes parameters
 use_ideal_beams  = True            # Use or not ideal Gaussian beam PSF
-use_pixel_window = True           # Add or not the pixel effective beam to
+use_pixel_window = True            # Add or not the pixel effective beam to
                                    #    the beam FWHM for filtering effects
 signif_border    = 10              # Number of border pixels to exclude
                                    #    for the calculation of P significance
@@ -47,6 +47,8 @@ signif_fraction  = 0.025           # Graction of britht pixels to mask
                                    #    for the calculation of P significance
 iterative_MF     = True            # Iterative matched filtering
 image_resampling = 1               # Resampling factor when projecting patches
+
+sigmaclipping    = 4.0             # Sigma clipping for rms estimation in rings
 
 # %%  SKY PATCHING
 
@@ -193,7 +195,7 @@ def peak_info(patch,
               take_positive = False,
               x             = None,
               y             = None,
-              clip          = None):
+              clip          = sigmaclipping):
 
     """
     Returns a dictionary containing the intensity, rms and position of a
