@@ -211,9 +211,13 @@ def check_simulation(nsim):
 
     localdir     = '/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/Data/'
     total_dir    = localdir+'total_sims/'
+    coadd_dir    = localdir+'coadd_signal_maps/'
     total_subdir = total_dir+simstr+'/'
+    coadd_subdir = coadd_dir+simstr+'/'
     total_fname  = total_subdir+chan_name+'_{0}_'.format(simstr)+'full_sim.fits'
+    coadd_fname  = coadd_subdir+chan_name+'_coadd_signal_map_{0}_PTEP_20200915_compsep.fits'.format(simstr)
     maps         = survey.load_LiteBIRD_map(total_fname,chan_name=chan_name)
+    comaps       = survey.load_LiteBIRD_map(coadd_fname,chan_name=chan_name)
 
     d            = catalogue_assessment(input_catalogue = catalogue,
                                         match_radius    = 1*u.deg,
@@ -239,12 +243,14 @@ def check_simulation(nsim):
 
     espf     = []
     espfreal = []
+    espcoadd = []
     coor     = table2skycoord(d['spurious'])
     for c in coor:
         espf.append(pol.Source.from_coordinate(maps, c))
         espfreal.append(pol.Source.from_coordinate(radiops, c))
+        espcoadd.append(pol.Source.from_coordinate(comaps,c))
 
-    return maps,d,lostf,lostreal,espf,espfreal
+    return maps,d,lostf,lostreal,espf,espfreal,espcoadd
 
 
 
@@ -362,7 +368,7 @@ def process_table():
     puri  = P.mean(axis=0)
     puris = P.std(axis=0)
 
-    plt.figure()
+    plt.figure(figsize=(8,8))
     plt.errorbar(flux, comp, yerr=comps,label='completeness',capsize=2)
     plt.errorbar(flux, puri, yerr=puris,label='purity',capsize=2)
     plt.xlabel('Flux density [Jy]')
