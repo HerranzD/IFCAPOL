@@ -48,7 +48,7 @@ signif_fraction  = 0.025           # Graction of britht pixels to mask
 iterative_MF     = True            # Iterative matched filtering
 image_resampling = 1               # Resampling factor when projecting patches
 
-sigmaclipping    = 4.0             # Sigma clipping for rms estimation in rings
+sigmaclipping    = 3.5             # Sigma clipping for rms estimation in rings
 
 # %%  SKY PATCHING
 

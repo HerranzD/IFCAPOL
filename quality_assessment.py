@@ -128,22 +128,30 @@ def catalogue_assessment(input_catalogue       = ref_catalogue,
         cat2['DEC'] = cat2[ref_dec].copy()
 
     # Galactic band cut
-    c1   = table2skycoord(cat1)
-    cat1 = cat1[np.abs(c1.galactic.b.deg)>=galcut_deg]
-    c2   = table2skycoord(cat2)
-    cat2 = cat2[np.abs(c2.galactic.b.deg)>=galcut_deg]
+    # c1   = table2skycoord(cat1)
+    # cat1 = cat1[np.abs(c1.galactic.b.deg)>=galcut_deg]
+    # c2   = table2skycoord(cat2)
+    # cat2 = cat2[np.abs(c2.galactic.b.deg)>=galcut_deg]
 
     # Spurious sources:
     spurious = cat1_not_in_cat2(cat1,cat2,match_radius)
+    csp      = table2skycoord(spurious)
+    spurious = spurious[np.abs(csp.galactic.b.deg)>=galcut_deg]
 
     # Missing sources:
     missing  = cat1_not_in_cat2(cat2,cat1,match_radius)
+    cms      = table2skycoord(missing)
+    missing  = missing[np.abs(cms.galactic.b.deg)>=galcut_deg]
 
     # Matched sources
     matched  = cat_match(cat2,cat1,match_radius)
+    cmt      = table2skycoord(matched)
+    matched  = matched[np.abs(cmt.galactic.b.deg)>=galcut_deg]
 
     # Completeness
     mthr     = np.count_nonzero(matched[ref_flux]>=ref_fluxcut)
+    c2       = table2skycoord(cat2)
+    cat2     = cat2[np.abs(c2.galactic.b.deg)>=galcut_deg]
     tthr     = np.count_nonzero(cat2[ref_flux]>=ref_fluxcut)
     try:
         compl = mthr/tthr
@@ -173,6 +181,72 @@ def catalogue_assessment(input_catalogue       = ref_catalogue,
             'completeness':compl,
             'purity':purit,
             'unit conversion':unit_conv}
+
+# %% --- CHECK A SIMULATION:
+
+def plot_overlay_catalogue(catalogue,mapa,title=''):
+
+    from myutils import table2skycoord
+    import healpy as hp
+
+    plt.figure()
+    mapa.moll(norm='hist',cbar=False,flip='astro')
+    c = table2skycoord(catalogue)
+    x = c.galactic.l.deg
+    y = c.galactic.b.deg
+    hp.projscatter(x, y, lonlat=True, coord='G',color='r',marker='o')
+    plt.title(title)
+
+def check_simulation(nsim):
+
+    from myutils import table2skycoord
+    from testing import radiops
+    import IFCAPOL as pol
+
+    simstr = '{0:04d}'.format(nsim)
+
+    fname_cat    = cat_dir+simstr+'/'+chan_name
+    fname_cat   += '_{0}_catalogue_after_IFCAPOL.fits'.format(simstr)
+    catalogue    = Table.read(fname_cat)
+
+    localdir     = '/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/Data/'
+    total_dir    = localdir+'total_sims/'
+    total_subdir = total_dir+simstr+'/'
+    total_fname  = total_subdir+chan_name+'_{0}_'.format(simstr)+'full_sim.fits'
+    maps         = survey.load_LiteBIRD_map(total_fname,chan_name=chan_name)
+
+    d            = catalogue_assessment(input_catalogue = catalogue,
+                                        match_radius    = 1*u.deg,
+                                        galcut_deg      = 40.0)
+
+    mapz = maps.copy()
+    plt.close('all')
+
+    plt.figure();
+    plot_overlay_catalogue(d['missing'], mapz[0]);
+    plt.title('Missing sources');
+
+    plt.figure();
+    plot_overlay_catalogue(d['spurious'], mapz[0]);
+    plt.title('Spurious sources');
+
+    lostf    = []
+    lostreal = []
+    coor     = table2skycoord(d['missing'])
+    for c in coor:
+        lostf.append(pol.Source.from_coordinate(maps, c))
+        lostreal.append(pol.Source.from_coordinate(radiops, c))
+
+    espf     = []
+    espfreal = []
+    coor     = table2skycoord(d['spurious'])
+    for c in coor:
+        espf.append(pol.Source.from_coordinate(maps, c))
+        espfreal.append(pol.Source.from_coordinate(radiops, c))
+
+    return maps,d,lostf,lostreal,espf,espfreal
+
+
 
 # %% --- COMPLETENESS/PURITY TABLES:
 
@@ -252,12 +326,14 @@ def make_tables(galcut=20,rmatch=1.0*u.deg):
         fname  = cat_dir+d+'/'+chan_name
         fname += '_{0}_catalogue_after_IFCAPOL.fits'.format(d)
 
-        input_catalogue = Table.read(fname)
-
-        tables.append(completeness_purity(input_catalogue,
-                                          ref_catalogue,
-                                          rmatch=rmatch,
-                                          galcut=galcut))
+        try:
+            input_catalogue = Table.read(fname)
+            tables.append(completeness_purity(input_catalogue,
+                                              ref_catalogue,
+                                              rmatch=rmatch,
+                                              galcut=galcut))
+        except FileNotFoundError:
+            pass
 
     fname = cat_dir+'QA.pkl'
 
