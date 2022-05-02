@@ -16,6 +16,7 @@ Created on Tue Mar  1 10:27:32 2022
 
 # %% --- IMPORTS
 
+import os
 import numpy         as np
 import astropy.units as u
 from fits_maps import Fitsmap
@@ -36,6 +37,12 @@ if running_system == 'local':
 elif running_system.upper() == 'NERSC':
 
     data_dir = '/global/cfs/cdirs/litebird/simulations/maps/PTEP_20200915_compsep/'
+    src_dir  = '/global/homes/h/herranz/LiteBIRD/src/ifcapol-litebird/'
+    scratchd = os.getenv('PSCRATCH')
+    map_dir  = scratchd+'LiteBIRD/Data/Maps/'
+    cat_inp  = scratchd+'LiteBIRD/Results/Catalogues/Input/'
+    cat_out  = scratchd+'LiteBIRD/Results/Catalogues/Output/'
+
 
 else:
 
