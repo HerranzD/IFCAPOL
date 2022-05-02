@@ -29,7 +29,7 @@ def radiops_name(chan_name):
         system.
 
     """
-    return radiops_dir+'radio_sources_{0}_uKcmb_nside512.fits'.format(chan_name)
+    return radiops_dir+'radio_sources_{0}_uKcmb_nside512.fits'.format(chan_name.split('LB_')[1])
 
 def coadd_name(sim_number,chan_name):
     """
