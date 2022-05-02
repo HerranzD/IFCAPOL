@@ -22,5 +22,5 @@ outdir = survey.map_dir+simstr+'/'
 if not os.path.isdir(outdir):
     os.mkdir(outdir)
 
-diccio('TOTAL').write(outdir+'total_'+chan_name+'_'+simstr+'.fits')
+diccio['TOTAL'].write(outdir+'total_'+chan_name+'_'+simstr+'.fits')
 
