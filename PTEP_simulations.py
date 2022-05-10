@@ -6,8 +6,13 @@ Created on Mon May  2 16:18:07 2022
 @author: herranz
 """
 
-import survey_model      as survey
 import os
+import survey_model      as survey
+import healpy            as hp
+
+from astropy.table       import Table
+
+# %% --- DEFINITIONS
 
 coadded_dir = survey.data_dir+'coadd_signal_maps/'
 noise_dir   = survey.data_dir+'noise/'
@@ -16,6 +21,8 @@ total_dir   = survey.map_dir+'total_maps/'
 
 if not os.path.exists(total_dir):
     os.makedirs(total_dir)
+
+# %% --- FILE NAMING ROUTINES
 
 def radiops_name(chan_name):
     """
@@ -135,7 +142,7 @@ def mock_radio_source_catalogue_name(chan_name):
     fname = mock_dir+'radiops_catalogue_'+chan_name+'_PTEP_20200915_compsep.fits'
     return fname
     
-
+# %% --- GENERATION OF FULL SIMULATION MAPS
 
 def PTEP_simulated_maps(sim_number,chan_name,tofile=None):
     """
@@ -180,3 +187,50 @@ def PTEP_simulated_maps(sim_number,chan_name,tofile=None):
 
     return {'TOTAL':total,
             'RADIOPS':radiops}
+
+# %% --- GENERATION OF RADIO POINT SOURCE CATALOGUES
+
+def create_mock_point_source_catalogue(chan_name):
+    """
+    Creates a catalogue of point sources from a point source HEALPix map and
+    stores it in the appropriate NERCS scratch filesystem
+
+    Parameters
+    ----------
+    chan_name : srt
+        The name of the LiteBIRD channel
+
+    Returns
+    -------
+ 
+    """
+    
+    fname   = radiops_name(chan_name)
+    radiops = survey.load_LiteBIRD_map(fname,chan_name=chan_name)
+
+    sources = radiops[0].data
+    minmax  = hp.hotspots(sources)
+    peaks   = {'Ipix':minmax[2],
+               'RA':radiops.pixel_to_coordinates(minmax[2]).icrs.ra,
+               'DEC':radiops.pixel_to_coordinates(minmax[2]).icrs.dec,
+               'GLON':radiops.pixel_to_coordinates(minmax[2]).galactic.l,
+               'GLAT':radiops.pixel_to_coordinates(minmax[2]).galactic.b,
+               'I':radiops[0].data[minmax[2]],
+               'Q':radiops[1].data[minmax[2]],
+               'U':radiops[2].data[minmax[2]]}
+    valleys = {'Ipix':minmax[1],
+               'RA':radiops.pixel_to_coordinates(minmax[1]).icrs.ra,
+               'DEC':radiops.pixel_to_coordinates(minmax[1]).icrs.dec,
+               'GLON':radiops.pixel_to_coordinates(minmax[1]).galactic.l,
+               'GLAT':radiops.pixel_to_coordinates(minmax[1]).galactic.b,
+               'I':radiops[0].data[minmax[1]],
+               'Q':radiops[1].data[minmax[1]],
+               'U':radiops[2].data[minmax[1]]}
+
+    peaks   = Table(peaks)
+    valleys = Table(valleys)
+
+    peaks.write(mock_radio_source_catalogue_name(chan_name),
+                overwrite=True)
+
+    
