@@ -19,6 +19,8 @@ noise_dir   = survey.data_dir+'noise/'
 radiops_dir = survey.data_dir+'foregrounds/radio_sources/'
 total_dir   = survey.map_dir+'total_maps/'
 
+LB_channels = list(survey.IMO.keys())
+
 if not os.path.exists(total_dir):
     os.makedirs(total_dir)
 
@@ -232,5 +234,17 @@ def create_mock_point_source_catalogue(chan_name):
 
     peaks.write(mock_radio_source_catalogue_name(chan_name),
                 overwrite=True)
+    
+def create_point_source_catalogues():
+    """
+    Generates the point source catalogues in the NERCS system
+
+    Returns
+    -------
+    None.
+
+    """
+    for chan in LB_channels:
+        create_mock_point_source_catalogue(chan)
 
     
