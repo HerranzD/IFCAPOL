@@ -6,6 +6,7 @@ Created on Mon Oct 30 11:03:16 2017
 @author: herranz
 """
 
+import os
 import numpy as np
 from numpy import dtype
 import healpy as hp
@@ -1270,7 +1271,7 @@ class Fitsmap:
     @classmethod
     def empty(self,n):
         x = np.zeros(hp.nside2npix(n))
-        f = '/Users/herranz/Dropbox/Temp/temp.fits'
+        f = os.getenv('HOME')+'/Temp/temp.fits'
         hp.write_map(f,x,overwrite=True,dtype=float)
         return read_healpix_map(f,verbose=False)
 
