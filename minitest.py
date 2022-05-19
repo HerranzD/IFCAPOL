@@ -8,7 +8,7 @@ Created on Mon May  2 20:23:55 2022
 
 import PTEP_simulations as simuls
 
-# chan_name    = 'LB_LFT_40'
+chan_name    = 'LB_LFT_40'
 
 
 # simnum = 10
@@ -22,4 +22,4 @@ import PTEP_simulations as simuls
 
 # diccio['TOTAL'].write(outdir+'total_'+chan_name+'_'+simstr+'.fits')
 
-simuls.create_point_source_catalogues()
+simuls.detect_sources(10,chan_name)

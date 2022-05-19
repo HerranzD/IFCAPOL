@@ -60,7 +60,7 @@ def coadd_name(sim_number,chan_name):
     Returns
     -------
     fname : str
-        The file name of the coadded (CMB+diffuse foregrounds) simulation 
+        The file name of the coadded (CMB+diffuse foregrounds) simulation
         in the NERSC LiteBIRD CFS system.
 
     """
@@ -84,7 +84,7 @@ def noise_name(sim_number,chan_name):
     Returns
     -------
     fname : str
-        The file name of the noise simulation 
+        The file name of the noise simulation
         in the NERSC LiteBIRD CFS system.
 
     """
@@ -96,7 +96,7 @@ def noise_name(sim_number,chan_name):
 def total_name(sim_number,chan_name):
     """
     Returns the name of the PTEP total simulation (coadded+radiops+noise)
-    file for a given LiteBIRD channel and a given simulation number 
+    file for a given LiteBIRD channel and a given simulation number
     (between 0 and 99).
 
     Parameters
@@ -109,7 +109,7 @@ def total_name(sim_number,chan_name):
     Returns
     -------
     fname : str
-        The file name of the total (CMB+diffuse foregrounds+noise+radiops) 
+        The file name of the total (CMB+diffuse foregrounds+noise+radiops)
         simulation in the NERSC scratch space.
 
     """
@@ -137,13 +137,40 @@ def mock_radio_source_catalogue_name(chan_name):
        The file name of the mock radio source catalogue in the NERSC scratch space.
 
     """
-    
+
     mock_dir = survey.cat_inp
     if not os.path.exists(mock_dir):
         os.makedirs(mock_dir)
     fname = mock_dir+'radiops_catalogue_'+chan_name+'_PTEP_20200915_compsep.fits'
     return fname
-    
+
+def detected_catalogue_name(sim_number,chan_name):
+    """
+    Returns the name of the blind catalogue of detected source candidates
+    for a given PTEP simulation.
+
+    Parameters
+    ----------
+    sim_number : int
+        The simulation number. It must take a value between 0 and 99.
+    chan_name : str
+        The name of the LiteBIRD channel
+
+
+    Returns
+    -------
+    fname : str
+        The file name of the blind catalogue.
+
+    """
+    output_catdir = survey.cat_out
+    simstr        = '{0:04d}'.format(sim_number)
+    if not os.path.exists(output_catdir):
+        os.makedirs(output_catdir)
+    fname = output_catdir+'IFCAPOL_catalogue_'+chan_name+'_'+simstr+'.fits'
+    return fname
+
+
 # %% --- GENERATION OF FULL SIMULATION MAPS
 
 def PTEP_simulated_maps(sim_number,chan_name,tofile=None):
@@ -180,7 +207,7 @@ def PTEP_simulated_maps(sim_number,chan_name,tofile=None):
                                        chan_name=chan_name)
 
     total   = signal+noise+radiops
-    
+
     if tofile is not None:
         if tofile == 'default':
             total.write(total_name(sim_number,chan_name))
@@ -204,9 +231,9 @@ def create_mock_point_source_catalogue(chan_name):
 
     Returns
     -------
- 
+
     """
-    
+
     fname   = radiops_name(chan_name)
     radiops = survey.load_LiteBIRD_map(fname,chan_name=chan_name)
 
@@ -234,7 +261,7 @@ def create_mock_point_source_catalogue(chan_name):
 
     peaks.write(mock_radio_source_catalogue_name(chan_name),
                 overwrite=True)
-    
+
 def create_point_source_catalogues():
     """
     Generates the point source catalogues in the NERCS system
@@ -247,4 +274,36 @@ def create_point_source_catalogues():
     for chan in LB_channels:
         create_mock_point_source_catalogue(chan)
 
-    
+
+# %% --- RUNNING SOURCE DETECTION ON A NERCS SIMULATION:
+
+def detect_sources(sim_number,chan_name):
+
+    import IFCAPOL           as     pol
+    import astropy.units     as     u
+    from astropy.coordinates import SkyCoord
+    from IFCAPOL_catalogue   import blind_survey,non_blind_survey
+
+    fname = total_name(sim_number,chan_name)
+    if os.path.isfile(fname):
+        simulation = survey.load_LiteBIRD_map(fname,chan_name=chan_name)
+    else:
+        maps       = PTEP_simulated_maps(sim_number,chan_name,tofile=fname)
+        simulation = maps['TOTAL']
+
+    s           = pol.Source.from_coordinate(simulation,SkyCoord(0,0,frame='icrs',unit=u.deg))
+    fwhm        = s.fwhm
+    catal_fname = detected_catalogue_name(sim_number,chan_name)
+
+    blind       = blind_survey(simulation[0],
+                               fwhm,
+                               catal_fname,
+                               verbose=False)
+
+    nonblind    = non_blind_survey(simulation,
+                                   catal_fname,
+                                   clean_mode = 'after',
+                                   verbose=False)
+
+    return {'overlapping':blind,
+            'cleaned':nonblind}

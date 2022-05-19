@@ -289,7 +289,7 @@ def non_blind_survey(sky_map,blind_survey_fname,
         A Table containing the non-blind catalogue. See the `IFCAPOL.Source.info`
         documentation for additional information on the format and columns
         of this output table. The Table is automatically saved to a file
-        named as the `blind_survey_fname` parameter, but adding the '_IFCAPOL'
+        named as the `blind_survey_fname` parameter, but adding the '_cleaned'
         string at the end of the file name.
 
     """
@@ -330,7 +330,7 @@ def non_blind_survey(sky_map,blind_survey_fname,
         temp       = remove_repeated_positions(bln, dist)
         out_tabl   = temp.copy()
 
-    fname    = blind_survey_fname.replace('.fits','_{0}_IFCAPOL.fits'.format(clean_mode))
+    fname    = blind_survey_fname.replace('.fits','_{0}_cleaned.fits'.format(clean_mode))
     out_tabl.write(fname,overwrite=True)
 
     return out_tabl
