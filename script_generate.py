@@ -15,6 +15,7 @@ nchans = len(PTEP.LB_channels)
 nsims  = 100
 
 args   = sys.argv
+print(args)
 
 def make_scripts():
 
