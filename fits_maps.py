@@ -1270,12 +1270,16 @@ class Fitsmap:
                          overwrite = True)
 
     @classmethod
-    def empty(self,n):
+    def empty(self,n,verbose=True):
         x = np.zeros(hp.nside2npix(n))
         t = str(uuid.uuid4())
         f = os.getenv('HOME')+'/Temp/'+t+'.fits'
+        if verbose:
+            print('Writing temporary file ',f)
         hp.write_map(f,x,overwrite=True,dtype=float)
         vacio = read_healpix_map(f,verbose=False)
+        if verbose:
+            print('Deleting temporary file',f)
         os.remove(f)
         return vacio
 
