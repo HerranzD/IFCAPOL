@@ -7,8 +7,10 @@ Created on Mon May  2 20:23:55 2022
 """
 
 import PTEP_simulations as simuls
+import sys
 
 chan_name    = 'LB_LFT_40'
+print('Argument List:', str(sys.argv))
 
 
 # simnum = 10
@@ -22,4 +24,4 @@ chan_name    = 'LB_LFT_40'
 
 # diccio['TOTAL'].write(outdir+'total_'+chan_name+'_'+simstr+'.fits')
 
-simuls.detect_sources(10,chan_name)
+# simuls.detect_sources(10,chan_name)
