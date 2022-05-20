@@ -9,7 +9,7 @@ Created on Fri May 20 13:40:47 2022
 import sys
 import PTEP_simulations as PTEP
 
-args        = sys.argv[1]
+args        = sys.argv
 L           = len(args)
 p1          = L-2
 p2          = L-1
