@@ -9,7 +9,7 @@ Created on Fri May 20 16:20:39 2022
 from myutils import save_ascii_list
 import PTEP_simulations as PTEP
 
-nchans = len(PTEP.survey.LB_channels)
+nchans = len(PTEP.LB_channels)
 nsims  = 100
 
 command_list = []
