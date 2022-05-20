@@ -41,7 +41,7 @@ for ichan in range(nchans):
         command_list.append('sbatch {0}'.format(macro_name))
 
 fname = PTEP.survey.scriptd+'send.sh'
-save_ascii_list(fname)
+save_ascii_list(command_list,fname)
 
 
 
