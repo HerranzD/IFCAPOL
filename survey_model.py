@@ -40,7 +40,7 @@ elif running_system.upper() == 'NERSC':
     homed    = os.getenv('HOME')+'/'
     src_dir  = homed+'LiteBIRD/src/'
     scriptd  = homed+'LiteBIRD/scripts/'
-    scratchd = os.getenv('PSCRATCH')+'/'
+    scratchd = os.getenv('SCRATCH')+'/'
     map_dir  = scratchd+'LiteBIRD/Data/Maps/'
     cat_inp  = scratchd+'LiteBIRD/Results/Catalogues/Input/'
     cat_out  = scratchd+'LiteBIRD/Results/Catalogues/Output/'
