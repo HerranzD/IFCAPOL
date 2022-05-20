@@ -72,9 +72,11 @@ def check_outputs():
     save_ascii_list(command_list,fname)
 
 
-if args[-1:].lower() == 'generate':
+if args[-1:] == 'generate':
+    print(' Generating the scripts')
     make_scripts()
 else:
+    print('Checking for failed jobs')
     check_outputs()
 
 
