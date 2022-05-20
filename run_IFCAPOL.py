@@ -9,8 +9,8 @@ Created on Fri May 20 13:40:47 2022
 import sys
 import PTEP_simulations as PTEP
 
-chan_number = sys.argv[0]
-sim_number  = sys.argv[1]
+chan_number = int(sys.argv[0])
+sim_number  = int(sys.argv[1])
 
 nmax        = len(PTEP.LB_channels)
 
