@@ -7,6 +7,7 @@ Created on Mon Oct 30 11:03:16 2017
 """
 
 import os
+import uuid
 import numpy as np
 from numpy import dtype
 import healpy as hp
@@ -1271,9 +1272,12 @@ class Fitsmap:
     @classmethod
     def empty(self,n):
         x = np.zeros(hp.nside2npix(n))
-        f = os.getenv('HOME')+'/Temp/temp.fits'
+        t = str(uuid.uuid4())
+        f = os.getenv('HOME')+'/Temp/'+t+'.fits'
         hp.write_map(f,x,overwrite=True,dtype=float)
-        return read_healpix_map(f,verbose=False)
+        vacio = read_healpix_map(f,verbose=False)
+        os.remove(f)
+        return vacio
 
     @classmethod
     def from_file(self,fname,**kwargs):
