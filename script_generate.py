@@ -13,6 +13,7 @@ import os
 
 nchans = len(PTEP.LB_channels)
 nsims  = 100
+Njobs  = nsims
 
 args   = sys.argv
 print(args)
@@ -47,8 +48,11 @@ def make_scripts():
             save_ascii_list(lsta,macro_name)
             command_list.append('sbatch {0}'.format(macro_name))
 
-    fname = PTEP.survey.scriptd+'send.sh'
-    save_ascii_list(command_list,fname)
+    for subj in range(nchans*nsims//Njobs):
+        fname = PTEP.survey.scriptd+'send_{0}.sh'.format(subj)
+        imin = subj*Njobs
+        imax = (subj+1)*Njobs
+        save_ascii_list(command_list[imin:imax],fname)
 
 
 def check_outputs():
