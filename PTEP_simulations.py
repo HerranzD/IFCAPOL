@@ -278,6 +278,31 @@ def create_point_source_catalogues():
 # %% --- RUNNING SOURCE DETECTION ON A NERCS SIMULATION:
 
 def detect_sources(sim_number,chan_name):
+    """
+    Runs the IFCAPOL source detection algorithm on an individual LiteBIRD
+    PTEP simulation in Cori at NERSC. The simulation is defined by a
+    LiteBIRD detector name and a noise+CMB simulation number (from 0 to 99).
+    The detection is done in three stages:
+        - First a blind search is performed, using a flat sky patching with many overlapping areas.
+        - Then, in a second run, IFCAPOL focuses on each one of the targets selected during the previous step. A new flat patch is projected around the target in order to avoid border effects.
+        - Finally, the resulting catalogue is cleaned by removing repeated sources (appearing in the overlapping regions between flat patches) in descending signal-to-noise ratio.
+    The ouput catalogues (both the full target set of blind detections and the catalogue cleaned of repetitios) are writen to file.
+
+    Parameters
+    ----------
+    sim_number : int
+        The simulation number. It must take a value between 0 and 99.
+    chan_name : str
+        The name of the LiteBIRD channel
+
+    Returns
+    -------
+    dict
+        A dictionary containing two `astropy` tables:
+            - 'overlapping' contains the blind search results
+            - 'cleaned' contains the output catalogue, after re-filtering in patches centered around the target coordinates and after cleaning possible repetitions.
+
+    """
 
     import IFCAPOL           as     pol
     import astropy.units     as     u
