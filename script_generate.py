@@ -46,7 +46,7 @@ def make_scripts():
             lsta.append('#SBATCH --mail-user=herranz@ifca.unican.es')
             lsta.append('#SBATCH --mail-type=ALL')
             lsta.append('#SBATCH --account=mp107')
-            lsta.append('#SBATCH -t 01:30:00')
+            lsta.append('#SBATCH -t 04:30:00')
             lsta.append('#SBATCH --output={0}Output_Logs/IFCAPOL_nchan{1}_nsim{2}.out'.format(PTEP.survey.scriptd,ichan,isim))
             lsta.append('#SBATCH --chdir={0}'.format(PTEP.survey.scriptd))
             lsta.append(' ')
