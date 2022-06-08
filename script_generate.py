@@ -53,7 +53,7 @@ def make_scripts():
             lsta.append('#run the application:')
             lsta.append('module load python')
             lsta.append('source activate pycmb')
-            lsta.append('srun -n 1 -c 1 python3 $HOME/LiteBIRD/src/run_IFCAPOL.py {0} {1}'.format(ichan,isim))
+            lsta.append('srun -n 1 -c 1 -T 04:30:00 python3 $HOME/LiteBIRD/src/run_IFCAPOL.py {0} {1}'.format(ichan,isim))
             lsta.append('conda deactivate')
 
             macro_name = PTEP.survey.scriptd+'submit_nchan{0}_nsim{1}.sh'.format(ichan,isim)
