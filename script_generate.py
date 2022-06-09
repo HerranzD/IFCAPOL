@@ -145,7 +145,7 @@ def check_outputs():
 
 if 'generate' in args[-1:]:
     print(' Generating the scripts')
-    make_scripts()
+    make_job_arrays()
 else:
     print('Checking for failed jobs')
     check_outputs()
