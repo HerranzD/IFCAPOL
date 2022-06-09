@@ -14,6 +14,11 @@ from astropy.table       import Table
 
 # %% --- DEFINITIONS
 
+catalogue_clean_mode = 'after'      # clean the repetitions after repatching
+overwrite_existing   = False        # if True, the detect_sources routine runs
+                                    # even if the final catalogue exists from some
+                                    # previous run of the code.
+
 coadded_dir = survey.data_dir+'coadd_signal_maps/'
 noise_dir   = survey.data_dir+'noise/'
 radiops_dir = survey.data_dir+'foregrounds/radio_sources/'
@@ -170,6 +175,33 @@ def detected_catalogue_name(sim_number,chan_name):
     fname = output_catdir+'IFCAPOL_catalogue_'+chan_name+'_'+simstr+'.fits'
     return fname
 
+def cleaned_catalogue_name(sim_number,chan_name):
+    """
+    Returns the name of the blind catalogue of detected source candidates
+    for a given PTEP simulation, after cleaning possible repetitions arising
+    from overlapping sky patches.
+
+    Parameters
+    ----------
+    sim_number : int
+        The simulation number. It must take a value between 0 and 99.
+    chan_name : str
+        The name of the LiteBIRD channel
+
+
+    Returns
+    -------
+    fname_out : str
+        The file name of the blind catalogue.
+
+    """
+
+    fname     = detected_catalogue_name(sim_number, chan_name)
+    fname_out = fname.replace('.fits','_{0}_cleaned.fits'.format(catalogue_clean_mode))
+
+    return fname_out
+
+
 
 # %% --- GENERATION OF FULL SIMULATION MAPS
 
@@ -309,26 +341,39 @@ def detect_sources(sim_number,chan_name):
     from astropy.coordinates import SkyCoord
     from IFCAPOL_catalogue   import blind_survey,non_blind_survey
 
-    fname = total_name(sim_number,chan_name)
-    if os.path.isfile(fname):
-        simulation = survey.load_LiteBIRD_map(fname,chan_name=chan_name)
-    else:
-        maps       = PTEP_simulated_maps(sim_number,chan_name,tofile=fname)
-        simulation = maps['TOTAL']
+    output_catalogue_name = cleaned_catalogue_name(sim_number, chan_name)
+    runit = True
 
-    s           = pol.Source.from_coordinate(simulation,SkyCoord(0,0,frame='icrs',unit=u.deg))
-    fwhm        = s.fwhm
-    catal_fname = detected_catalogue_name(sim_number,chan_name)
+    if os.path.isfile(output_catalogue_name):
+        if not overwrite_existing:
+            runit = False
 
-    blind       = blind_survey(simulation[0],
-                               fwhm,
-                               catal_fname,
-                               verbose=False)
+    if runit:
 
-    nonblind    = non_blind_survey(simulation,
+        fname = total_name(sim_number,chan_name)
+        if os.path.isfile(fname):
+            simulation = survey.load_LiteBIRD_map(fname,chan_name=chan_name)
+        else:
+            maps       = PTEP_simulated_maps(sim_number,chan_name,tofile=fname)
+            simulation = maps['TOTAL']
+
+        s           = pol.Source.from_coordinate(simulation,SkyCoord(0,0,frame='icrs',unit=u.deg))
+        fwhm        = s.fwhm
+        catal_fname = detected_catalogue_name(sim_number,chan_name)
+
+        blind       = blind_survey(simulation[0],
+                                   fwhm,
                                    catal_fname,
-                                   clean_mode = 'after',
                                    verbose=False)
 
-    return {'overlapping':blind,
-            'cleaned':nonblind}
+        nonblind    = non_blind_survey(simulation,
+                                       catal_fname,
+                                       clean_mode = catalogue_clean_mode,
+                                       verbose=False)
+
+        return {'overlapping':blind,
+                'cleaned':nonblind}
+
+    else:
+
+        return {}

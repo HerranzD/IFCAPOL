@@ -22,7 +22,7 @@ nmax        = len(PTEP.LB_channels)
 if chan_number < nmax:
     chan_name = PTEP.LB_channels[chan_number]
     if sim_number < 100:
-        PTEP.detect_sources(sim_number,chan_name)
+        dicia = PTEP.detect_sources(sim_number,chan_name)
     else:
         print('Wrong simulation number')
 else:
