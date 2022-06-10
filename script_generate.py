@@ -51,7 +51,7 @@ def make_job_arrays():
         lsta.append('#run the application:')
         lsta.append('module load python')
         lsta.append('source activate pycmb')
-        lsta.append('srun python3 $HOME/LiteBIRD/src/run_IFCAPOL.py {0} $SLURM_ARRAY_JOB_ID'.format(ichan))
+        lsta.append('srun python3 $HOME/LiteBIRD/src/run_IFCAPOL.py {0} $SLURM_ARRAY_TASK_ID'.format(ichan))
         lsta.append('conda deactivate')
 
         macro_name = PTEP.survey.scriptd+'submit_nchan{0}.slurm'.format(ichan)
