@@ -10,10 +10,10 @@ import os
 
 import numpy              as np
 import PTEP_simulations   as PTEP
-import survey_model       as Table,survey
+import survey_model       as survey
 import astropy.units      as u
 
-from astropy.table import vstack
+from astropy.table import Table,vstack
 
 
 nchans = len(PTEP.LB_channels)
