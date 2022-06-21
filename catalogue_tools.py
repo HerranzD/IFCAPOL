@@ -9,7 +9,7 @@ Created on Tue Sep 25 12:34:27 2018
 import numpy as np
 import astropy.units as u
 import healpy as hp
-import missions as mi
+#import missions as mi
 import os
 
 from astropy.table import Table,hstack
@@ -293,44 +293,44 @@ def find_common_area(cat1,cat2,
 
 # %%  ----- Planck PCCS2
 
-def load_PCCS2():
+# def load_PCCS2():
 
-    proot  = '/Users/herranz/Trabajo/Planck/Non_Thermal_Catalogue/Results/PCCS2/'
-    nfreqs = [str(int(x)).rjust(3,'0') for x in mi.Planck.freq_GHz]
-    list0  = os.listdir(proot)
-    pnames = [proot+x for x in list0]
+#     proot  = '/Users/herranz/Trabajo/Planck/Non_Thermal_Catalogue/Results/PCCS2/'
+#     nfreqs = [str(int(x)).rjust(3,'0') for x in mi.Planck.freq_GHz]
+#     list0  = os.listdir(proot)
+#     pnames = [proot+x for x in list0]
 
-    PCCS2  = {}
+#     PCCS2  = {}
 
-    for key in nfreqs:
-        nu    = int(key)
-        i     = np.where(mi.Planck.freq_GHz == nu)[0][0]
-        fname = [x for x in pnames if key in x][0]
-        cat0  = Table.read(fname)
-        for ncol in cat0.colnames:
-            try:
-                if cat0[ncol].unit.to_string() == 'degrees':
-                    cat0[ncol].unit = u.deg
-            except AttributeError:
-                pass
-            if 'FLUX' in ncol:
-                cat0[ncol].meta['Freq'] = mi.Planck.freq[i]
-                cat0[ncol].meta['FWHM'] = mi.Planck.fwhm[i]
-                cat0[ncol].meta['AREA'] = mi.Planck.beam_area[i]
-                for nnu in nfreqs:
-                    if nnu in ncol:
-                        j = np.where(mi.Planck.freq_GHz == int(nnu))[0][0]
-                        cat0[ncol].meta['Freq'] = mi.Planck.freq[j]
-                        cat0[ncol].meta['FWHM'] = mi.Planck.fwhm[j]
-                        cat0[ncol].meta['AREA'] = mi.Planck.beam_area[j]
+#     for key in nfreqs:
+#         nu    = int(key)
+#         i     = np.where(mi.Planck.freq_GHz == nu)[0][0]
+#         fname = [x for x in pnames if key in x][0]
+#         cat0  = Table.read(fname)
+#         for ncol in cat0.colnames:
+#             try:
+#                 if cat0[ncol].unit.to_string() == 'degrees':
+#                     cat0[ncol].unit = u.deg
+#             except AttributeError:
+#                 pass
+#             if 'FLUX' in ncol:
+#                 cat0[ncol].meta['Freq'] = mi.Planck.freq[i]
+#                 cat0[ncol].meta['FWHM'] = mi.Planck.fwhm[i]
+#                 cat0[ncol].meta['AREA'] = mi.Planck.beam_area[i]
+#                 for nnu in nfreqs:
+#                     if nnu in ncol:
+#                         j = np.where(mi.Planck.freq_GHz == int(nnu))[0][0]
+#                         cat0[ncol].meta['Freq'] = mi.Planck.freq[j]
+#                         cat0[ncol].meta['FWHM'] = mi.Planck.fwhm[j]
+#                         cat0[ncol].meta['AREA'] = mi.Planck.beam_area[j]
 
-        PCCS2[key] = cat0
+#         PCCS2[key] = cat0
 
-    return PCCS2
+#     return PCCS2
 
 # %%  ----- Planck PCNT
 
-PCNT_file = '/Users/herranz/Trabajo/Planck/Non_Thermal_Catalogue/Paper/SVN/PIP_127_Herranz/Catalogue/PCNT.fits'
+# PCNT_file = '/Users/herranz/Trabajo/Planck/Non_Thermal_Catalogue/Paper/SVN/PIP_127_Herranz/Catalogue/PCNT.fits'
 
-def load_PCNT():
-    return load_astrocat(PCNT_file)
+# def load_PCNT():
+#     return load_astrocat(PCNT_file)
