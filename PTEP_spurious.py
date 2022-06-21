@@ -199,8 +199,8 @@ def get_catalogues(isim,ichan):
 
     if os.path.isfile(fname_IFCAPOL):
 
-        print('   Reference catalogue = ',fname_reference)
-        print('   IFCAPOL   catalogue = ',fname_IFCAPOL)
+        # print('   Reference catalogue = ',fname_reference)
+        # print('   IFCAPOL   catalogue = ',fname_IFCAPOL)
 
         ref_cat     = Table.read(fname_reference)
         IFCAPOL_cat = Table.read(fname_IFCAPOL)
