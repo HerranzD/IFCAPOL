@@ -1211,6 +1211,27 @@ class Fitsmap:
 # %% -------   INPUT/OUTPUT -------------------------------------------------
 
     def write(self,filename,new_type=None,new_unit=None,additional_header=None):
+        """
+        Writes the `Fitsmap` to a .fits file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file where the `Fitsmap` will be written.
+        new_type : str, optional
+            If not None, the value of this parameter sets the TTYPE keyword in the
+            file header. The default is None.
+        new_unit : str, optional
+            If not None, the value of this parameter sets the TUNIT keyword in the
+            file header. The default is None.
+        additional_header : list of header entries, optional
+            Additional values for the file header. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
 
         if new_type is not None:
             self.set_name(0,new_type)
@@ -1271,6 +1292,27 @@ class Fitsmap:
 
     @classmethod
     def empty(self,n,verbose=True):
+        """
+        Generates an empty instance of `Fitsmap` with a given **nside**
+        resolution parameter.
+
+        Parameters
+        ----------
+        n : int
+            The HEALPix **nside** paraneter.
+        verbose : bool, optional
+            If True, the method writes some information on screen.
+            n particular, this method writes and posteriorly deletes a temporary
+            FITS file. The verbose option returns the name of this temporary file.
+            The default is True.
+
+        Returns
+        -------
+        vacio : `Fitsmap`
+            An empty `Fitsmap` instance.
+
+        """
+
         x = np.zeros(hp.nside2npix(n))
         t = str(uuid.uuid4())
         f = os.getenv('HOME')+'/Temp/'+t+'.fits'
@@ -1285,6 +1327,24 @@ class Fitsmap:
 
     @classmethod
     def from_file(self,fname,**kwargs):
+        """
+        Reads a `Fitsmap` instance from a .fits file
+        in HEALPix format.
+
+        Parameters
+        ----------
+        fname : string
+            The name of the file from which the `Fitsmap`
+            is to be read.
+        **kwargs : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        maps : `Fitsmap`
+            A `Fitsmap` object.
+
+        """
         maps = read_healpix_map(fname,**kwargs)
         return maps
 
@@ -1292,6 +1352,14 @@ class Fitsmap:
 
     @property
     def print_info(self):
+        """
+        Prints some basic info about the object on screen.
+
+        Returns
+        -------
+        None.
+
+        """
         print(' ')
         print(' Number of maps  = {0}'.format(self.nmaps))
         print(' Nside           = {0}'.format(self.nside))
@@ -1302,6 +1370,15 @@ class Fitsmap:
 
     @property
     def fwhm(self):
+        """
+        Returns the Full Width at Half Maximum (FWHM) of the maps.
+
+        Returns
+        -------
+        output :  list of `~astropy.units.quantity.Quantity`
+            The FWHM associated to each map.
+
+        """
         if self.fwhm_base is None:
             if self.beam_area_base is None:
                 output = None
@@ -1339,6 +1416,16 @@ class Fitsmap:
 
     @property
     def beam_area(self):
+        """
+        Returns, and sets up if not presente, the values of the **beam_area_base**
+        attribute.
+
+        Returns
+        -------
+        a : list of `~astropy.units.quantity.Quantity`
+            The beam area associated to each map.
+
+        """
         if self.beam_area_base is None:
             if self.fwhm is None:
                 a = self.pixel_area
@@ -1360,28 +1447,68 @@ class Fitsmap:
         return a
 
     @property
-    def T(self):  # Returns the first map (assumed to be T)
+    def T(self):
+        """
+        Returns the first map (assumed to be T), if it exists
+
+        Returns
+        -------
+        array like
+            The first data layer (map) in the `Fitsmap`.
+
+        """
         if self.data.size == self.npix:
             return self.data
         else:
             return self.data[0,:]
 
     @property
-    def Q(self): # Returns the second map (assumed to be Q), if it exists
+    def Q(self):
+        """
+        Returns the second map (assumed to be Q), if it exists
+
+        Returns
+        -------
+        array like
+            The second data layer (map) in the `Fitsmap`.
+
+        """
         if self.data.size == self.npix:
             return np.array([])
         else:
             return self.data[1,:]
 
     @property
-    def U(self): # Returns the third map (assumed to be U), if it exists
+    def U(self):
+        """
+        Returns the third map (assumed to be U), if it exists
+
+        Returns
+        -------
+        array like
+            The third data layer (map) in the `Fitsmap`.
+
+        """
+
         if self.data.size == self.npix:
             return np.array([])
         else:
             return self.data[2,:]
 
     @property
-    def badval(self): # Returns the bad pixel value
+    def badval(self):
+        """
+        Returns the value of the pixels that are considered *bad pixels*. The
+        methood reads this value from the `Fitsmap` header. If the header
+        does not contain the **BAD_DATA** keyword, then this methods returns
+        the default healpy **UNSEEN** value.
+
+        Returns
+        -------
+        b : float
+            Bad value numerical value.
+
+        """
         try:
             b = self.header['BAD_DATA']
         except KeyError:
@@ -1390,7 +1517,16 @@ class Fitsmap:
         return b
 
     @property
-    def nmaps(self): # Returns number of maps in the Fitsmap
+    def nmaps(self):
+        """
+        Returns the number of maps contained in the `Fitsmap` object.
+
+        Returns
+        -------
+        n : int
+            The number of maps.
+
+        """
         if self.data.size == self.npix:
             n = 1
         else:
@@ -1398,19 +1534,65 @@ class Fitsmap:
         return n
 
     @property
-    def nside(self): # Returns the NSIDE parameter
+    def nside(self):
+        """
+        Returns the HEALPix **nside** parameter for the maps contained in the
+        `Fitsmap`.
+
+        Returns
+        -------
+        int
+            The HEALPix **nside** parameter for the maps contained in the
+            `Fitsmap`.
+
+        """
         return hp.get_nside(self.data)
 
     @property
-    def npix(self):  # Returns the NPIXEL parameter
+    def npix(self):
+        """
+        Returns the HEALPix **npixel** parameter for the maps contained in the
+        `Fitsmap`.
+
+        Returns
+        -------
+        int
+            The HEALPix **npixel** parameter for the maps contained in the
+            `Fitsmap`.
+
+        """
+
         return hp.pixelfunc.nside2npix(self.nside)
 
     @property
-    def resolution(self):  # Returns the approximate pixel size, in arcmin
+    def resolution(self):
+        """
+        Returns the approximate pixel size, in arcmin, by invoking the
+        healpy `nside2resol` method.
+
+        Returns
+        -------
+        float
+            The pixel size, in arcmin.
+
+        """
+
         return (hp.nside2resol(self.nside,arcmin=True))*u.arcmin
 
     @property
-    def coordsys(self):  # Returns the coordinate system (by default, Galactic)
+    def coordsys(self):
+        """
+        Returns the coordinate system (by default, Galactic) of the maps. This
+        is read from the **COORDSYS** keyword in the header, if possible. If
+        not, Galactic coordinates are assumed.
+
+        Returns
+        -------
+        csys : strign
+            'G' for Galactic coordinates, 'C' for equatorial.
+
+        """
+
         try:
             csys = self.header['COORDSYS']
             if csys.upper() == 'EQUATORIAL':
@@ -1423,7 +1605,17 @@ class Fitsmap:
         return csys
 
     @property
-    def columns(self):  # Returns, as a list of strings, the names of the maps
+    def columns(self):
+        """
+        Returns, as a list of strings, the names of the maps (if they exist).
+
+        Returns
+        -------
+        cnames : list of strings
+            The names of the maps contained in the `Fitsmap` object.
+
+        """
+
         n      = self.nmaps
         cnames = []
         for i in range(n):
@@ -1438,12 +1630,32 @@ class Fitsmap:
 
     @property
     def set_beam_areas(self):
+        """
+        Ensures that the **beam_area_base** attribute of the `Fitsmap` is initialized.
+
+        Returns
+        -------
+        None.
+
+        """
         sigmas = fwhm2sigma*self.fwhm
         self.beam_area_base = 2.0*np.pi*(sigmas**2).si
 
 
     @property
-    def units(self):  # Returns, as a list of strings, the units of the maps
+    def units(self):
+        """
+        Returns, as a list of strings, the units of the maps, as read from the
+        `Fitsmap` header. If the header does not contain the appropriate
+        TUNIT keywords, the method returns an empty list.
+
+        Returns
+        -------
+        cnames : list of strings
+            The units of the maps.
+
+        """
+
         n      = self.nmaps
         cnames = []
         for i in range(n):
@@ -1457,10 +1669,19 @@ class Fitsmap:
         return cnames
 
     @property
-    def physical_units(self): # Tries to return the units (as astropy.units
-                              # quantities)
-                              # of the maps. If the method in unable to find the
-                              # unit, it returns an empty list in its place
+    def physical_units(self):
+        """
+        This method tries to automatically determine which are the `astropy.unit`
+        of the `Fitsmap`. If this method is unable to parse the unit, it returns an
+        empty list instead.
+
+        Returns
+        -------
+        unit_phys : list of astropy.units
+            A list containing an `astropy.unit` per each one of the maps.
+
+        """
+
 
         unit_string = self.units
         if isinstance(unit_string,str):
@@ -1471,7 +1692,17 @@ class Fitsmap:
         return unit_phys
 
     @property
-    def ismask(self):   # Checks if the data in a Fitsmap is a boolean mask
+    def ismask(self):
+        """
+        Checks whether the data contained in the `Fitsmap` object is a
+        mask (boolean) or not.
+
+        Returns
+        -------
+        bool
+            True if the `Fitsmap` object contains a sky mask.
+
+        """
         return self.data.dtype == np.dtype('bool')
 
 
