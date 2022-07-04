@@ -33,31 +33,45 @@ def make_job_arrays():
 
     for ichan in range(nchans):
 
+        job_init = 100
+        job_end  = 99
+
+        for isim in range(100):
+            chan_name = PTEP.LB_channels[ichan]
+            fname     = PTEP.cleaned_catalogue_name(isim,chan_name)
+            if not os.path.isfile(fname):
+                job_init = isim
+                break
+
         lsta = []
-        lsta.append('#!/bin/bash')
-        lsta.append('#SBATCH -N 1')
-        lsta.append('#SBATCH -C haswell')
-        lsta.append('#SBATCH -q regular')
-        lsta.append('#SBATCH -J IFCAPOL_array_job_{0}'.format(ichan))
-        lsta.append('#SBATCH --mail-user=herranz@ifca.unican.es')
-        lsta.append('#SBATCH --mail-type=ALL')
-        lsta.append('#SBATCH --account=mp107')
-        lsta.append('#SBATCH -t 04:30:00')
-        lsta.append('#SBATCH --output={0}Output_Logs/IFCAPOL_nchan{1}_%A.%a.out'.format(PTEP.survey.scriptd,ichan))
-        lsta.append('#SBATCH --error={0}Output_Logs/IFCAPOL_nchan{1}_%A.%a.err'.format(PTEP.survey.scriptd,ichan))
-        lsta.append('#SBATCH --array=0-99             # job array with index values 0, 1, ... 99')
-        lsta.append('#SBATCH --chdir={0}'.format(PTEP.survey.scriptd))
-        lsta.append(' ')
-        lsta.append('#run the application:')
-        lsta.append('module load python')
-        lsta.append('source activate pycmb')
-        lsta.append('srun python3 $HOME/LiteBIRD/src/run_IFCAPOL.py {0} $SLURM_ARRAY_TASK_ID'.format(ichan))
-        lsta.append('conda deactivate')
+
+        if job_init <= job_end:
+
+            lsta.append('#!/bin/bash')
+            lsta.append('#SBATCH -N 1')
+            lsta.append('#SBATCH -C haswell')
+            lsta.append('#SBATCH -q regular')
+            lsta.append('#SBATCH -J IFCAPOL_array_job_{0}'.format(ichan))
+            lsta.append('#SBATCH --mail-user=herranz@ifca.unican.es')
+            lsta.append('#SBATCH --mail-type=ALL')
+            lsta.append('#SBATCH --account=mp107')
+            lsta.append('#SBATCH -t 00:45:00')
+            lsta.append('#SBATCH --output={0}Output_Logs/IFCAPOL_nchan{1}_%A.%a.out'.format(PTEP.survey.scriptd,ichan))
+            lsta.append('#SBATCH --error={0}Output_Logs/IFCAPOL_nchan{1}_%A.%a.err'.format(PTEP.survey.scriptd,ichan))
+            lsta.append('#SBATCH --array={0}-{1}             # job array with index values {2}, ... {3}'.format(job_init,
+                                                                                                                job_end,
+                                                                                                                job_init,
+                                                                                                                job_end))
+            lsta.append('#SBATCH --chdir={0}'.format(PTEP.survey.scriptd))
+            lsta.append(' ')
+            lsta.append('#run the application:')
+            lsta.append('module load python')
+            lsta.append('source activate pycmb')
+            lsta.append('srun python3 $HOME/LiteBIRD/src/run_IFCAPOL.py {0} $SLURM_ARRAY_TASK_ID'.format(ichan))
+            lsta.append('conda deactivate')
 
         macro_name = PTEP.survey.scriptd+'submit_nchan{0}.slurm'.format(ichan)
         save_ascii_list(lsta,macro_name)
-
-
 
 def make_scripts():
     """
