@@ -31,6 +31,8 @@ def make_job_arrays():
 
     """
 
+    lsubmits = []
+
     for ichan in range(nchans):
 
         job_init = 100
@@ -72,6 +74,10 @@ def make_job_arrays():
 
         macro_name = PTEP.survey.scriptd+'submit_nchan{0}.slurm'.format(ichan)
         save_ascii_list(lsta,macro_name)
+
+        lsubmits.append('sbatch submit_nchan{0}.slurm'.format(ichan))
+
+    save_ascii_list(lsubmits, PTEP.survey.scriptd+'submit_arrays.sh')
 
 def make_scripts():
     """
