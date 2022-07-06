@@ -6,6 +6,7 @@ Created on Fri May 20 13:40:47 2022
 @author: herranz
 """
 
+import os
 import sys
 import PTEP_simulations as PTEP
 
@@ -22,7 +23,14 @@ nmax        = len(PTEP.LB_channels)
 if chan_number < nmax:
     chan_name = PTEP.LB_channels[chan_number]
     if sim_number < 100:
-        dicia = PTEP.detect_sources(sim_number,chan_name)
+        fname = PTEP.cleaned_catalogue_name(sim_number,chan_name)
+        if os.path.isfile(fname):
+            print(' Output catalogue already exists for sim {0} in {1}'.format(sim_number,
+                                                                               chan_name))
+        else:
+            print(' IFCAPOL detecting in sim {0} in {1}'.format(sim_number,
+                                                                chan_name))
+            dicia = PTEP.detect_sources(sim_number,chan_name)
     else:
         print('Wrong simulation number')
 else:

@@ -55,7 +55,7 @@ def make_job_arrays():
             lsta.append('#SBATCH --mail-user=herranz@ifca.unican.es')
             lsta.append('#SBATCH --mail-type=ALL')
             lsta.append('#SBATCH --account=mp107')
-            lsta.append('#SBATCH -t 02:05:00')
+            lsta.append('#SBATCH -t 02:30:00')
             lsta.append('#SBATCH --output={0}Output_Logs/IFCAPOL_nchan{1}_%A.%a.out'.format(PTEP.survey.scriptd,ichan))
             lsta.append('#SBATCH --error={0}Output_Logs/IFCAPOL_nchan{1}_%A.%a.err'.format(PTEP.survey.scriptd,ichan))
             lsta.append('#SBATCH --array={0}-{1}             # job array with index values {2}, ... {3}'.format(job_init,
