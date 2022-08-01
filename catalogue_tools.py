@@ -330,7 +330,7 @@ def find_common_area(cat1,cat2,
 
 # %%  ----- Planck PCNT
 
-# PCNT_file = '/Users/herranz/Trabajo/Planck/Non_Thermal_Catalogue/Paper/SVN/PIP_127_Herranz/Catalogue/PCNT.fits'
+PCNT_file = '/Users/herranz/Trabajo/Planck/Non_Thermal_Catalogue/Paper/SVN/PIP_127_Herranz/Catalogue/PCNT.fits'
 
-# def load_PCNT():
-#     return load_astrocat(PCNT_file)
+def load_PCNT():
+    return load_astrocat(PCNT_file)

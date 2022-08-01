@@ -1074,13 +1074,27 @@ class Fitsmap:
 
 # %% -------   UNIT CONVERSIONS ---------------------------------------------
 
-    def set_units(self,unit_string):
-        for i in range(self.nmaps):
-            self.header['TUNIT{0}'.format(i+1)] = unit_string
 
     def to_unit(self,final_unit,
                 omega_B=None,
                 freq=None):
+        """
+        Converts the data in the `Fitsmap` to the specified unit.
+
+        Parameters
+        ----------
+        final_unit : `~astropy.units.quantity.Quantity`
+            Unit to which the data is transformed.
+        omega_B : angular area `~astropy.units.quantity.Quantity`, optional
+            Beam area. The default is None.
+        freq : frequency `~astropy.units.quantity.Quantity`, optional
+            The frequency of observation. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
 
         input_units = self.physical_units
         m           = self.nmaps
@@ -1118,94 +1132,143 @@ class Fitsmap:
 
 
     def to_Jy(self,barea=None,freq=None):
+        """
+        Applies the unit conversion to janskys. This method invokes `Fitsmap.to_unit`,
+        setting *final_unit* to astropy.units.Jy
+
+        Parameters
+        ----------
+        barea : angular area `~astropy.units.quantity.Quantity`, optional
+            Beam area. The default is None.
+        freq : frequency `~astropy.units.quantity.Quantity`, optional
+            The frequency of observation. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
         self.to_unit(u.Jy,omega_B=barea,freq=freq)
 
     def to_K(self,barea=None,freq=None):             # thermodynamic conversion is assumed
+        """
+        Applies the unit conversion to Klvin (thermodynamic).
+        This method invokes `Fitsmap.to_unit`,
+        setting *final_unit* to astropy.units.K
+
+        Parameters
+        ----------
+        barea : angular area `~astropy.units.quantity.Quantity`, optional
+            Beam area. The default is None.
+        freq : frequency `~astropy.units.quantity.Quantity`, optional
+            The frequency of observation. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
         self.to_unit(Kcmb,omega_B=barea,freq=freq)
 
-#    def to_unit_old(self,final_unit,barea=None,freq=None):
-#
-#        input_units = self.physical_units
-#
-#        if freq is None:
-#            freq      = self.obs_frequency
-#
-#        if barea is None:
-#            beam_area = self.beam_area
-#        else:
-#            beam_area = barea
-#
-#        if self.nmaps == 1:
-#            try:
-#                x = 1.0*input_units[0]
-#                t = x.to(final_unit,
-#                         equivalencies=u.brightness_temperature(freq,
-#                                                                beam_area=beam_area))
-#                self.data[:] = t*self.data[:]
-#                self.header['TUNIT{0}'.format(1)] = final_unit.to_string()
-#            except UnitConversionError:
-#                try:
-#                    x = 1.0*input_units[0]**(1/2)
-#                    t = x.to(final_unit,
-#                             equivalencies=u.brightness_temperature(freq,
-#                                                                    beam_area=beam_area))
-#                    self.data[:] = t*t*self.data[:]
-#                    self.header['TUNIT{0}'.format(1)] = final_unit.to_string()+'^2'
-#                except UnitConversionError:
-#                    pass
-#        else:
-#            for jmap in range(self.nmaps):
-#                try:
-#                    x = 1.0*input_units[jmap]
-#                    t = x.to(final_unit,
-#                             equivalencies=u.brightness_temperature(freq,
-#                                                                    beam_area=beam_area[jmap]))
-#
-#                    self.data[jmap,:] = t*self.data[jmap,:]
-#                    self.header['TUNIT{0}'.format(jmap+1)] = final_unit.to_string()
-#                except UnitConversionError:
-#                    try:
-#                        x = 1.0*input_units[jmap]**(1/2)
-#                        t = x.to(final_unit,
-#                                 equivalencies=u.brightness_temperature(freq,
-#                                                                        beam_area=beam_area[jmap]))
-#                        self.data[jmap,:] = t*t*self.data[jmap,:]
-#                        self.header['TUNIT{0}'.format(jmap+1)] = '('+final_unit.to_string()+')^2'
-#                    except UnitConversionError:
-#                        pass
-#
-#    def to_Jy_old(self,barea=None,freq=None):
-#        umay = [x.upper() for x in self.units]
-#        if 'JY/SR' in umay:
-#            if self.nmaps==1:
-#                fconv = (self.beam_area).to(u.sr).value
-#                self.data = self.data*fconv
-#                self.header['TUNIT1'] = 'Jy'
-#            else:
-#                for imap in range(self.nmaps):
-#                    fconv = (self.beam_area[imap]).to(u.sr).value
-#                    self.data[imap,:] = fconv*self.data[imap,:]
-#                    self.header['TUNIT{0}'.format(imap+1)] = 'Jy'
-#        else:
-#            self.to_unit_old(u.Jy,barea=barea,freq=freq)
-#
-#    def to_K_old(self,barea=None,freq=None):
-#        self.to_Jy_old(barea=barea,freq=freq)
-#        self.to_unit_old(u.K,barea=barea,freq=freq)
 
 # %% -------   HEADER MANIPULATION ------------------------------------------
 
     def set_name(self,column,nombre):
+        """
+        Updates the TTYPE header information of a given extension (column)
+        of the `Fitsmap`.
+
+        Parameters
+        ----------
+        column : int
+            The number of the extension (column). Be aware that the FITS
+            standard for numbering extensions starts in 1, while numpy arrays
+            start in 0. For example, in oder to set the TTYPE1, *column* must
+            be set to 0.
+        nombre : str
+            The string to be stored in the TTYPE.
+
+        Returns
+        -------
+        None.
+
+        """
         self.header['TTYPE{0}'.format(column+1)] = nombre
 
     def set_unit(self,column,nombre):
+        """
+        Updates the TUNIT header information of a given extension (column)
+        of the `Fitsmap`.
+
+        Parameters
+        ----------
+        column : int
+            The number of the extension (column). Be aware that the FITS
+            standard for numbering extensions starts in 1, while numpy arrays
+            start in 0. For example, in oder to set the TUNIT1, *column* must
+            be set to 0.
+        nombre : str
+            The string to be stored in the TUNIT.
+
+        Returns
+        -------
+        None.
+
+        """
         self.header['TUNIT{0}'.format(column+1)] = nombre
 
+
+    def set_units(self,unit_string):
+        """
+        Sets all the TUNITs in the `Fitsmap` header to a given unit.
+
+        Parameters
+        ----------
+        unit_string : string
+            The unit.
+
+        Returns
+        -------
+        None.
+
+        """
+        for i in range(self.nmaps):
+            self.header['TUNIT{0}'.format(i+1)] = unit_string
+
     def add_comment(self,comment):
+        """
+        Adds a comment to the `Fitsmap` header
+
+        Parameters
+        ----------
+        comment : str
+            A comment.
+
+        Returns
+        -------
+        None.
+
+        """
         self.comment_count += 1
         self.header['COMMENT{0}'.format(self.comment_count)] = comment
 
     def locate_type(self,tstring):
+        """
+        Searches the the TTYPEs in the `Fitsmap` header for a particular
+        string.
+
+        Parameters
+        ----------
+        tstring : str
+            Search string.
+
+        Returns
+        -------
+        list
+            List of integers giving the index of each extension for which the
+            TTYPE is equal to the search string.
+
+        """
         return [i for i in range(self.nmaps) if (self.header['TTYPE{0}'.format(i+1)] == tstring)]
 
 # %% -------   INPUT/OUTPUT -------------------------------------------------
