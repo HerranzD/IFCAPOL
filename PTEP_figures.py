@@ -15,8 +15,8 @@ from astropy.table       import Table
 
 catdir = '/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/Catalogs/Output/'
 
-fname_40 = catdir+'LB_LFT_40_not_matched.fits'
-fname_50 = catdir+'LB_LFT_40_not_matched.fits'
+fname_40 = catdir+'Non_Matched/LB_LFT_40_non_matched.fits'
+fname_50 = catdir+'Non_Matched/LB_LFT_40_non_matched.fits'
 
 refmap_name  = '/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/'
 refmap_name += 'Data/LB_LFT_40_testing_map_0000_PTEP_20200915_compsep.fits'
