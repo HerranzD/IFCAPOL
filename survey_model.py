@@ -22,7 +22,7 @@ import astropy.units as u
 from fits_maps import Fitsmap
 from unit_conversions import uKcmb
 
-running_system = 'NERSC'     # it can be 'local' or 'NERSC'
+running_system = 'local'     # it can be 'local' or 'NERSC'
 
 # %% --- PATH DEFINITIONS
 
