@@ -775,6 +775,22 @@ class Fitsmap:
         return pix
 
     def coordinates_to_vector(self,coord):
+        """
+        Returns the vector(s) (HEALPix convention) corresponding to a sky
+        coordinate or set of sky coordinates.
+
+        Parameters
+        ----------
+        coord : `~astropy.coordinates.SkyCoord`
+            Coordinate(s) to be converted to vectors.
+
+        Returns
+        -------
+        x, y, z floats, scalar or array-like
+            Vectors (HEALPix convention)
+            corresponding to the input coordinates.
+
+        """
         if self.ordering.upper() == 'NEST':
             nested = True
         else:
@@ -783,6 +799,21 @@ class Fitsmap:
                           nest=nested)
 
     def ud_grade(self,nside_new):
+        """
+        Upgrade or degrade resolution of a `Fitsmap`
+
+        Parameters
+        ----------
+        nside_new : int
+            New (upgraded or degraded) nside parameter.
+
+        Returns
+        -------
+        outmap : Fitsmap
+            The upgraded or degraded `Fitsmap`.
+
+        """
+
         nmap = hp.ud_grade(self.data.copy(),nside_out=nside_new,
                            order_in=self.check_order(),
                            order_out=self.check_order())
@@ -798,6 +829,24 @@ class Fitsmap:
         return outmap
 
     def disc_around_coordinates(self,coord,radius):
+        """
+        Returns pixels whose centers lie within the disk defined by a coordinate
+        and a disk radius.
+
+        Parameters
+        ----------
+        coord : `~astropy.coordinates.SkyCoord`
+            Coordinate of the center of the circle.
+        radius : `~astropy.units.quantity.Quantity`
+            Radius of the circle.
+
+        Returns
+        -------
+        int, array
+            The pixels which lie within the given disk.
+
+        """
+
         pix = self.coordinates_to_pixel(coord)
         nested = False
         if self.ordering.upper() == 'NEST':
@@ -807,6 +856,23 @@ class Fitsmap:
                              inclusive=True,nest=nested)
 
     def fraction_masked_disk(self,coord,radius):
+        """
+        Return the fraction of masked pixels inide a circle around a given
+        coordinate.
+
+        Parameters
+        ----------
+        coord : `~astropy.coordinates.SkyCoord`
+            Coordinate of the center of the circle.
+        radius : `~astropy.units.quantity.Quantity`
+            Radius of the circle.
+
+        Returns
+        -------
+        float
+            Fraction (between 0 and 1) of pixels that are masked.
+
+        """
         n_masked = 0
         n_total  = 0
         for i in range(self.nmaps):
@@ -818,10 +884,30 @@ class Fitsmap:
 
     @property
     def pixel_area(self):
+        """
+        Pixel area. This method invokes `healpy.pixelfunc.nside2pixarea`.
+
+        Returns
+        -------
+        `~astropy.units.quantity.Quantity`
+            The pixel area, in sr.
+
+        """
         return hp.nside2pixarea(self.nside)*u.sr
 
     @property
-    def pixel_window_function(self):     # polarization is not included
+    def pixel_window_function(self):
+        """
+        Return the pixel window function for the given nside. This method
+        invokes `healpy.sphtfunc.pixwin` only for temperature. Polarization
+        is not included.
+
+        Returns
+        -------
+        array
+            The temperature pixel window function.
+
+        """
         return hp.pixwin(self.nside)
 
     def pixel_beam_function(self,theta):
@@ -829,6 +915,15 @@ class Fitsmap:
 
     @property
     def pixel_fwhm(self):
+        """
+        Returns the FWHM of the best Gaussian fit to the pixel window function.
+
+        Returns
+        -------
+        `~astropy.units.quantity.Quantity`
+            The pixel FWHM, in arcmin.
+
+        """
 
         theta_max = 5*hp.nside2resol(self.nside)
         thetarr   = np.linspace(-theta_max,theta_max,1000)
@@ -844,14 +939,41 @@ class Fitsmap:
 
     @property
     def pixel_sigma(self):
+        """
+        Returns the width of the best Gaussian fit to the pixel window function.
+
+        Returns
+        -------
+        `~astropy.units.quantity.Quantity`
+            The pixel function width, in arcmin.
+
+        """
         return fwhm2sigma*self.pixel_fwhm
 
     @property
     def pixel_size(self):
+        """
+        Alias for `Fitsmap.resolution`
+
+        Returns
+        -------
+        float
+            The pixel size, in arcmin.
+
+        """
         return self.resolution
 
     @property
     def pixsize(self):
+        """
+        Alias for `Fitsmap.resolution`
+
+        Returns
+        -------
+        float
+            The pixel size, in arcmin.
+
+        """
         return self.resolution
 
 
@@ -859,6 +981,27 @@ class Fitsmap:
 # %% -------   VISUALIZATION  -----------------------------------------------
 
     def moll(self,i=0,tofile=None,norm='hist',**kwargs):
+        """
+        Plot one of the data elements of the `Fitsmap` in Mollweide projection.
+
+        Parameters
+        ----------
+        i : int, optional
+            The index value of the data array to be plotted. The default is 0.
+        tofile : string, optional
+            File name where the plot will be written. If None, nothing is
+            written to file. The default is None.
+        norm : {‘hist’, ‘log’, None}, optional
+            Color normalization, hist= histogram equalized color mapping,
+            log= logarithmic color mapping. The default is 'hist'.
+        **kwargs : TYPE
+            See `healpy.visufunc.mollview` for additional kwargs.
+
+        Returns
+        -------
+        None.
+
+        """
 
         c = self.columns
         n = self.nmaps
@@ -887,6 +1030,39 @@ class Fitsmap:
               resampling     = 1,
               toplot         = False,
               tofile         = None):
+        """
+        Projects a flat patch around a given sky coordinate.
+
+        Parameters
+        ----------
+        coord : `~astropy.coordinates.SkyCoord`
+            Sky coordinate of the center of the flat patch.
+        npix : int, optional
+            Size (number of pixels per side) of the flat patch.
+            If None, the size is automatically set to
+            `Fitsmap.nside` / 4.  The default is None.
+        psi_deg : float, optional
+            Rotation angle of the patch, in degrees. See the `rot` argument
+            of `healpy.visufunc.gnomview` for more information. The default is 0.0.
+        deltatheta_deg : float, optional
+            The angular size of the patch, in degrees. The default is 14.658.
+        resampling : integer, optional
+            Resampling factor to be applied. On output, each pixel is subdivided
+            into (resampling x resampling) sub-pixels. The default is 1
+            (no resampling).
+        toplot : bool, optional
+            If True, the patch is plotted as a figure in a new window. The
+            default is False.
+        tofile : str or None, optional
+            If a string is provided, it is the name of a file to which the
+            patch is written. The default is None.
+
+        Returns
+        -------
+        imag : `sky_images.Imagen`
+            A flat patch centered around the given coordinate.
+
+        """
 
         matplotlib.use('Agg', force=True)
 
@@ -987,9 +1163,32 @@ class Fitsmap:
 
         return imag
 
-# %% -------   BEAM AT GIVEN COORDINATES  -----------------------------------
+# %% -------   BEAM OPERATIONS ----------------------------------------------
 
     def spherical_beam(self,coordinate,bls,thetamax=10*u.deg):
+        """
+        Returns a `Fitsmap` containing a sky image of a beam at a given
+        position (coordinate).
+
+        Parameters
+        ----------
+        coordinate : `~astropy.coordinates.SkyCoord`
+            Sky coordinate where the beam function is centered.
+        bls : array
+            Window function b(l) of the beam.
+        thetamax : `~astropy.units.quantity.Quantity`, optional
+            Maximum angle for the calculation of the beam. This argument
+            is used to save time and storage by cutting the calculations
+            above a given angular scale. Outside this radius, the beam map
+            takes the value 0. The default is 10*u.deg.
+
+        Returns
+        -------
+        outmap : `Fitsmap`
+            A `Fitsmap` object containing a sky image of a beam at a given
+            position (coordinate).
+
+        """
 
         if self.ordering.upper() == 'RING':
             nest = False
@@ -1023,6 +1222,28 @@ class Fitsmap:
         return outmap
 
     def flat_beam(self,coordinate,bls,npix=512,deltatheta_deg=14.658):
+        """
+        Returns a `sky_images.Imagen` flat sky patch containing an image
+        of the beam at a given sky coordinate.
+
+        Parameters
+        ----------
+        coordinate : `~astropy.coordinates.SkyCoord`
+            Sky coordinate where the beam function is centered.
+        bls : array
+            Window function b(l) of the beam.
+        npix : int, optional
+            Size of the patch. The default is 512x512 pixels.
+        deltatheta_deg : float, optional
+            Angular size of the patch, in degrees. The default is 14.658.
+
+        Returns
+        -------
+        p2 : `sky_images.Imagen`
+            A flat sky patch containing an image
+            of the beam at a given sky coordinate.
+
+        """
 
         p0   = self.patch(coordinate,
                           npix*4,
@@ -1040,9 +1261,20 @@ class Fitsmap:
 
         return p2
 
-# %% -------   BEAM OPERATIONS ----------------------------------------------
-
     def update_fwhm(self,fwhm):
+        """
+        Defines (or updates) the FWHM and beam area of the `Fitsmap` object.
+
+        Parameters
+        ----------
+        fwhm : `~astropy.units.quantity.Quantity`
+            Full Width Half at Maximum (FWHM).
+
+        Returns
+        -------
+        None.
+
+        """
         if self.nmaps == 1:
             self.fwhm_base      = fwhm
             s                   = fwhm2sigma*fwhm
@@ -1059,6 +1291,19 @@ class Fitsmap:
                 self.beam_area_base.append(a)
 
     def update_beam_area(self,area):
+        """
+        Defines (or updates) the FWHM and beam area of the `Fitsmap` object.
+
+        Parameters
+        ----------
+        area : `~astropy.units.quantity.Quantity`
+            Beam area.
+
+        Returns
+        -------
+        None.
+
+        """
         a = area
         if self.nmaps == 1:
             self.beam_area_base = a
