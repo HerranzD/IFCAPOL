@@ -27,6 +27,7 @@ import re
 from sky_images import Imagen
 from myutils import coord2vec,fwhm2sigma,sigma2fwhm
 from unit_conversions import Kcmb,parse_unit,convert_factor
+from mapview import skyview
 
 
 # %% ------- Example files, used for testing: --------------------------------
@@ -1019,6 +1020,50 @@ class Fitsmap:
 
         if tofile is not None:
             plt.savefig(tofile)
+
+    def skyview(self,coord,i=0,tofile=None,title=None,zoom_size=4*u.deg):
+        """
+        Invokes mapview.skyview to visualize the sky map around a given
+        coordinate in spherical view.
+
+        Parameters
+        ----------
+        coord : `~astropy.coordinates.SkyCoord`
+            Sky coordinate where the plot will be centered. It is also used
+            as center of the zooming region.
+        i : int, optional
+            The `Fitsmap` data extension. The default is 0.
+        tofile : srt or None, optional
+            File where the plot is saved. The default is None.
+        title : str or None, optional
+            Figure title. The default is None.
+        zoom_size : `~astropy.units.quantity.Quantity`
+            The size of the zoom. The default is 4*u.deg.
+
+
+        Returns
+        -------
+        None.
+
+        """
+
+        n = self.nmaps
+
+        if n > 1:
+            x = self.data[i,:].copy()
+        else:
+            x = self.data.copy()
+
+        coordsys = self.header['COORDSYS']
+
+        skyview(x,
+                coord,
+                coordsys  = coordsys,
+                zoom_size = zoom_size,
+                title     = title,
+                tofile    = tofile)
+
+
 
 
 # %% -------   PATCHING  ----------------------------------------------------

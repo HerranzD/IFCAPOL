@@ -68,8 +68,8 @@ def plotfit(x,y,x_err,y_err,outmodel,
     ax = plt.subplot(subplotn)
 
     if logscal:
-        ax.set_xscale("log", nonposx='clip')
-        ax.set_yscale("log", nonposy='clip')
+        ax.set_xscale("log") #, nonposx='clip')
+        ax.set_yscale("log") #, nonposy='clip')
 
     plt.errorbar(x,y,xerr=x_err,yerr=y_err,
                  fmt='o',
