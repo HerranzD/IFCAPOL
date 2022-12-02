@@ -119,11 +119,11 @@ def catalogue_assessment(input_catalogue       = ref_catalogue,
 
 
     # Adding formatted coordinates
-    if 'RA' not in cat1:
+    if 'RA' not in cat1.colnames:
         cat1['RA']  = cat1[input_ra].copy()
         cat1['DEC'] = cat1[input_dec].copy()
 
-    if 'RA' not in cat2:
+    if 'RA' not in cat2.colnames:
         cat2['RA']  = cat2[ref_ra].copy()
         cat2['DEC'] = cat2[ref_dec].copy()
 
