@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import astropy.units     as u
 import survey_model      as survey
 
+
+from post_PTEP_simulations import mock_radio_source_catalogue_name
 from astropy.table import Table
 
 
@@ -24,15 +26,24 @@ subdirs    = [f'{i:04d}' for i in range(100)]
 
 # %% --- CATALOGUE OF REFERENCE
 
-ref_catalogue_fname  = survey.data_dir+'mock_ps_catalogue_'
-ref_catalogue_fname += chan_name[3:]+'_uKcmb_nside512.fits'
+#ref_catalogue_fname  = survey.data_dir+'mock_ps_catalogue_'
+#ref_catalogue_fname += chan_name[3:]+'_uKcmb_nside512.fits'
+
+ref_catalogue_fname  = mock_radio_source_catalogue_name(chan_name)
 ref_catalogue        = Table.read(ref_catalogue_fname)
 
 ref_catalogue.sort(keys='I',reverse=True)
 
+# %% --- TEST CATALOGUE
+
+from post_PTEP_simulations import cleaned_catalogue_name
+test_catalogue       = Table.read(cleaned_catalogue_name(0,chan_name))
+test_catalogue.sort(keys='I [uK_CMB]',reverse=True)
+
+
 # %% --- BASIC CATALOGUE ASSESSMENT
 
-def catalogue_assessment(input_catalogue       = ref_catalogue,
+def catalogue_assessment(input_catalogue       = test_catalogue,
                          reference_catalogue   = ref_catalogue,
                          match_radius          = 30*u.arcmin,
                          input_ra              = 'RA [deg]',
@@ -52,7 +63,7 @@ def catalogue_assessment(input_catalogue       = ref_catalogue,
     ----------
     input_catalogue : `~astropy.Table`, optional
         The catalogue whose quality is going to be assessed.
-        The default is ref_catalogue.
+        The default is test_catalogue.
     reference_catalogue : `~astropy.Table`, optional
         The groundtruth catalogue to which the input catalogue is
         compared. The default is ref_catalogue.
@@ -128,10 +139,10 @@ def catalogue_assessment(input_catalogue       = ref_catalogue,
         cat2['DEC'] = cat2[ref_dec].copy()
 
     # Galactic band cut
-    # c1   = table2skycoord(cat1)
-    # cat1 = cat1[np.abs(c1.galactic.b.deg)>=galcut_deg]
-    # c2   = table2skycoord(cat2)
-    # cat2 = cat2[np.abs(c2.galactic.b.deg)>=galcut_deg]
+    c1   = table2skycoord(cat1)
+    cat1 = cat1[np.abs(c1.galactic.b.deg)>=galcut_deg]
+    c2   = table2skycoord(cat2)
+    cat2 = cat2[np.abs(c2.galactic.b.deg)>=galcut_deg]
 
     # Spurious sources:
     spurious = cat1_not_in_cat2(cat1,cat2,match_radius)
@@ -256,8 +267,10 @@ def check_simulation(nsim):
 
 # %% --- COMPLETENESS/PURITY TABLES:
 
-def completeness_purity(input_catalogue,
-                        reference_catalogue,
+def completeness_purity(input_catalogue       = test_catalogue,
+                        reference_catalogue   = ref_catalogue,
+               #         input_catalogue,
+               #         reference_catalogue,
                         smin   = 10,
                         smax   = 1000,
                         rmatch = 30*u.arcmin,

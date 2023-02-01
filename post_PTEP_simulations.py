@@ -150,7 +150,7 @@ def mock_radio_source_catalogue_name(chan_name):
     mock_dir = survey.cat_inp
     if not os.path.exists(mock_dir):
         os.makedirs(mock_dir)
-    fname = mock_dir+'radiops_catalogue_'+chan_name+'_PTEP_20200915_compsep.fits'
+    fname = mock_dir+'radiops_catalogue_'+chan_name+'_post_PTEP.fits'
     return fname
 
 def detected_catalogue_name(sim_number,chan_name):
