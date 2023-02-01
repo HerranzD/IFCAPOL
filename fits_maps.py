@@ -371,10 +371,23 @@ class Fitsmap:
 
         return outmap
 
-    def check_compatibility(self,other):              # checks if SELF is
-                                                      # compatible
-                                                      # with OTHER for
-                                                      # arithmetic operations
+    def check_compatibility(self,other):
+        """
+        Checks if SELF is compatible with OTHER for arithmetic operations
+
+        Parameters
+        ----------
+        other : TYPE
+            A python object.
+
+        Returns
+        -------
+        compatibility : bool
+            Whether the two arguments are compatible or not.
+        ctype : str
+            A string describing the kind of compatible object.
+
+        """
 
         compatibility = False
         ctype         = None
@@ -416,6 +429,15 @@ class Fitsmap:
 # %% -------   COPY METHOD -------------------------------------------------
 
     def check_order(self):
+        """
+        Returns the ordering scheme of the `Fitsmap`.
+
+        Returns
+        -------
+        order : string
+            "RING" or "NEST".
+
+        """
         if self.ordering.upper() == 'RING':
             order = 'RING'
         else:
@@ -423,6 +445,16 @@ class Fitsmap:
         return order
 
     def copy(self):
+        """
+        Creates a copy of the `Fitsmap` instance.
+
+        Returns
+        -------
+        copia : `Fitsmap`
+            Copy of the `Fitsmap`.
+
+        """
+
         copia = Fitsmap(self.data.copy(),self.mask.copy(),
                         self.header.copy(),self.check_order())
 
@@ -436,9 +468,40 @@ class Fitsmap:
 # %% -------   MASKS -------------------------------------------------------
 
     def mask_value(self,value):
+        """
+        This method masks those pixels whose value is equal to a given
+        input.
+
+        Parameters
+        ----------
+        value : float
+            Value to be masked.
+
+        Returns
+        -------
+        None.
+
+        """
         self.mask = self.data == value
 
     def masked_data(self,i=-1):
+        """
+        Returns the mask as a data array.
+
+        Parameters
+        ----------
+        i : int, optional
+            Dimension of the `Fitsmap,data` along which the mask is returned.
+            The default is -1, which means all the dimensions
+            are considered and the output will be stored in a list of
+            dimension `Fitsmap.nmaps`.
+
+        Returns
+        -------
+        v : array or list of array
+            DESCRIPTION.
+
+        """
         if (self.nmaps == 1) or (i<0):
             v = np.ma.array(self.data.copy(),mask=self.mask.copy())
         else:
@@ -446,10 +509,40 @@ class Fitsmap:
         return v
 
     def add_mask(self,mask):
+        """
+        This method adds a mask map (in HEALPix format) to the `Fitsmap`. The
+        sum follows the boolean logic rules.
+
+        Parameters
+        ----------
+        mask : array
+            Mask values, as HEALPix map.
+
+        Returns
+        -------
+        None.
+
+        """
         self.mask = self.mask + mask
 
-    def mask_band(self,band_size): # masks a band of size band_size around
-                                   # the Equator
+    def mask_band(self,band_size):
+        """
+        Masks a band of a given size around the Equator.
+
+        Parameters
+        ----------
+        band_size : float or `~astropy.units.quantity.Quantity`
+            Half-size of the band. The band is assumed to be symmetrical
+            around the equator (`band_size` counts in both directions).
+            If a float is provided, the method assumes the band size is
+            expressed in degrees. If not, the argument must be an
+            angular `astropy.Quantity`.
+
+        Returns
+        -------
+        None.
+
+        """
 
         if isinstance(band_size,u.quantity.Quantity):
             t1 = band_size
@@ -476,7 +569,15 @@ class Fitsmap:
                 if self.ismask:
                     self.data[i,ipix] = True
 
-    def grow_mask_1pix(self):   # grows the mask by one pixel
+    def grow_mask_1pix(self):
+        """
+        This method grows the mask of the `Fitsmap` in one pixel.
+
+        Returns
+        -------
+        None.
+
+        """
         if self.nmaps == 1:
             mask   = self.mask.copy()
         else:
@@ -495,7 +596,20 @@ class Fitsmap:
                 else:
                     self.mask[:,pixel] = True
 
-    def grow_mask_radius(self,radius):   # grows the mask by a certain radius
+    def grow_mask_radius(self,radius):
+        """
+        Grows the mask by a certain radius.
+
+        Parameters
+        ----------
+        radius : `~astropy.units.quantity.Quantity`
+            Growth radius.
+
+        Returns
+        -------
+        None.
+
+        """
         if self.nmaps == 1:
             mask   = self.mask.copy()
         else:
@@ -518,27 +632,86 @@ class Fitsmap:
                     self.mask[:,pixel] = True
 
     def to_mask(self):
+        """
+        Transfer the mask values to the data extension of the `Fitsmap`.
+
+        Returns
+        -------
+        None.
+
+        """
         self.data = self.mask.copy()
 
     @property
     def mask_area(self):
+        """
+        Returns the area of the sky that is covered by the mask.
+
+        Returns
+        -------
+        `~astropy.units.quantity.Quantity`
+            Area of the masked sky
+
+        """
         return np.count_nonzero(self.mask)*self.pixel_area
 
     @property
     def unmasked_area(self):
+        """
+        Returns the area of the sky that is not covered by the mask.
+
+        Returns
+        -------
+        `~astropy.units.quantity.Quantity`
+            Area of the non-masked sky
+
+        """
         return 4.0*np.pi*u.sr-self.mask_area
 
     @property
     def masked_fraction(self):
+        """
+        Returns the fraction of pixels that are masked.
+
+        Returns
+        -------
+        float
+            Fraction of masked pixels.
+
+        """
         return np.count_nonzero(self.mask)/self.npix
 
     @property
     def unmasked_fraction(self):
+        """
+        Returns the fraction of pixels that are not masked.
+
+        Returns
+        -------
+        float
+            Fraction of non-masked pixels.
+
+        """
         return 1.0-self.masked_fraction
 
 # %% -------   SMOOTHING ---------------------------------------------------
 
     def smooth(self,fwhm):
+        """
+        Smooths the map with a Gaussian symmetric beam.
+
+        Parameters
+        ----------
+        fwhm : `~astropy.units.quantity.Quantity`
+            The Full Width at Half Maximum of the Gaussian beam.
+
+        Returns
+        -------
+        mapa : `Fitsmap`
+            Smoothed map.
+
+        """
+
         mapa = self.copy()
         mapa.to_ring()
         if mapa.nmaps == 1:
@@ -563,6 +736,28 @@ class Fitsmap:
 # %% -------   STATISTICS ---------------------------------------------------
 
     def ngood(self,i=-1):
+        """
+        Returns the number of "good" pixels of the data
+        contained in the `Fitsmap`. Good pixels are those non marked
+        as BADVAL in the HEALPix convention.
+
+        Parameters
+        ----------
+        i : int, optional
+            Dimension of the `Fitsmap,data` along which the normality test
+            is performed. The default is -1, which means all the dimensions
+            are considered and the output will be stored in a list of
+            dimension `Fitsmap.nmaps`.
+        **kwargs : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        r : int or array
+            The number of good pixels.
+
+        """
+
         if i>=0:
             a  = self.masked_data(i)
             x  = a.data
@@ -581,6 +776,27 @@ class Fitsmap:
         return r
 
     def maxval(self,i=-1):
+        """
+        Returns the maximum value of the data
+        contained in the `Fitsmap`.
+
+        Parameters
+        ----------
+        i : int, optional
+            Dimension of the `Fitsmap,data` along which the normality test
+            is performed. The default is -1, which means all the dimensions
+            are considered and the output will be stored in a list of
+            dimension `Fitsmap.nmaps`.
+        **kwargs : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        r : float or array
+            The maximum value.
+
+        """
+
         if i>=0:
             a = self.masked_data(i)
             r = a.max()
@@ -593,6 +809,27 @@ class Fitsmap:
         return r
 
     def minval(self,i=-1):
+        """
+        Returns the minimum value of the data
+        contained in the `Fitsmap`.
+
+        Parameters
+        ----------
+        i : int, optional
+            Dimension of the `Fitsmap,data` along which the normality test
+            is performed. The default is -1, which means all the dimensions
+            are considered and the output will be stored in a list of
+            dimension `Fitsmap.nmaps`.
+        **kwargs : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        r : float or array
+            The minimum value.
+
+        """
+
         if i>=0:
             a = self.masked_data(i)
             r = a.min()
@@ -605,6 +842,27 @@ class Fitsmap:
         return r
 
     def mean(self,i=-1):
+        """
+        Returns the mean of the data
+        contained in the `Fitsmap`.
+
+        Parameters
+        ----------
+        i : int, optional
+            Dimension of the `Fitsmap,data` along which the normality test
+            is performed. The default is -1, which means all the dimensions
+            are considered and the output will be stored in a list of
+            dimension `Fitsmap.nmaps`.
+        **kwargs : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        r : float or array
+            The mean.
+
+        """
+
         if i>=0:
             a = self.masked_data(i)
             r = a.mean()
@@ -617,6 +875,27 @@ class Fitsmap:
         return r
 
     def std(self,i=-1):
+        """
+        Returns the standard deviation of the data
+        contained in the `Fitsmap`.
+
+        Parameters
+        ----------
+        i : int, optional
+            Dimension of the `Fitsmap,data` along which the normality test
+            is performed. The default is -1, which means all the dimensions
+            are considered and the output will be stored in a list of
+            dimension `Fitsmap.nmaps`.
+        **kwargs : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        r : float or array
+            The standard deviation.
+
+        """
+
         if i>=0:
             a = self.masked_data(i)
             r = a.std()
@@ -629,6 +908,27 @@ class Fitsmap:
         return r
 
     def skew(self,i=-1,**kwargs):
+        """
+        Returns the skewness of the data
+        contained in the `Fitsmap`.
+
+        Parameters
+        ----------
+        i : int, optional
+            Dimension of the `Fitsmap,data` along which the normality test
+            is performed. The default is -1, which means all the dimensions
+            are considered and the output will be stored in a list of
+            dimension `Fitsmap.nmaps`.
+        **kwargs : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        r : float or array
+            The skewness.
+
+        """
+
         if i>=0:
             a = self.masked_data(i)
             r = np.asscalar(mst.skew(a,**kwargs).data)
@@ -641,6 +941,26 @@ class Fitsmap:
         return r
 
     def kurtosis(self,i=-1,**kwargs):
+        """
+        Returns the kurtosis of the data
+        contained in the `Fitsmap`.
+
+        Parameters
+        ----------
+        i : int, optional
+            Dimension of the `Fitsmap,data` along which the normality test
+            is performed. The default is -1, which means all the dimensions
+            are considered and the output will be stored in a list of
+            dimension `Fitsmap.nmaps`.
+        **kwargs : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        r : float or array
+            The kurtosis.
+
+        """
 
         if i>=0:
             a = self.masked_data(i)
@@ -654,6 +974,31 @@ class Fitsmap:
         return r
 
     def statistics(self,i=-1):
+        """
+        Returns a dictionary of statistical descriptors for the data
+        contained in the `Fitsmap`.
+
+        Parameters
+        ----------
+        i : int, optional
+            Dimension of the `Fitsmap,data` along which the normality test
+            is performed. The default is -1, which means all the dimensions
+            are considered and the output will be stored in a list of
+            dimension `Fitsmap.nmaps`.
+
+        Returns
+        -------
+        dict
+            A dictionary containing:
+                * 'mean': mean of the data
+                * 'std': standard deviation of the data
+                * 'min': minimum value
+                * 'max': maximum value
+                * 'skew': skewness
+                * 'kurt': kurtosis
+                * 'ngood': number of good samples
+
+        """
         return {'mean':self.mean(i=i),
                 'std':self.std(i=i),
                 'max':self.maxval(i=i),
@@ -663,6 +1008,55 @@ class Fitsmap:
                 'ngood':self.ngood(i=i)}
 
     def test_normal(self,i=-1,toplot=False,tofile=None,threshold=1.e-3):
+        """
+        Normality test of the non-masked elements of the `Fitsmap`
+        object. This method invokes the normaltest function from scipy [1]_.
+        The function tests the null hypothesis that a sample comes
+        from a normal distribution.  It is based on D'Agostino and
+        Pearson's [2]_, [3]_ test that combines skew and kurtosis to
+        produce an omnibus test of normality.
+
+        Parameters
+        ----------
+        i : int, optional
+            Dimension of the `Fitsmap,data` along which the normality test
+            is performed. The default is -1, which means all the dimensions
+            are considered and the output will be stored in a list of
+            dimension `Fitsmap.nmaps`.
+        toplot : bool, optional
+            If *True*, a plot with the results is generated. The default is False.
+        tofile : bool, optional
+             Name of the file where the results will be stored. The default is None.
+        threshold : float, optional
+            Threshold for the p-value. If the p-value is lesser than the
+            specified threshold, the test returns *False*
+            (the distribution is not considered to be normal). The default is 1.e-3.
+
+        Returns
+        -------
+        dict
+            A dictionary containing:
+                * 'p-value': A 2-sided chi squared probability for the hypothesis test.
+                * 'is_normal': A boolean answer to the question about whether or not the distribution is normal.
+                * 'statistics': ``s^2 + k^2``, where ``s`` is the z-score returned by `skewtest` and ``k`` is the z-score returned by `kurtosistest` (see the documentation for `scipy.stats.normaltest`
+
+
+
+        References
+        ----------
+        .. [1] Virtanen, P. et al. (2020), "SciPy 1.0: Fundamental Algorithms
+               for Scientific Computing in Python", Nature Methods, 17(3), 261-272
+
+        .. [2] D'Agostino, R. B. (1971), "An omnibus test of normality for
+               moderate and large sample size", Biometrika, 58, 341-348
+
+        .. [3] D'Agostino, R. and Pearson, E. S. (1973), "Tests for departure from
+               normality", Biometrika, 60, 613-622
+
+
+        """
+
+
         if self.nmaps==1:
             x = self.data.copy()
             m = self.mask.copy()
@@ -728,6 +1122,14 @@ class Fitsmap:
 # %% -------   PIXEL OPERATIONS AND COORDINATES ----------------------------
 
     def to_ring(self):
+        """
+        Converts the `Fitsmap`to the HEALPix ordering scheme RING.
+
+        Returns
+        -------
+        None.
+
+        """
         if self.ordering.upper() == 'NEST':
             self.ordering = 'RING'
             self.data     = hp.reorder(self.data,n2r=True)
@@ -735,6 +1137,14 @@ class Fitsmap:
             self.header['ORDERING'] = 'RING'
 
     def to_nest(self):
+        """
+        Converts the `Fitsmap`to the HEALPix ordering scheme NEST.
+
+        Returns
+        -------
+        None.
+
+        """
         if self.ordering.upper() == 'RING':
             self.ordering = 'NEST'
             self.data     = hp.reorder(self.data,r2n=True)
@@ -742,6 +1152,22 @@ class Fitsmap:
             self.header['ORDERING'] = 'NEST'
 
     def pixel_to_coordinates(self,i):
+        """
+        Returs the sky coordinate(s) corresponding to the HEALPix pixel
+        index or indexes `i`. The index is referred
+        to the ordering scheme of the `Fitsmap` object.
+
+        Parameters
+        ----------
+        i : int
+            The HEALPix index.
+
+        Returns
+        -------
+        `~astropy.coordinates.SkyCoord`
+            Sky coordinate or array of sky coordinates.
+
+        """
         cframe = self.coordsys
         if cframe == 'G':
             framsys = 'galactic'
@@ -759,6 +1185,22 @@ class Fitsmap:
         return SkyCoord(lon*u.deg,lat*u.deg,frame=framsys)
 
     def coordinates_to_pixel(self,coord):
+        """
+        Returns the HEALPix pixel index(es) corresponding to a given
+        sky coordinate or set of sky coordinates. The index is referred
+        to the ordering scheme of the `Fitsmap` object.
+
+        Parameters
+        ----------
+        coord : `~astropy.coordinates.SkyCoord`
+            Coordinate(s) to be converted to pixel index.
+
+        Returns
+        -------
+        pix : int
+            Pixel index, or array of pixel indexes.
+
+        """
         cframe = self.coordsys
         if cframe == 'C':
             lon = coord.icrs.ra.deg
@@ -1024,7 +1466,8 @@ class Fitsmap:
     def skyview(self,coord,i=0,tofile=None,title=None,zoom_size=4*u.deg):
         """
         Invokes mapview.skyview to visualize the sky map around a given
-        coordinate in spherical view.
+        coordinate in spherical view. The visualization is made in the equatorial
+        coordinate system, using the input coordinate as center of the projection.
 
         Parameters
         ----------
@@ -1210,7 +1653,38 @@ class Fitsmap:
 
 # %% -------   BEAM OPERATIONS ----------------------------------------------
 
-    def spherical_beam(self,coordinate,bls,thetamax=10*u.deg):
+    @property
+    def beam_bls(self):
+        """
+        Gaussian beam window function. Computes the spherical transform of an axisimmetric gaussian beam.
+        For a sky of underlying power spectrum C(l) observed with beam of given FWHM,
+        the measured power spectrum will be C(l)_meas = C(l) B(l)^2 where B(l) is given by
+        gaussbeam(Fwhm,Lmax). The polarization beam is also provided
+        assuming a perfectly co-polarized beam (e.g., Challinor et al 2000, astro-ph/0008228)
+
+        Returns
+        -------
+        bls : beam window function, as a [lmax+1, 4] array:
+            * Temperature beam
+            * Grad/electric polarization beam
+            * Curl/magnetic polarization beam
+            * Temperature * grad beam
+
+        """
+
+        fwhm_rad = self.fwhm.to(u.rad)
+        if self.nmaps == 1:
+            fwhm_rad = fwhm_rad.value
+        else:
+            fwhm_rad = fwhm_rad[0].value
+        lmax = self.nside*3-1
+
+        bls = hp.gauss_beam(fwhm_rad,lmax,pol=True)
+
+        return bls
+
+
+    def spherical_beam(self,coordinate,bls,thetamax=10*u.deg,upscale_fact=4):
         """
         Returns a `Fitsmap` containing a sky image of a beam at a given
         position (coordinate).
@@ -1226,6 +1700,10 @@ class Fitsmap:
             is used to save time and storage by cutting the calculations
             above a given angular scale. Outside this radius, the beam map
             takes the value 0. The default is 10*u.deg.
+        upscale_fact: int
+            Upscaling factor used to refine the beam. Beam is generated
+            at resolution nside2 = self.nside * upscale_fact.
+            The default is 4.
 
         Returns
         -------
@@ -1241,7 +1719,7 @@ class Fitsmap:
             nest = True
 
         v1       = coord2vec(coordinate)
-        nside2   = 4*self.nside
+        nside2   = upscale_fact*self.nside
         npix2    = hp.nside2npix(nside2)
         beam_map = np.zeros(npix2)
 

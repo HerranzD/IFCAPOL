@@ -22,7 +22,7 @@ overwrite_existing   = False        # if True, the detect_sources routine runs
 coadded_dir = survey.data_dir+'coadd_signal_maps/'
 noise_dir   = survey.data_dir+'noise/'
 radiops_dir = survey.data_dir+'foregrounds/radio_sources/'
-total_dir   = survey.map_dir+'total_maps/'
+total_dir   = survey.data_dir+'total_maps/'
 
 LB_channels = list(survey.IMO.keys())
 
