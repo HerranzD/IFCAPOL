@@ -27,43 +27,43 @@ from   scipy.stats   import sigmaclip
 """
 
 def xy_arrays(size,center=None):
-    
+
     if center is None:
         x0 = y0 = size // 2
     else:
         x0 = center[0]
         y0 = center[1]
-    
+
     y = np.arange(0,size,1,float)
     x = y[:,np.newaxis]
-    
+
     x = x-x0
     y = y-y0
-    
+
     return x,y
 
 def distance_map(size,center=None,units=None):
-    
+
     x,y = xy_arrays(size,center=center)
-    r   = np.sqrt(x**2+y**2)   
+    r   = np.sqrt(x**2+y**2)
     if units is not None:
         r = r*units
-    
+
     return r
 
 def angle_map(size,center=None,deg=False,phase_rad=None):
-    
+
     x,y = xy_arrays(size,center=center)
     phi = np.arctan2(x,y)
-    
+
     if phase_rad is not None:
         phi += phase_rad
-    
+
     if deg:
         phi = phi*(u.rad.to(u.deg))
-        
+
     return phi
-    
+
 
 ### ------------------------------------------------------------------
 ###    STATISTICS IN RINGS AND CIRCLES
@@ -140,7 +140,7 @@ def ring_count(imagen,r1,r2,centro=None,clip=None):
 
 def count_in_circle(imagen,r,centro=None):
     labels = ring_mask(imagen.shape[0],0,r,center=centro)
-    return nd.sum(np.zeros(imagen.shape),labels,1)
+    return nd.sum(np.ones(imagen.shape),labels,1)
 
 def median_in_circle(imagen,r,centro=None):
     labels = ring_mask(imagen.shape[0],0,r,center=centro)
