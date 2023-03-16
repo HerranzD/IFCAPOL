@@ -257,6 +257,7 @@ def blind_survey(sky_map,fwhm,fname,threshold=3.0,verbose=False):
 def non_blind_survey(sky_map,blind_survey_fname,
                      xclean     = 2.0,
                      clean_mode = 'after',
+                     snrcut     = 3.5,
                      verbose    = False):
     """
     Runs a non-blind polarization detection/estimation pipeline on a
@@ -279,6 +280,9 @@ def non_blind_survey(sky_map,blind_survey_fname,
         is performed before the non-blind analysis. If 'after', the cleaning
         is performed after the non-blind analysis, using the new signal-to-noise
         ratio as reference. The default is 'after'.
+    snr_cut : float, optional
+        The signal to noise ratio (SNR) in intensity at which to cut the
+        catalogue, that is, the effective sigma detection threshold.
     verbose : bool, optional
         If True, some basic info is written on screen during runtime.
         The default is False.
@@ -331,6 +335,10 @@ def non_blind_survey(sky_map,blind_survey_fname,
         out_tabl   = temp.copy()
 
     fname    = blind_survey_fname.replace('.fits','_{0}_cleaned.fits'.format(clean_mode))
+
+    ttotal   = out_tabl.copy()
+    out_tabl = ttotal[ttotal['I SNR']>=snrcut]
+
     out_tabl.write(fname,overwrite=True)
 
     return out_tabl

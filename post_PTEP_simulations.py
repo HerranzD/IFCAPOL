@@ -303,7 +303,7 @@ def create_point_source_catalogues():
 
 # %% --- RUNNING SOURCE DETECTION ON A NERCS SIMULATION:
 
-def detect_sources(sim_number,chan_name):
+def detect_sources(sim_number,chan_name,snrcut=3.5):
     """
     Runs the IFCAPOL source detection algorithm on an individual LiteBIRD
     PTEP simulation in Cori at NERSC. The simulation is defined by a
@@ -351,7 +351,9 @@ def detect_sources(sim_number,chan_name):
             maps       = post_PTEP_simulated_maps(sim_number,chan_name)
             simulation = maps['TOTAL']
 
-        s           = pol.Source.from_coordinate(simulation,SkyCoord(0,0,frame='icrs',unit=u.deg))
+        s           = pol.Source.from_coordinate(simulation,
+                                                 SkyCoord(0,0,frame='icrs',
+                                                          unit=u.deg))
         fwhm        = s.fwhm
         catal_fname = detected_catalogue_name(sim_number,chan_name)
 
