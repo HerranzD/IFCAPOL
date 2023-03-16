@@ -125,7 +125,7 @@ def arc_min(d):
 def d2pix(d,patch):
     return (d/patch.pixsize).si.value
 
-def stats_central(patch,fwhm,clip=None,verbose=False):
+def stats_central(patch,fwhm,clip=None,verbose=False,toplot=False):
 
     """
     Performs basic statistics around the center of a given patch of the sky.
@@ -151,6 +151,9 @@ def stats_central(patch,fwhm,clip=None,verbose=False):
 
     verbose: bool
         If True, some control messages are written on screen
+
+    toplot: bool, optional
+        If True, makes a plot showing the rings used for statistcal analysis
 
 
     Returns
@@ -181,6 +184,21 @@ def stats_central(patch,fwhm,clip=None,verbose=False):
 
     st1          = patch.stats_in_rings(rmin_central,rmax_central,clip=clip)
     st2          = patch.stats_in_rings(rmin_stats,rmax_stats,clip=clip)
+
+    if toplot:
+
+        r0 = (rmin_central/patch.pixsize).si.value
+        r1 = (rmin_stats/patch.pixsize).si.value
+        r2 = (rmax_stats/patch.pixsize).si.value
+        ll = patch.size[0]//2
+        fig,ax = plt.subplots(1)
+        ax.imshow(patch.datos)
+        circle0 = plt.Circle((ll,ll),r0,color='green',alpha=0.2)
+        circle1 = plt.Circle((ll,ll),r1,color='red',alpha=0.2)
+        circle2 = plt.Circle((ll,ll),r2,color='yellow',alpha=0.1)
+        ax.add_patch(circle0)
+        ax.add_patch(circle1)
+        ax.add_patch(circle2)
 
     return {'MIN'   :st1['min_inside']-st2['mean'],
             'MAX'   :st1['max_inside']-st2['mean'],
