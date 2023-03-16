@@ -365,7 +365,8 @@ def detect_sources(sim_number,chan_name,snrcut=3.5):
         nonblind    = non_blind_survey(simulation,
                                        catal_fname,
                                        clean_mode = catalogue_clean_mode,
-                                       verbose=False)
+                                       snrcut     = snrcut,
+                                       verbose    = False)
 
         return {'overlapping':blind,
                 'cleaned':nonblind}
