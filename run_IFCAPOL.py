@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri May 20 13:40:47 2022
+Script for calling PTEP_simulations.detect_sources from command line
 
 @author: herranz
 """
