@@ -32,7 +32,7 @@ from mapview import skyview
 
 # %% ------- Example files, used for testing: --------------------------------
 
-testfile  = '/Users/herranz/Trabajo/Planck/Data/PLA/LFI_SkyMap_030-BPassCorrected_0256_R2.01_full.fits'
+testfile  = '/Users/herranz/Trabajo/Planck/Data/PLA/PR4/LFI_SkyMap_030-BPassCorrected-field-IQU_1024_R3.00_full.fits'
 testfile2 = '/Users/herranz/Dropbox/test.fits'
 testfile3 = '/Users/herranz/Dropbox/testmask.fits'
 Planck_masks_file = '/Users/herranz/Trabajo/Planck/Non_Thermal_Catalogue/Data/Planck_masks/HFI_Mask_GalPlane-apo0_2048_R2.00.fits'
