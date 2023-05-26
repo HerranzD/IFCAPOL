@@ -357,7 +357,9 @@ def detect_sources(sim_number,chan_name):
             maps       = PTEP_simulated_maps(sim_number,chan_name,tofile=fname)
             simulation = maps['TOTAL']
 
-        s           = pol.Source.from_coordinate(simulation,SkyCoord(0,0,frame='icrs',unit=u.deg))
+        s           = pol.Source.from_coordinate(simulation,
+                                                 SkyCoord(0,0,frame='icrs',
+                                                          unit=u.deg))
         fwhm        = s.fwhm
         catal_fname = detected_catalogue_name(sim_number,chan_name)
 
