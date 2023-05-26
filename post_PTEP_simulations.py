@@ -15,7 +15,7 @@ from astropy.table       import Table
 # %% --- DEFINITIONS
 
 catalogue_clean_mode = 'after'      # clean the repetitions after repatching
-overwrite_existing   = False        # if True, the detect_sources routine runs
+overwrite_existing   = True        # if True, the detect_sources routine runs
                                     # even if the final catalogue exists from some
                                     # previous run of the code.
 
