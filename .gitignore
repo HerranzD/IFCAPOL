@@ -4,5 +4,18 @@
 # Ignora checkpoints de ipython notebooks
 .ipynb_checkpoints
 
+# Ignorate a ti mismo 
+.gitignor 
+
 # Ignora pycache
 __pycache__
+
+# Ignora programas auxiliares que no conciernen al proyecto externo
+update_personal_code.py
+
+# Ignora programas intermedios que no tienen utilidad fuera del equipo local
+PTEP_spurious.py
+non_matched_local.py
+
+# Ignora archivos temporales
+temp.jpg
