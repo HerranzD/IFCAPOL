@@ -51,15 +51,24 @@ else:
 
 # %% --- LITEBIRD IMO
 
-IMO = np.load(src_dir+'instrument_LB_IMOv1.npy', allow_pickle=True).item()
+IMo_version = 'PTEP'
 
-for k in IMO.keys():    # add physical units to the IMO dictionary.
-                        # Beams will be asumed to be FWHM values.
+if IMo_version == 'PTEP':
 
-    IMO[k]['freq']      = IMO[k]['freq']*u.GHz
-    IMO[k]['freq_band'] = IMO[k]['freq_band']*u.GHz
-    IMO[k]['beam']      = IMO[k]['beam']*u.arcmin
-    IMO[k]['P_sens']    = IMO[k]['P_sens']*uKcmb*u.arcmin
+    IMO = np.load(src_dir+'instrument_LB_IMOv1.npy', allow_pickle=True).item()
+
+    for k in IMO.keys():    # add physical units to the IMO dictionary.
+                            # Beams will be asumed to be FWHM values.
+
+        IMO[k]['freq']      = IMO[k]['freq']*u.GHz
+        IMO[k]['freq_band'] = IMO[k]['freq_band']*u.GHz
+        IMO[k]['beam']      = IMO[k]['beam']*u.arcmin
+        IMO[k]['P_sens']    = IMO[k]['P_sens']*uKcmb*u.arcmin
+
+else:
+
+    from LiteBIRD_IMo import read_IMo
+    IMO = read_IMo(IMo_version)
 
 # %% --- BASIC MAP INPUT
 
