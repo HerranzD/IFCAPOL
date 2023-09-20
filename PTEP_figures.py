@@ -34,7 +34,7 @@ def plot_catalogue(mapa,catalogue,snr_cut=5.0,xsize=2400,title=None,tofile=None)
     x = cut_catalogue['GLON [deg]']
     y = cut_catalogue['GLAT [deg]']
 #    c = 1.0-cut_catalogue['SIM_NUMBER']*0.01
-    hp.projscatter(x, y, lonlat=True, coord='G',c='red',marker='o',alpha=0.1)
+    hp.projscatter(x, y, lonlat=True, coord='G',c='red',marker='o',alpha=0.5)
     hp.graticule()
 
     if title is not None:
