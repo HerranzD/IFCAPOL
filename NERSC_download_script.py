@@ -45,6 +45,9 @@ def fname_sim(instr,chan,fknee,typ,nsim):
     return fname
 
 def list_all_cases(nsim,typ,fknee):
+    """
+    Returns a list with all the files to be downloaded
+    """
     l = []
     for inst in instr_list:
         for chan in chans_list[inst]:
@@ -54,6 +57,7 @@ def list_all_cases(nsim,typ,fknee):
 
 # write a file with a get command for each element in the list
 def write_get_file(l):
+ 
     with open('get_files.txt','w') as f:
         for fname in l:
             f.write('get '+fname+'\n')
