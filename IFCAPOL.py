@@ -137,9 +137,39 @@ def get_patches(sky_map,coord):
 # %%  PATCH OPERATIONS
 
 def arc_min(d):
+    """
+    Converts an angular Quantity into its value in arcmin
+
+    Parameters
+    ----------
+    d : astropy.units.quantity.Quantity
+        Angle.
+
+    Returns
+    -------
+    float
+        The value of the angle in arcmin.
+
+    """
     return d.to(u.arcmin).value
 
 def d2pix(d,patch):
+    """
+    Express an angular Quantity as a number of pixels in an IFCAPOL flat patch
+
+    Parameters
+    ----------
+    d : astropy.units.quantity.Quantity
+        Angle.
+    patch : Imagen object (see the Imagen class in sky_images.py)
+        Imagen object containing the patch
+
+    Returns
+    -------
+    TYPE
+        The angle expressed as a number of pixels.
+
+    """
     return (d/patch.pixsize).si.value
 
 def stats_central(patch,fwhm,clip=None,verbose=False,toplot=False):
