@@ -69,7 +69,7 @@ def coadd_name(sim_number,chan_name):
         in the NERSC LiteBIRD CFS system.
 
     """
-    simstr = '{0:02d}'.format(sim_number)
+    simstr = '{0:04d}'.format(sim_number)
     simdir = coadded_dir+simstr+'/'
 
     y = [x for x in os.listdir(simdir) if chan_name in x]
@@ -127,6 +127,31 @@ def total_name(sim_number,chan_name):
     if not os.path.exists(totdir):
         os.makedirs(totdir)
     fname = totdir+chan_name+'_total_sim_'+simstr+'_PTEP_20200915_compsep.fits'
+    return fname
+
+def run0_name(chan_name):
+    """
+    Returns the names of individual run0 sim number 0000 files. For testing
+    purposes only.
+
+    Parameters
+    ----------
+    chan_name : str
+        One of the LiteBird (IMo v2) channels
+
+    Returns
+    -------
+    fname : str
+        The file name of the total (CMB+diffuse foregrounds+noise+radiops)
+        simulation in my local system
+
+    """
+
+    fname  = survey.data_dir+'Run0/Sims_0000/'
+    fname += 'LB_{0}FT_'.format(chan_name[0])
+    fname += chan_name
+    fname += '_binned_cmb_fg_wn_1f_100mHz_0000.fits'
+
     return fname
 
 def mock_radio_source_catalogue_name(chan_name):
