@@ -53,6 +53,23 @@ sigmaclipping    = 2.5             # Sigma clipping for rms estimation in rings
 # %%  SKY PATCHING
 
 def define_npix(nside):
+    """
+    The finbes the number of pixels of a patch 14.658 x 14.658 degrees wide,
+    depending on the nside parameter of the HEALPix parent map. This number
+    of pixels is set so that the flat patch pixel area is roughly equal to
+    the HEALPix pixel size.
+
+    Parameters
+    ----------
+    nside : int
+        HEALpix nside parameter.
+
+    Returns
+    -------
+    int
+        Number of pixels (per axis) of the square projected patch.
+
+    """
     return int(64*hp.nside2resol(256)/hp.nside2resol(nside))
 
 def get_patches(sky_map,coord):
