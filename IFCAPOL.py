@@ -718,6 +718,25 @@ def get_IQUP(sky_map,
 class Photometry:
 
     def __init__(self,value,error,significance,outer):
+        """
+        Creates a Photometry instance
+
+        Parameters
+        ----------
+        value : astropy Quantity
+            A photometric value.
+        error : astropy Quantity
+            Associated error.
+        significance : float
+            Significance or signal to noise ratio.
+        outer : Photometry
+            Outer instance to interface with the parent Souce class.
+
+        Returns
+        -------
+        Photometry.
+
+        """
         self.value        = value
         self.error        = error
         self.significance = significance
