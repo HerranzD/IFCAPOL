@@ -27,7 +27,7 @@ The project is open for collaboration within the LiteBIRD community. Please feel
 
 ## Authors and acknowledgment
 
-Most of this code has been developed by Diego Herranz (DH). DH wishes to acknowledge the Spanish Ministry of Science, Innovation and Universities  for partial support under the project  PGC2018-101814-B-IOO. 
+Most of this code has been developed by Diego Herranz (DH), with contributions by Marcos López-Caniego (MLC) and Giuseppe Puglisi (GP). DH wishes to acknowledge the Spanish Ministry of Science, Innovation and Universities  for partial support under the project  PGC2018-101814-B-IOO. 
 
 ## License
 
