@@ -7,10 +7,12 @@ As a part of the LiteBIRD Foregrounds JSG, this project is intended to provide a
 
 ## Documentation
 
-Documentation will be placed under the doc folder
+Documentation will be placed under the doc folder.
 
 
 ## Usage
+
+You can find a working example of the usage of this pipeline in the IFCAPOL_catalogue_example.ipynb notebook. Link [here](https://gitlab.com/HerranzD/ifcapol-litebird/-/blob/main/IFCAPOL_catalogues_example.ipynb?ref_type=heads).
 
 
 ## Support
