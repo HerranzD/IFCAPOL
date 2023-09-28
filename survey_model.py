@@ -51,7 +51,7 @@ else:
 
 # %% --- LITEBIRD IMO
 
-IMo_version = 'PTEP'
+IMo_version = 'V2'
 
 if IMo_version == 'PTEP':
 

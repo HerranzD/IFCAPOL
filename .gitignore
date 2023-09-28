@@ -16,6 +16,7 @@ update_personal_code.py
 # Ignora programas intermedios que no tienen utilidad fuera del equipo local
 PTEP_spurious.py
 non_matched_local.py
+NERSC_download_script.py
 
 # Ignora archivos temporales
 temp.jpg
