@@ -1045,6 +1045,10 @@ class Source:
 
     @property
     def I(self):
+        """
+        Returns the estimated intensity of the
+        source, using the matched filter estimation on the I map.
+        """
         return Photometry(self.diccio['I'],
                           self.diccio['I err'],
                           0,
@@ -1052,6 +1056,10 @@ class Source:
 
     @property
     def Q(self):
+        """
+        Returns the estimated Q Stokes parameter of the
+        source, using the matched filter estimation on the Q map.
+        """
         return Photometry(self.diccio['Q'],
                           self.diccio['Q err'],
                           0,
@@ -1059,6 +1067,10 @@ class Source:
 
     @property
     def U(self):
+        """
+        Returns the estimated U Stokes parameter of the
+        source, using the matched filter estimation on the U map.
+        """
         return Photometry(self.diccio['U'],
                           self.diccio['U err'],
                           0,
@@ -1066,6 +1078,10 @@ class Source:
 
     @property
     def P(self):
+        """
+        Returns the estimated polarization of the
+        source, using the Filtered Fusion (FF) estimation method.
+        """
         return Photometry(self.diccio['debiased P'],
                           self.diccio['P err'],
                           self.diccio['P significance level'],
@@ -1073,6 +1089,10 @@ class Source:
 
     @property
     def polfrac(self):
+        """
+        Returns the estimated polarization fraction of the
+        source, using the Filtered Fusion (FF) estimation method.
+        """
         return Photometry(self.diccio['pol frac [%]'],
                           self.diccio['pol frac err [%]'],
                           self.diccio['P significance level'],
@@ -1080,6 +1100,10 @@ class Source:
 
     @property
     def angle(self):
+        """
+        Returns the estimated polarization angle of the
+        source, using the matched filter estimation of Q and U.
+        """
         return Photometry(self.diccio['pol angle'],
                           self.diccio['pol angle err'],
                           0,
@@ -1088,6 +1112,10 @@ class Source:
 
     @property
     def Ifit(self):
+        """
+        Returns the intensity estimated by the Gaussian fitting
+        of the I map.
+        """
         return Photometry(self.diccio['Gaussian fit I'].amplitude,
                           self.diccio['Gaussian fit I'].residual.std(),
                           0,
@@ -1095,6 +1123,10 @@ class Source:
 
     @property
     def Qfit(self):
+        """
+        Returns the Q Stokes parameter estimated by the Gaussian fitting
+        of the Q map.
+        """
         return Photometry(self.diccio['Gaussian fit Q'].amplitude,
                           self.diccio['Gaussian fit Q'].residual.std(),
                           0,
@@ -1102,6 +1134,10 @@ class Source:
 
     @property
     def Ufit(self):
+        """
+        Returns the U Stokes parameter estimated by the Gaussian fitting
+        of the U map.
+        """
         return Photometry(self.diccio['Gaussian fit U'].amplitude,
                           self.diccio['Gaussian fit U'].residual.std(),
                           0,
@@ -1109,6 +1145,10 @@ class Source:
 
     @property
     def Pfit(self):
+        """
+        Returns the polarization estimated by the Gaussian fitting
+        of the Q and U maps.
+        """
         return Photometry(self.diccio['Gaussian fit P'].amplitude,
                           self.diccio['Gaussian fit P'].residual.std(),
                           0,
@@ -1116,6 +1156,10 @@ class Source:
 
     @property
     def polfrac_fit(self):
+        """
+        Returns the polarization fraction estimated by the Gaussian fitting
+        of the Q and U maps.
+        """
         return Photometry(100*self.Pfit.value/self.Ifit.value,
                           100*polfrac_error(self.Ifit.value,
                                             self.Pfit.value,
@@ -1126,6 +1170,11 @@ class Source:
 
     @property
     def angle_fit(self):
+        """
+        Returns the polarization angle estimated by the Gaussian fitting
+        of the Q and U maps.
+        """
+
         return Photometry(self.diccio['pol angle fit'],
                           pol_angle_error(self.Qfit.value,
                                           self.Ufit.value,
@@ -1139,6 +1188,23 @@ class Source:
 
     @classmethod
     def from_coordinate(self,sky_map,coordinate):
+        """
+        Returns a Source object from the sky_map, around a given sky coordinate
+
+        Parameters
+        ----------
+        sky_map : Fitsmap object (see the Fitsmap class in fits_maps.py)
+            The input LiteBIRD image, as a Fitsmap object.
+
+        coordinate : astropy.SkyCoord
+            The coordinate of the source.
+
+        Returns
+        -------
+        A Source object.
+
+        """
+
         d = get_IQUP(sky_map,coordinate)
         d['Parent map FWHM'] = sky_map.fwhm[0].to(u.arcmin)
         d['Creation time']   = datetime.datetime.now()
@@ -1146,11 +1212,42 @@ class Source:
 
     @classmethod
     def from_object_name(self,sky_map,name):
+        """
+        Returns a Source object from the sky_map, around a source with
+        a known name.
+
+        Parameters
+        ----------
+        sky_map : Fitsmap object (see the Fitsmap class in fits_maps.py)
+            The input LiteBIRD image, as a Fitsmap object.
+
+        name : string
+            The name of the source.
+
+        Returns
+        -------
+        A Source object.
+
+        """
+
         coordinate = SkyCoord.from_name(name)
         return self.from_coordinate(sky_map,coordinate)
 
     @classmethod
     def from_tgz(self,fname):
+        """
+        Reads a Source object from a .tgz file.
+
+        Parameters
+        ----------
+        fname : string
+            The name of the input file.
+
+        Returns
+        -------
+        A Source object.
+
+        """
 
         tar = tarfile.open(fname, 'r')
         tar.extractall()
@@ -1177,6 +1274,19 @@ class Source:
         return Source(new_dict)
 
     def write_tgz(self,fname):
+        """
+        Writes the Source object to a .tgz file.
+
+        Parameters
+        ----------
+        fname : string
+            The name of the output file.
+
+        Returns
+        -------
+        None.
+
+        """
 
         def make_tarfile(output_filename, source_dir):
             with tarfile.open(output_filename, "w:gz") as tar:
