@@ -493,6 +493,22 @@ def peak_fit(patch,
 # %%  POLARIMETRIC ESTIMATOR
 
 def significance_level(image,value):
+    """
+    Returns the significance level of a given value in a given image
+    
+    Parameters
+    ----------
+    image : Imagen object (see the Imagen class in sky_images.py)
+        An input patch (either I, Q or U).
+    value : float
+        Value to be tested.
+
+    Returns
+    -------
+    float
+        Significance level of the value in the image.
+
+    """
 
     n = image.datos.count()
     x = image.datos[image.datos.mask==False].flatten()
@@ -505,21 +521,105 @@ def significance_level(image,value):
     return sig
 
 def pol_angle(Q,U):
+    """
+    Returns the polarization angle phi, given the Stokes parameters Q,U.
+
+    Parameters
+    ----------
+    Q : float
+        Stokes Q.
+    U : float
+        Stokes U.   
+
+    Returns
+    -------
+    astropy quantity
+        The polarization angle phi in degrees
+
+    """
     phi = 0.5*np.arctan2(-U,Q)*u.rad
     return phi.to(u.deg)
 
 def pol_angle_error(Q,U,sQ,sU):
+    """
+    Returns the error of the polarization angle phi, given the Stokes
+    parameters Q,U and their associated errors.
+
+    Parameters
+    ----------
+    Q : float
+        Stokes Q.   
+    U : float
+        Stokes U.
+    sQ : float
+        Error of Stokes Q.
+    sU : float
+        Error of Stokes U.
+
+    Returns
+    -------
+    astropy quantity
+        The error of the polarization angle phi in degrees
+
+    """
     nume  = Q*Q*sU*sU + U*U*sQ*sQ
     deno  = 4*(Q*Q+U*U)**2
     sigma = np.sqrt(nume/deno)*u.rad
     return sigma.to(u.deg)
 
 def polfrac_error(I,P,sI,sP):
+    """
+    Returns the error of the polarization fraction P, given the Stokes
+    parameters I,Q,U and their associated errors.
+
+    Parameters
+    ----------
+    I : float
+        Stokes I.
+    P : float
+        Polarization P.
+    sI : float
+        Error of Stokes I.
+    sP : float
+        Error of polarization P.
+
+    Returns
+    -------
+    float
+        The error of the polarization fraction P.
+
+    """
+
     nume = I*I*sP*sP + P*P*sI*sI
     deno = np.power(I,4)
     return np.sqrt(np.divide(nume,deno))
 
 def P_from_dict(dicc):
+    """
+    Returns a dictionary containing the polarization parameters estimated
+    from the Stokes parameters I,Q,U. The Stokes parameters are assumed to
+    be contained in the input dictionary.
+
+    Parameters
+    ----------
+    dicc : dictionary
+        Input dictionary containing the Stokes parameters I,Q,U and their associated errors,
+        plus the Gaussian fits to the Stokes parameters. The dictionary must also contain
+        the matched filtered Stokes parameters and the matched filtered polarization P map.
+        This dictionary can be obtained from the output of the get_IQUP function.
+
+    Returns
+    -------
+    A dictionary containing:
+        - Polarization P and its error.
+        - Debiased polarization P and its error.
+        - Polarization significance level.
+        - Polarization fraction and its error.
+        - Polarization angle and its error.
+        - Polarization angle from the Gaussian fit to Q and U.
+        - Polarization angle error from the Gaussian fit to Q and U.
+
+    """
 
     Q    = dicc['Q']
     U    = dicc['U']
@@ -732,9 +832,16 @@ class Photometry:
         outer : Photometry
             Outer instance to interface with the parent Souce class.
 
-        Returns
-        -------
-        Photometry.
+        Methods summary
+        ---------------
+        copy()
+            Makes a copy of the Photometry instance.
+
+        snr
+            Returns the signal to noise ratio of the Photometry object.
+
+        Jy
+            Returns a Photometry instance converted to jansky units.
 
         """
         self.value        = value
