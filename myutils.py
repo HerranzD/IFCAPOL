@@ -237,6 +237,34 @@ def confidence_limits(array,cl):
 # %%    LEAST SQUARES FITTING
 
 def lsq_fit(func,x,y,sigma=None,p0=None):
+    """
+    Least squares fit of a function to data. It uses the scipy.optimize
+    curve_fit function.
+
+    Parameters
+    ----------
+    func : function
+        The function to be fitted.
+    x : numpy array
+        The x values of the data.
+    y : numpy array
+        The y values of the data.
+    sigma : numpy array, optional
+        The uncertainties of the data. The default is None.
+    p0 : list, optional
+        Initial guess for the parameters of the function. The default is None.
+
+    Returns
+    -------
+    popt : list
+        The best fit parameters.
+    perr : list
+        The uncertainties of the best fit parameters.
+    pcov : numpy array
+        The covariance matrix of the best fit parameters.
+
+    """
+
     if sigma is not None:
         popt, pcov = curve_fit(func,x,y,sigma=sigma,maxfev=20000)
         if p0 is not None:
@@ -249,6 +277,29 @@ def lsq_fit(func,x,y,sigma=None,p0=None):
     return popt,perr,pcov
 
 def asymm_chi2(pars,func,x,y,l,u):
+    """
+    Chi2 function for asymmetric errors.
+
+    Parameters
+    ----------
+    pars : list
+        Parameters of the function.
+    func : function
+        The function to be fitted.
+    x : numpy array
+        The x values of the data.
+    y : numpy array
+        The y values of the data.
+    l : numpy array
+        The lower uncertainties of the data.
+    u : numpy array
+        The upper uncertainties of the data.
+
+    Returns
+    -------
+    float
+        The chi2 value.
+    """
 
     z  = func(x,*pars)
     sl = y-l
@@ -260,12 +311,69 @@ def asymm_chi2(pars,func,x,y,l,u):
     return d.sum()
 
 def asymm_lsq_fit(func,x,y,l,u,p0=None):
+    """
+    Least squares fit of a function to data with asymmetric errors. It uses
+    the scipy.optimize minimize function.
+
+    Parameters
+    ----------
+    func : function
+        The function to be fitted.
+    x : numpy array
+        The x values of the data.
+    y : numpy array
+        The y values of the data.
+    l : numpy array
+        The lower uncertainties of the data.
+    u : numpy array
+        The upper uncertainties of the data.
+    p0 : list, optional
+        Initial guess for the parameters of the function. The default is None.
+
+    Returns
+    -------
+    res : scipy.optimize.OptimizeResult
+        The result of the minimization.
+
+    """
 
     res = minimize(asymm_chi2,p0,args=(func,x,y,l,u))
 
     return res
 
 def plot_confidence_band(func,x,popt,pcov,nstd=1,alpha=0.15,noplot=False):
+    
+    """
+        Plots the confidence band of a fit. It uses the scipy.optimize
+        curve_fit function.
+
+        Parameters
+        ----------
+        func : function
+            The function to be fitted.
+        x : numpy array
+            The x values of the data.
+        popt : list
+            The best fit parameters.
+        pcov : numpy array
+            The covariance matrix of the best fit parameters.
+        nstd : float, optional
+            The number of sigmas to be plotted. The default is 1.
+        alpha : float, optional
+            The transparency of the band. The default is 0.15.
+        noplot : bool, optional
+            If True, it does not plot anything. The default is False.
+
+        Returns
+        -------
+        fit_dw : numpy array
+            The lower confidence band.
+        fit : numpy array
+            The best fit.
+        fit_up : numpy array
+            The upper confidence band.
+
+     """
 
     if noplot:
         x = np.asarray([x])
@@ -307,6 +415,23 @@ def plot_confidence_band(func,x,popt,pcov,nstd=1,alpha=0.15,noplot=False):
 # %%     RANDOM NUMBER GENERATORS
 
 def random_samples_rejection(fdata,nsamples):
+    """
+    Generates NSAMPLES random samples drawn, using the  rejection method, 
+    from the (differential) pdf stored in the histogram FDATA
+
+    Parameters
+    ----------
+    fdata : numpy array
+        The histogram data.
+    nsamples : int
+        The number of samples to be generated.
+
+    Returns
+    -------
+    r : numpy array
+        The random samples.
+
+    """  
 
     nmax = np.int64(100*nsamples)
     x    = fdata[0]
@@ -330,6 +455,23 @@ def random_samples_rejection(fdata,nsamples):
 
 
 def random_from_cdf(cdf,nsamples):
+    """
+    Generates NSAMPLES random samples drawn, using the inverse transform
+    sampling method, from a cumulative distribution function CDF.
+
+    Parameters
+    ----------
+    cdf : function
+        The cumulative distribution function.
+    nsamples : int
+        The number of samples to be generated.
+
+    Returns
+    -------
+    y : numpy array
+        The random samples.
+
+    """
     x = np.random.rand(nsamples)
     y = inversefunc(cdf,x)
     return y
@@ -404,8 +546,23 @@ def random_from_discrete_distribution(histdata,nsamples,
         rvar = np.reshape(rvar,nsamples)
 
     return rvar
-
+                    
 def random_sky_coord(cshape=None):
+    """
+    Generates a random sky coordinate.      
+
+    Parameters
+    ----------
+    cshape : tuple, optional
+        The shape of the output array. The default is None.
+
+    Returns
+    -------
+    SkyCoord
+        The random sky coordinate.
+
+    """
+
     if cshape is not None:
         phi   = 2*np.pi*np.random.rand(cshape)
         theta = np.arccos(2*np.random.rand(cshape)-1.0)
@@ -417,7 +574,25 @@ def random_sky_coord(cshape=None):
     return SkyCoord(ra,dec,frame='icrs',unit=u.rad)
 
 def color_noise_powlaw(size,rms,index):
+    """
+    Generates a random noise field with a power law power spectrum.
 
+    Parameters
+    ----------
+    size : int
+        The size of the output array.
+    rms : float
+        The rms of the noise.
+    index : float
+        The power law index.
+
+    Returns
+    -------
+    noise : numpy array
+        The random noise field.
+
+    """
+    
     x     = np.arange(0, size, 1, float)
     y     = x[:,np.newaxis]
     x0    = y0 = size//2
@@ -441,6 +616,23 @@ def color_noise_powlaw(size,rms,index):
 # %%     CHI2 STATISTICS:
 
 def vector_chi2(vect,covmat):
+    """
+    Calculates the chi2 value of a vector with respect to a covariance matrix.
+
+    Parameters
+    ----------
+    vect : numpy array
+        The vector.
+    covmat : numpy array
+        The covariance matrix.
+
+    Returns
+    -------
+    float
+        The chi2 value.
+
+    """
+
     cinv = np.matrix(np.linalg.inv(covmat))
     x    = np.matrix(vect)
     return x*cinv*x.T
@@ -449,10 +641,28 @@ def vector_chi2(vect,covmat):
 # %%     DISTANCE BETWEEN DISTRIBUTIONS:
 
 def normal_Mahalanobis(mu1,cov1,mu2,cov2):
+    """
+    Calculates the Mahalanobis distance between two multi-variate
+    normal distributions with mean vectors MU1, MU2 and covariance
+    matrices COV1 and COV2
 
-    # Calculates the Mahalanobis distance between two multi-variate
-    #   normal distributions with mean vectors MU1, MU2 and covariance
-    #   matrices COV1 and COV2
+    Parameters
+    ----------
+    mu1 : numpy array
+        The mean vector of the first distribution.
+    cov1 : numpy array
+        The covariance matrix of the first distribution.
+    mu2 : numpy array
+        The mean vector of the second distribution.
+    cov2 : numpy array
+        The covariance matrix of the second distribution.
+
+    Returns
+    -------
+    float
+        The Mahalanobis distance.
+
+    """ 
 
     x      = np.matrix(mu1-mu2)
     Sigma  = np.matrix(cov1+cov2)
@@ -466,20 +676,66 @@ def normal_Mahalanobis(mu1,cov1,mu2,cov2):
 # %%     ARITHMETICS
 
 def truncate_number(x,ndec):
+    """
+    Truncates a number to a given number of decimal places.
+
+    Parameters
+    ----------
+    x : float
+        The number to be truncated.
+    ndec : int
+        The number of decimal places.
+
+    Returns
+    -------
+    float
+        The truncated number.
+
+    """
+
     from math import trunc
     f = 10**ndec
     return trunc(f*x)/f
 
 def quantity_append(qt1,qt2):
+    """
+    Appends two astropy quantities.
+    
+    Parameters
+    ----------
+    qt1 : astropy quantity
+        The first quantity.
+    qt2 : astropy quantity  
+        The second quantity.
+
+    Returns
+    -------
+    astropy quantity
+        The appended quantity.
+
+    """
     return u.Quantity([x for x in qt1]+[y for y in qt2])
 
 def msum(iterable):
-    "Full precision summation using multiple floats for intermediate values"
-    # Rounded x+y stored in hi with the round-off stored in lo.  Together
-    # hi+lo are exactly equal to x+y.  The inner loop applies hi/lo summation
-    # to each partial so that the list of partial sums remains exact.
-    # Depends on IEEE-754 arithmetic guarantees.  See proof of correctness at:
-    # www-2.cs.cmu.edu/afs/cs/project/quake/public/papers/robust-arithmetic.ps
+    """
+    Full precision summation using multiple floats for intermediate values.
+    Rounded x+y stored in hi with the round-off stored in lo.  Together
+    hi+lo are exactly equal to x+y.  The inner loop applies hi/lo summation
+    to each partial so that the list of partial sums remains exact.
+    Depends on IEEE-754 arithmetic guarantees.  See proof of correctness at:
+    www-2.cs.cmu.edu/afs/cs/project/quake/public/papers/robust-arithmetic.ps
+    
+    Parameters
+    ----------
+    iterable : list
+        The list of numbers to be summed.
+
+    Returns
+    -------
+    float
+        The sum of the numbers.
+
+    """
 
     partials = []               # sorted, non-overlapping partial sums
     for x in iterable:
@@ -500,10 +756,23 @@ def msum(iterable):
 from math import frexp
 
 def lsum(iterable):
-    "Full precision summation using long integers for intermediate values"
-    # Transform (exactly) a float to m * 2 ** e where m and e are integers.
-    # Adjust (tmant,texp) and (mant,exp) to make texp the common exponent.
-    # Given a common exponent, the mantissas can be summed directly.
+    """
+    Full precision summation using long integers for intermediate values.
+    Transforms each float into a (mantissa, exponent) pair, then adds
+    pairs with common exponents.  Because long integers have unlimited
+    precision, this routine does not suffer from round-off error.
+    
+    Parameters
+    ----------
+    iterable : list
+        The list of numbers to be summed.
+    
+    Returns
+    -------
+    float
+        The sum of the numbers.
+
+    """
 
     tmant, texp = np.long(0), 0
     for x in iterable:
@@ -521,11 +790,27 @@ from decimal import getcontext, Decimal, Inexact
 getcontext().traps[Inexact] = True
 
 def dsum(iterable):
-    "Full precision summation using Decimal objects for intermediate values"
-    # Transform (exactly) a float to m * 2 ** e where m and e are integers.
-    # Convert (mant, exp) to a Decimal and add to the cumulative sum.
-    # If the precision is too small for exact conversion and addition,
-    # then retry with a larger precision.
+
+    """
+    Full precision summation using Decimal objects for intermediate values.
+    Transforms each float x into a Decimal with value x, then adds the
+    decimals together.
+    Transform (exactly) a float to m * 2 ** e where m and e are integers.
+    Convert (mant, exp) to a Decimal and add to the cumulative sum.
+    If the precision is too small for exact conversion and addition,
+    then retry with a larger precision.  
+    
+    Parameters
+    ----------
+    iterable : list
+        The list of numbers to be summed.
+
+    Returns
+    -------
+    float
+        The sum of the numbers.
+
+    """
 
     total = Decimal(0)
     for x in iterable:
@@ -542,28 +827,106 @@ def dsum(iterable):
 from fractions import Fraction
 
 def frsum(iterable):
-    "Full precision summation using fractions for itermediate values"
+    """
+    Full precision summation using fractions for intermediate values.
+
+    Parameters
+    ----------
+    iterable : list
+        The list of numbers to be summed.
+
+    Returns
+    -------
+    float
+        The sum of the numbers.
+
+    """
+
     return float(sum(map(Fraction.from_float, iterable)))
 
 # %%    SKY COORDINATES
 
 def coords_append(coord1,coord2):
+    """
+    Appends two lists of astropy sky coordinates.
+
+    Parameters
+    ----------
+    coord1 : list of astropy SkyCoord
+        The first list of coordinates.
+    coord2 : list of astropy SkyCoord
+        The second list of coordinates.
+
+    Returns
+    -------
+    list of astropy SkyCoord
+        The appended coordinates.
+
+    """
     r = [v for v in coord1.icrs.ra]+[v for v in coord2.icrs.ra]
     d = [v for v in coord1.icrs.dec]+[v for v in coord2.icrs.dec]
     return SkyCoord(r,d,frame='icrs').flatten()
 
 def coord2glonglat(c):
+    """
+    Converts a sky coordinate to a pair of Galactic longitude and latitude values in degrees.
+
+    Parameters
+    ----------
+    c : astropy SkyCoord
+        The sky coordinate.
+
+    Returns
+    -------
+    lon : float
+        The Galactic longitude in degrees.
+    lat : float
+        The Galactic latitude in degrees.
+
+    """ 
     lat = c.galactic.b.deg
     lon = c.galactic.l.deg
     return lon,lat
 
 def coord2thetaphi(c):
+    """
+    Converts a sky coordinate to a pair of colatitude and Galactic longitude values in degrees.
+
+    Parameters
+    ----------
+    c : astropy SkyCoord
+        The sky coordinate.
+
+    Returns
+    -------
+    theta : float
+        The colatitude in degrees.
+    phi : float
+        The Galactic longitude in degrees.
+
+    """
     lon,lat = coord2glonglat(c)
     theta   = 90.0-lat
     phi     = lon
     return theta,phi
 
 def table2skycoord(tabla):
+    """
+    Converts an astropy Table that contains, among other things, a couple of columns with
+    sky coordinates to a list of astropy sky coordinates.  This routine tries to parse the
+    names of the columns to find the sky coordinates among a list of possible names. 
+
+    Parameters
+    ----------
+    tabla : astropy Table
+        The table.
+
+    Returns
+    -------
+    coords : list of astropy SkyCoord
+        The list of sky coordinates.
+
+    """
 
     ranames = ['RA','RAJ2000','RA_deg']
     denames = ['DEC','DEJ2000','DECJ2000','DEC_deg']
@@ -671,6 +1034,23 @@ def table2skycoord(tabla):
     return coords
 
 def read_image_coordinate(fname,timer=False):
+    """
+    Reads the coordinates of the center of a FITS image. It uses the WCS information
+    stored in the FITS header.
+
+    Parameters
+    ----------
+    fname : str
+        The name of the FITS file.
+    timer : bool, optional
+        If True, it prints the time it takes to read the coordinates. The default is False.
+
+    Returns
+    -------
+    c : astropy SkyCoord
+        The sky coordinate of the center of the image.
+
+    """
 
     t1        = time.time()
 
@@ -701,6 +1081,18 @@ def read_image_coordinate(fname,timer=False):
 
 
 def skycoord2file(coords,fname):
+    """
+    Writes a list of sky coordinates to a FITS file, using an astropoy QTable.  
+    It writes the coordinates in both ICRS and Galactic frames.
+
+    Parameters
+    ----------
+    coords : list of astropy SkyCoord
+        The list of sky coordinates.
+    fname : str
+        The name of the FITS file.
+
+    """
     t = QTable()
     t['RA']   = coords.icrs.ra
     t['DEC']  = coords.icrs.dec
@@ -709,7 +1101,30 @@ def skycoord2file(coords,fname):
     t.write(fname,overwrite=True)
 
 def coord2name(coords,frame=None,truncate=False):
+    """
+    Converts a list of sky coordinates to a list of names.  The names are
+    the Galactic or equatorial coordinates in degrees, with the format
+    XXX.XX+YY.YY or XXX.XX-YY.YY, where XXX.XX is the Galactic longitude
+    or the right ascension and YY.YY is the Galactic latitude or the
+    declination.  If TRUNCATE is True, the coordinates are truncated to
+    two decimal places.
 
+    Parameters
+    ----------
+    coords : list of astropy SkyCoord
+        The list of sky coordinates.
+    frame : str, optional
+        The coordinate system. It can be 'G' for Galactic or 'E' for equatorial.
+        The default is None.
+    truncate : bool, optional
+        If True, the coordinates are truncated to two decimal places. The default is False.
+
+    Returns
+    -------
+    names : numpy array
+        The list of names.
+
+    """
     names = []
     if frame.upper()[0] == 'G':
         coords = coords.galactic
@@ -743,6 +1158,28 @@ def coord2name(coords,frame=None,truncate=False):
     return np.array(names)
 
 def healpix2coord(nside,ipix,coordsys='G',nested=False):
+    """
+    Converts a HEALPix pixel to a sky coordinate.
+    
+    Parameters
+    ----------
+    nside : int
+        The HEALPix nside parameter.
+    ipix : int
+        The HEALPix pixel number.
+    coordsys : str, optional
+        The coordinate system. It can be 'G' for Galactic or 'E' for equatorial.
+        The default is 'G'.
+    nested : bool, optional
+        If True, the HEALPix pixelization is nested. The default is False.
+
+    Returns
+    -------
+    c : astropy SkyCoord
+        The sky coordinate.
+
+    """
+
     lon,lat = hp.pix2ang(nside,ipix,nest=nested,lonlat=True)
     if coordsys.upper()[0] == 'G':
         c = SkyCoord(lon,lat,unit=u.deg,frame='galactic')
@@ -751,6 +1188,28 @@ def healpix2coord(nside,ipix,coordsys='G',nested=False):
     return c
 
 def coord2healpix(nside,coord,coordsys='G',nested=False):
+    """
+    Converts a sky coordinate (or a list of sky coordinates) to 
+    a HEALPix pixel (or a list of them).
+
+    Parameters
+    ----------
+    nside : int
+        The HEALPix nside parameter.
+    coord : astropy SkyCoord or list of astropy SkyCoord
+        The sky coordinate.
+    coordsys : str, optional    
+        The coordinate system. It can be 'G' for Galactic or 'E' for equatorial.
+        The default is 'G'.
+    nested : bool, optional
+        If True, the HEALPix pixelization is nested. The default is False.
+
+    Returns
+    -------
+    ipix : int or numpy array
+        The HEALPix pixel number(s).
+
+    """
     if coordsys.upper()[0] == 'G':
         lon = coord.galactic.l.deg
         lat = coord.galactic.b.deg
@@ -761,6 +1220,23 @@ def coord2healpix(nside,coord,coordsys='G',nested=False):
     return ipix
 
 def coord2vec(coord,coordsys='G'):
+    """
+    Converts a sky coordinate to a HEALPix vector.
+
+    Parameters
+    ----------
+    coord : astropy SkyCoord
+        The sky coordinate.
+    coordsys : str, optional
+        The coordinate system. It can be 'G' for Galactic or 'E' for equatorial.
+        The default is 'G'.
+
+    Returns
+    -------
+    vec : numpy array
+        The HEALPix vector.
+
+    """
     if coordsys.upper()[0] == 'G':
         lon = coord.galactic.l.deg
         lat = coord.galactic.b.deg
@@ -776,12 +1252,31 @@ def coord2vec(coord,coordsys='G'):
 def interpolate_between_arrays(z0,z,x,y):
 
     """
-    Interpola entre dos pares de arrays
+    Interpolate between two arrays of points Z1 and Z2, with
           Z1:  {x1[0],x1[1],...,x1[n]}, {y1[0],y1[1],...,y1[n]}
           Z2:  {x2[0],x2[1],...,x2[m]}, {y2[0],y2[1],...,y2[m]}
-    para un punto intermedio Z0
+    for an intermediate point Z0.   The interpolation is done
+    linearly in the y direction, and then in the x direction.
+    The output is the interpolated value of y at Z0.
+    This routine uses interp1d from scipy.interpolate.
 
-a    """
+    Parameters
+    ----------
+    z0 : float
+        The intermediate point.
+    z : numpy array
+        The array of points.
+    x : numpy array
+        The x values.
+    y : numpy array
+        The y values.
+
+    Returns
+    -------
+    y0 : float
+        The interpolated value of y at Z0.
+
+    """
 
     xmin = np.max((x[0].min(),x[1].min()))
     xmax = np.min((x[0].max(),x[1].max()))
@@ -805,6 +1300,26 @@ a    """
     return xout,yout
 
 def positions_around(x,array):
+    """
+    Returns the positions of the elements around value X in the array ARRAY.  
+    The array must be sorted.   
+
+    Parameters
+    ----------
+    x : float
+        The value.
+    array : numpy array
+        The array.
+
+    Returns
+    -------
+    i1 : int
+        The position of the element in the array that is smaller than X.
+    i2 : int
+        The position of the element in the array that is larger than X.
+
+    """
+
     snu = array-x
     m1  = snu<0
     m2  = snu>0
@@ -815,28 +1330,100 @@ def positions_around(x,array):
 # %%    ADVANCED FILE INPUT/OUTPUT
 
 def save_object(obj,fname):
+    """
+    Saves an object to a file using pickle.
+
+    Parameters
+    ----------
+    obj : object
+        The object to be saved.
+    fname : str
+        The name of the file.
+
+    """
+
     with open(fname+'.pkl','wb') as f:
         pickle.dump(obj,f,pickle.HIGHEST_PROTOCOL)
 
 def load_object(fname):
+    """
+    Loads an object from a file using pickle.
+
+    Parameters
+    ----------
+    fname : str
+        The name of the file.
+
+    Returns
+    -------
+    object
+        The loaded object.
+
+    """
     with open(fname+'.pkl','rb') as f:
         return pickle.load(f)
 
 def write_blank(x):
+    """
+    Writes a blank line to the screen if the boolean X is True.
+
+    Parameters
+    ----------
+    x : bool
+        If True, the blank line is written.
+
+    """
     if x:
         print(' ')
 
 def save_ascii_list(lista,fname):
+    """
+    Saves a list to an ascii file.
+
+    Parameters
+    ----------
+    lista : list
+        The list to be saved.
+    fname : str
+        The name of the file.
+
+    """
+
     with open(fname, 'w') as f:
         for item in lista:
             f.write('{0}\n'.format(item))
 
 def append_ascii_list(lista,fname):
+    """
+    Appends a list to an ascii file.
+
+    Parameters
+    ----------
+    lista : list
+        The list to be appended.
+    fname : str
+        The name of the file.
+
+    """
     with open(fname, 'a+') as f:
         for item in lista:
             f.write('{0}\n'.format(item))
 
 def read_ascii_list(fname):
+    """
+    Reads an ascii file and returns a list.
+
+    Parameters
+    ----------
+    fname : str
+        The name of the file.
+
+    Returns
+    -------
+    list
+        The list.
+
+    """
     with open(fname,'r',errors='replace') as f:
         lines = f.readlines()
     return [x.strip() for x in lines]
@@ -845,6 +1432,37 @@ def read_ascii_column(filename,col_number,
                       delimiter = ' ',
                       header = None,
                       astype = float):
+    """
+    Reads a column from an ascii file.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the file.
+    col_number : int
+        The column number.
+    delimiter : str, optional
+        The delimiter. The default is ' '.
+    header : int, Sequence of int, ‘infer’ or None, default ‘infer’
+        Row number(s) containing column labels and marking the start of the data (zero-indexed). 
+        Default behavior is to infer the column names: if no names are passed the behavior is 
+        identical to header=0 and column names are inferred from the first line of the file, 
+        if column names are passed explicitly to names then the behavior is identical to
+        header=None. Explicitly pass header=0 to be able to replace existing names. 
+        The header can be a list of integers that specify row locations for a MultiIndex 
+        on the columns e.g. [0, 1, 3]. Intervening rows that are not specified will be 
+        skipped (e.g. 2 in this example is skipped). Note that this parameter ignores 
+        commented lines and empty lines, so header=0 denotes the first line of data rather 
+        than the first line of the file.
+    astype : type, optional
+        The data type. The default is float.
+
+    Returns
+    -------
+    x : numpy array
+        The column.
+
+    """
 
     if header is not None:
         if header == 0:
@@ -871,6 +1489,19 @@ def read_ascii_column(filename,col_number,
     return x
 
 def add_array_line_csv(x,fname,header=None):
+    """
+    Adds a line to a csv file. The line is a numpy array.       
+
+    Parameters
+    ----------
+    x : numpy array
+        The array.
+    fname : str
+        The name of the file.
+    header : str, optional
+        The header. The default is None.
+
+    """
 
     y = ''
     for numero in x:
@@ -888,6 +1519,22 @@ def add_array_line_csv(x,fname,header=None):
             f.write(y)
 
 def search_in_file(fname,string):
+    """
+    Searches for a string in a file.
+
+    Parameters
+    ----------
+    fname : str
+        The name of the file.
+    string : str
+        The string.
+
+    Returns
+    -------
+    sresults : list
+        The list of lines in the file that contain the string.
+
+    """
 
     with open(fname) as f:
         datafile = f.readlines()
@@ -919,6 +1566,21 @@ def clean_pdfs_in_LaTeX_dir(fdir,filename):
 # %%    FILE MODIFICATIONS
 
 def change_dir_capitalization(directory):
+    """
+    Changes the capitalization of the directories in a given directory. It changes
+    the names of the directories so that the first letter is capitalized and the
+    rest are lower case. It also changes the names of the files inside the directories
+    to match the new names of the directories.  It is useful when the directories
+    are named using all capital letters.  It is recursive. It does not change the
+    capitalization of the directories in the current directory.  
+
+    Parameters
+    ----------
+    directory : str
+        The name of the directory.
+
+    """
+
 
     def reformat_dirname(dirname):
         nombre  = dirname.split('/')[-1]
@@ -947,8 +1609,25 @@ def change_dir_capitalization(directory):
         os.rename(l,reformat_dirname(l))
 
 def find_and_replace_text(directory,old_string,new_string,filePattern):
+    """
+    Finds and replaces a string in all the files in a given directory. It is recursive.
 
-    # example: find_and_replace('/Users/herranz/Desktop/','antes','despues','*.txt')
+    Parameters
+    ----------
+    directory : str
+        The name of the directory.
+    old_string : str
+        The string to be replaced.
+    new_string : str
+        The new string.
+    filePattern : str
+        The file pattern. It can be '*.txt' or '*.pdf', for example. 
+
+    Example
+    -------
+    find_and_replace_text('/Users/herranz/Desktop/','antes','despues','*.txt')
+
+    """
 
     for path, dirs, files in os.walk(os.path.abspath(directory)):
         for filename in fnmatch.filter(files, filePattern):
@@ -960,6 +1639,17 @@ def find_and_replace_text(directory,old_string,new_string,filePattern):
                 f.write(s)
 
 def recursive_file_delete(parent_dir,fname):
+    """
+    Deletes recursively all the files with a given name in a given directory.
+
+    Parameters
+    ----------
+    parent_dir : str
+        The name of the directory.
+    fname : str
+        The name of the file.
+
+    """
     for path, dirs, files in os.walk(os.path.abspath(parent_dir)):
         for filename in fnmatch.filter(files,fname):
             filepath = os.path.join(path,filename)
@@ -968,6 +1658,23 @@ def recursive_file_delete(parent_dir,fname):
 # %%    FILE QUERIES
 
 def list_dir(dir_name,ext=None):
+    """
+    Returns a list of files in a given directory. It is recursive. If EXT is not None,
+    it returns only the files with that extension. 
+
+    Parameters
+    ----------
+    dir_name : str
+        The name of the directory.
+    ext : str, optional
+        The extension. The default is None.
+
+    Returns
+    -------
+    files : list
+        The list of files.
+
+    """
     files = []
     for r,d,f in os.walk(dir_name):
         for file in f:
@@ -980,6 +1687,20 @@ def list_dir(dir_name,ext=None):
 
 
 def file_exists(fname):
+    """
+    Checks if a file exists.
+
+    Parameters
+    ----------
+    fname : str
+        The name of the file.
+
+    Returns
+    -------
+    bool
+        True if the file exists, False otherwise.
+
+    """
     return os.path.isfile(fname)
 
 
@@ -990,6 +1711,37 @@ def asymmetric_errorbar(x,y,xsamples=None,ysamples=None,nsigmas=1.0,
                         add_ymedian=False,
                         fmt='',median_fmt='o',
                         median_size=7,**kwargs):
+    """
+    Plots asymmetric error bars. The error bars are computed from the samples
+    of the x and y values, and the confidence intervals are computed using
+    confidence_limits for percentiles given by normal_confidence_interval.  The 
+    median of the y samples can also be plotted. The error bars are plotted
+    using the matplotlib errorbar function. 
+
+    Parameters
+    ----------
+    x : float
+        The x value.
+    y : float
+        The y value.
+    xsamples : list of numpy arrays, optional
+        The list of x samples. The default is None. 
+    ysamples : list of numpy arrays, optional
+        The list of y samples. The default is None.
+    nsigmas : float, optional
+        The number of sigmas for the confidence intervals. The default is 1.0.
+    add_ymedian : bool, optional
+        If True, the median of the y samples is plotted. The default is False.
+    fmt : str, optional
+        The format of the error bars. The default is ''.
+    median_fmt : str, optional
+        The format of the median. The default is 'o'.
+    median_size : int, optional
+        The size of the median filter. The default is 7.
+    **kwargs : dict
+        Additional arguments for the matplotlib errorbar function.
+
+    """
 
     if xsamples is not None:
         l  = len(xsamples)
@@ -1099,6 +1851,37 @@ def plot_confidence_ellipse(x0, y0,cov,ax,n_std=3.0,facecolor='none',**kwargs):
 def gaussian_density_plot(d,d_err,xlimits,
                           return_statistics=False,
                           return_density=False,**kwargs):
+    """
+    Plots the density of a set of points using a Gaussian kernel density estimator.
+    It can also return the mean and median of the distribution.
+
+    Parameters
+    ----------
+    d : numpy array
+        The array of points.
+    d_err : numpy array
+        The array of errors.
+    xlimits : tuple
+        The x limits.   
+    return_statistics : bool, optional
+        If True, it returns the mean and median of the distribution. The default is False.
+    return_density : bool, optional
+        If True, it returns the x and y arrays of the density. The default is False.
+    **kwargs : dict
+        Additional arguments for the matplotlib fill_between function.
+
+    Returns
+    -------
+    mean : float
+        The mean of the distribution.
+    median : float
+        The median of the distribution.
+    xarr : numpy array
+        The x array of the density.
+    yarr : numpy array
+        The y array of the density.
+
+    """
 
     n = d.size
 
@@ -1131,6 +1914,24 @@ def gaussian_density_plot(d,d_err,xlimits,
 # %%  DISTANCE TO ELEMENTS IN A MATRIX
 
 def distance_matrix(i,j,shape):
+    """
+    Computes the distance of each element in a matrix to a given point.
+
+    Parameters
+    ----------
+    i : int
+        The row of the point.
+    j : int
+        The column of the point.
+    shape : tuple
+        The shape of the matrix.
+
+    Returns
+    -------
+    d : numpy array
+        The distance matrix. The shape is the same as the input shape. 
+
+    """
     n = shape[0]
     m = shape[1]
     x = np.arange(0,m,1,float)
@@ -1177,6 +1978,20 @@ def img_shapefit(img1,img2):
 from collections import defaultdict
 
 def nested_dict(n):
+    """
+    Creates a nested dictionary with N levels.
+
+    Parameters
+    ----------
+    n : int
+        The number of levels.
+
+    Returns
+    -------
+    defaultdict
+        The nested dictionary.
+
+    """
     if n == 1:
         return defaultdict()
     else:
@@ -1186,14 +2001,56 @@ def nested_dict(n):
 # %%  ARRAY MANIPULATION
 
 def as_array(x):
+    """
+    Converts a number to a numpy array.
+
+    Parameters
+    ----------
+    x : float
+        The number.
+
+    Returns
+    -------
+    numpy array
+        The array.
+
+    """
     return np.asarray(x).reshape(1, -1)[0,:]
 
 # %%  BEAM CONVERSION UTILITIES
 
 def fwhm_to_area(fwhm):
+    """
+    Converts a FWHM to an area.
+
+    Parameters
+    ----------
+    fwhm : float
+        The FWHM.
+
+    Returns
+    -------
+    area : float
+        The area.
+
+    """
     return 2*np.pi*(fwhm*fwhm2sigma)**2
 
 def area_to_fwhm(area):
+    """
+    Converts an area to a FWHM.
+
+    Parameters
+    ----------
+    area : float
+        The area.
+
+    Returns
+    -------
+    fwhm : float
+        The FWHM.
+
+    """
     sigma = np.sqrt(area/(2*np.pi))
     return sigma*sigma2fwhm
 
@@ -1203,4 +2060,18 @@ import numba
 
 @numba.vectorize([numba.float64(numba.complex128),numba.float32(numba.complex64)])
 def abs2(x):
+    """
+    Computes the squared modulus of a complex number.
+
+    Parameters
+    ----------
+    x : complex
+        The complex number.
+
+    Returns
+    -------
+    float
+        The squared modulus.
+
+    """
     return x.real**2 + x.imag**2

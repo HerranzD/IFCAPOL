@@ -334,8 +334,8 @@ class Imagen:
     @classmethod
     def from_ascii_file(self,fname):
         """
-        Reads a `Imagen` object from an ASCII file with header. 
-        The ASCII file must be structured as a header containing first the 
+        Reads a `Imagen` object from an ASCII file with header.
+        The ASCII file must be structured as a header containing first the
         lsize, glon, glat, pixel size keywords, after which the image data
         is written as a three column (X,Y,Z) list separated by blank spaces.
 
@@ -373,8 +373,8 @@ class Imagen:
                              theta_deg,phi_deg,
                              pixsize_arcmin):
         """
-        Reads a `Imagen` object from an ASCII file without header. 
-        The ASCII file must be structured as a three column (X,Y,Z) 
+        Reads a `Imagen` object from an ASCII file without header.
+        The ASCII file must be structured as a three column (X,Y,Z)
         list separated by blank spaces.
 
         Parameters
@@ -409,7 +409,7 @@ class Imagen:
     @classmethod
     def from_fits_file(self,fname):
         """
-        Reads a `Imagen` object from an astronomical FITS file. 
+        Reads a `Imagen` object from an astronomical FITS file.
         This method invokes the lower-level from_hdu method.
 
         Parameters
@@ -427,10 +427,10 @@ class Imagen:
         imag = self.from_hdu(hdul[0])
         hdul.close()
 
-        i,j  = imag.size[0]/2,imag.size[1]/2
-        cc   = imag.pixel_coordinate(i,j)
-        imag.centro = np.array([90.0-cc.galactic.b.deg,
-                                cc.galactic.l.deg])
+        # i,j  = imag.size[0]/2,imag.size[1]/2
+        # cc   = imag.pixel_coordinate(i,j)
+        # imag.centro = np.array([90.0-cc.galactic.b.deg,
+        #                         cc.galactic.l.deg])
 
         return imag
 
@@ -453,7 +453,16 @@ class Imagen:
         """
         h    = hdul.header
         w    = wcs.WCS(h)
-        co   = w.pixel_to_world(h['NAXIS1']/2,h['NAXIS2']/2)
+
+        if w.naxis == 2:
+            co   = w.pixel_to_world(h['NAXIS1']/2,h['NAXIS2']/2)
+        elif w.naxis == 4:
+            co   = w.pixel_to_world(h['NAXIS1']/2,
+                                    h['NAXIS2']/2,
+                                    h['NAXIS3']/2,
+                                    h['NAXIS4']/2)[0]
+        else:
+            print(' Warning: wrong NAXIS in WCS object')
 
         try:
             pixsize = u.Quantity(np.abs(h['CDELT1']),unit=h['CUNIT1'])
@@ -464,8 +473,15 @@ class Imagen:
                 pixsize = np.abs(w.pixel_scale_matrix).mean()*u.deg
 
         centro  = np.array([90.0-co.galactic.b.deg,co.galactic.l.deg])
-        datos   = np.fliplr(np.flipud(hdul.data))
-        size    = hdul.data.shape
+
+        if w.naxis == 2:
+            datos   = np.fliplr(np.flipud(hdul.data))
+            size    = hdul.data.shape
+        elif w.naxis == 4:
+            datos   = np.fliplr(np.flipud(hdul.data)).squeeze()
+            size    = datos.shape
+        else:
+            print(' Warning: wrong NAXIS in WCS object')
 
         self.image_header = h
         if (('RA' in h['CTYPE1'].upper()) or ('RA' in h['CTYPE2'].upper())):
@@ -520,7 +536,7 @@ class Imagen:
         Returns
         -------
         `Imagen`
-            An Image object with size and pixel size specified by the 
+            An Image object with size and pixel size specified by the
             **npix** and **pixsize** arguments, and with **datos** = 0.0
 
         """
@@ -556,22 +572,22 @@ class Imagen:
              tofile     = None):
         """
         Advanced plotting of the data in *Imagen.datos* .
-        The plot uses World Coordinate System and can be placed inside a 
+        The plot uses World Coordinate System and can be placed inside a
         given subplot, have or not and overlaid coordinate grid and sent
         to a file, on demand.
 
         Parameters
         ----------
         pos : int, optional
-            The identifier of a subplot where the plot is sent. 
+            The identifier of a subplot where the plot is sent.
             The default is 111.
         newfig : bool, optional
             Whether to open a new figure or not. The default is False.
         animated : bool, optional
-            Whether the figure will be part of an animation or not. 
+            Whether the figure will be part of an animation or not.
             The default is False.
         coord_grid : bool, optional
-            Whether to overlay a coordinate grid or not. 
+            Whether to overlay a coordinate grid or not.
             The default is False.
         colorbar : bool, optional
             Whether to add a color bar or not. The default is True.
@@ -634,7 +650,7 @@ class Imagen:
 
         Returns
         -------
-        w : `astropy.wcs`  
+        w : `astropy.wcs`
             The World Coordinate System (WCS) associated to the `Imagen`.
 
         """
@@ -739,8 +755,8 @@ class Imagen:
 
         Returns
         -------
-        d : `~astropy.units.quantity.Quantity` 
-            Angular separation (on the sphere) between the first and the 
+        d : `~astropy.units.quantity.Quantity`
+            Angular separation (on the sphere) between the first and the
             second pixel.
 
         """
@@ -763,7 +779,7 @@ class Imagen:
 
         Returns
         -------
-        r : `Imagen` 
+        r : `Imagen`
             A new `Imagen` (the poststamp) with size (*lado,lado*) centered
             at the same postion of the parent `Imagen`.
 
@@ -790,7 +806,7 @@ class Imagen:
 
         Returns
         -------
-        output_img : `Imagen` 
+        output_img : `Imagen`
             A new `Imagen` (the poststamp) with size (*lado,lado*) centered
             at the coordinate *coord*.
 
@@ -820,19 +836,19 @@ class Imagen:
         Parameters
         ----------
         fwhm : `~astropy.units.quantity.Quantity` or ndarray, optional
-            The profile assumed for the matched filter. 
+            The profile assumed for the matched filter.
                 - If **fwhm** is an astropy Quantity (for example fwhm=1*u.arcmin) the profile is assumed to be a Gaussian with the given full width half maximum.
                 - If **fwhm** is a ndarray, it is interpreted as a image representation of the profile (in real space). The ndarray should have the same size as the `Imagen.datos` .
             The default is 1.0*u.deg.
         toplot : bool, optional
-            If True, the matched filtered image is plotted in a new figure. 
+            If True, the matched filtered image is plotted in a new figure.
             The default is False.
 
         Returns
         -------
-        fmapa : `Imagen` 
-            An `Imagen` with the same parameters as the parent `Imagen` 
-            whose *datos* attribute contains the matched filtered version 
+        fmapa : `Imagen`
+            An `Imagen` with the same parameters as the parent `Imagen`
+            whose *datos* attribute contains the matched filtered version
             of the parent `Imagen`.
 
         """
@@ -866,23 +882,23 @@ class Imagen:
         Parameters
         ----------
         fwhm : `~astropy.units.quantity.Quantity` or ndarray, optional
-            The profile assumed for the matched filter. 
+            The profile assumed for the matched filter.
                 - If **fwhm** is an astropy Quantity (for example fwhm=1*u.arcmin) the profile is assumed to be a Gaussian with the given full width half maximum.
                 - If **fwhm** is a ndarray, it is interpreted as a image representation of the profile (in real space). The ndarray should have the same size as the `Imagen.datos` .
             The default is 1.0*u.deg.
         toplot : bool, optional
-            If True, the matched filtered image is plotted in a new figure. 
+            If True, the matched filtered image is plotted in a new figure.
             The default is False.
 
         Returns
         -------
-        fmapa : `Imagen` 
-            An `Imagen` with the same parameters as the parent `Imagen` 
-            whose *datos* attribute contains the non-interative matched filtered 
+        fmapa : `Imagen`
+            An `Imagen` with the same parameters as the parent `Imagen`
+            whose *datos* attribute contains the non-interative matched filtered
             version of the parent `Imagen`.
-        fmapai : `Imagen` 
-            An `Imagen` with the same parameters as the parent `Imagen` 
-            whose *datos* attribute contains the iterative matched filtered version 
+        fmapai : `Imagen`
+            An `Imagen` with the same parameters as the parent `Imagen`
+            whose *datos* attribute contains the iterative matched filtered version
             of the parent `Imagen`.
 
         """
@@ -909,14 +925,14 @@ class Imagen:
         fwhm : `~astropy.units.quantity.Quantity`, optional
             The FWHM of the Gaussian smoothing kernel. The default is 1.0*u.deg.
         toplot : bool, optional
-            If True, the smoothed image is plotted in a new figure. 
+            If True, the smoothed image is plotted in a new figure.
             The default is False.
 
         Returns
         -------
-        fmapa : `Imagen` 
-            An `Imagen` with the same parameters as the parent `Imagen` 
-            whose *datos* attribute contains the smoothed version 
+        fmapa : `Imagen`
+            An `Imagen` with the same parameters as the parent `Imagen`
+            whose *datos* attribute contains the smoothed version
             of the parent `Imagen`.
         """
 
@@ -927,7 +943,7 @@ class Imagen:
         if toplot:
             fmapa.draw(newfig=True)
         return fmapa
-    
+
     def convolve(self,kernel,toplot=False):
         """
         Convolves the image with a given kernel
@@ -935,28 +951,28 @@ class Imagen:
         Parameters
         ----------
         kernel : ndarray
-            Array of convolution weights, same number of dimensions as 
+            Array of convolution weights, same number of dimensions as
             input *datos*.
         toplot : bool, optional
-            If True, the convolved image is plotted in a new figure. 
+            If True, the convolved image is plotted in a new figure.
             The default is False.
 
         Returns
         -------
-        cmap : `Imagen` 
-            An `Imagen` with the same parameters as the parent `Imagen` 
-            whose *datos* attribute contains the convolved version 
+        cmap : `Imagen`
+            An `Imagen` with the same parameters as the parent `Imagen`
+            whose *datos* attribute contains the convolved version
             of the parent `Imagen`.
 
         """
-        
+
         input_array  = self.datos.copy()
         output_array = convolve(input_array,kernel)
         cmap         = self.copy()
-        cmap.datos   = output_array 
+        cmap.datos   = output_array
         if toplot:
             cmap.draw(newfig=True)
-            
+
         return cmap
 
 # %% ---- FITTING -----------------------
@@ -971,7 +987,7 @@ class Imagen:
         return_output : bool, optional
             If True, returns a `Ajuste` fit object. The default is False.
         verbose : bool, optional
-            If True, the result of the fitting is printed on screen. 
+            If True, the result of the fitting is printed on screen.
             The default is True.
 
         Returns
@@ -1049,7 +1065,7 @@ class Imagen:
 
     def mask_border(self,nbpix):
         """
-        Masks the border of the `Imageen` 
+        Masks the border of the `Imageen`
 
         Parameters
         ----------
@@ -1124,7 +1140,7 @@ class Imagen:
 
         Returns
         -------
-        `Imagen` 
+        `Imagen`
             A synthetic Gaussian `Imagen` with a given FWHM.
 
         """
@@ -1143,7 +1159,7 @@ class Imagen:
 
         Returns
         -------
-        p : `~healpy.projector.GnomonicProj` 
+        p : `~healpy.projector.GnomonicProj`
             Gnomonic projector around the centre of the `Imagen`.
 
         """
@@ -1167,12 +1183,12 @@ class Imagen:
         factor : int, optional
             The downsampling factor. The default is 2.
         func : function, optional
-            The funcion used to downsample. The default is np.sum. Other 
+            The funcion used to downsample. The default is np.sum. Other
             possibilities include the median, maximum, minimum...
 
         Returns
         -------
-        `Imagen` 
+        `Imagen`
             A downsampled version of the `Image` with the same centre but
             size (*size//factor,size//factor*).
 
@@ -1192,12 +1208,12 @@ class Imagen:
         factor : int, optional
             The upsampling factor. The default is 2.
         conserve_sum : bool, optional
-            If true, the upsampling preserves the area integral of the pixels. 
+            If true, the upsampling preserves the area integral of the pixels.
             The default is True.
 
         Returns
         -------
-        `Imagen` 
+        `Imagen`
             A upsampled version of the `Image` with the same centre but
             size (*size x factor,size x factor*).
         """

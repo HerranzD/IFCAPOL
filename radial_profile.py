@@ -3,9 +3,46 @@ import matplotlib.pyplot as plt
 from scipy import ndimage
 from scipy.interpolate import interp1d
 
-def radial_profile(data,nbins=50,center=None,
-                   toplot=False,kind='linear',datype='real',
-                   equal_scale=False):
+def radial_profile(data,
+                   nbins       = 50,
+                   center      = None,
+                   toplot      = False,
+                   kind        = 'linear',
+                   datype      = 'real',
+                   equal_scale = False):
+
+
+    """
+    Calculates the radial profile of an input data array.
+
+    Args:
+        data (numpy array):
+            The input data array.
+        nbins (int, optional):
+            The number of radial bins to divide the data into. Default is 50.
+        center (tuple, optional):
+            The coordinates of the center of the data array. If not specified,
+            the center is set to the middle of the array.
+        toplot (bool, optional):
+            If True, the radial profile is plotted. Default is False.
+        kind (str, optional):
+            The interpolation method to use. Default is 'linear'.
+        datype (str, optional):
+            The data type of the input data. Can be 'real' or 'complex'.
+            Default is 'real'.
+        equal_scale (bool, optional):
+            If True, the output radial profile is scaled to have the same
+            standard deviation and mean as the input data. Default is False.
+
+    Returns:
+        pmap (numpy array):
+            The radial profile of the input data.
+        xperfil (numpy array):
+            The radial distance for each bin in the radial profile.
+        perfil (numpy array):
+            The average value of the input data in each bin of the radial
+            profile.
+    """
 
     s       = data.shape
     dmean   = data.mean()
@@ -48,10 +85,19 @@ def radial_profile(data,nbins=50,center=None,
         else:
             pmap = f(r)
     else:
-        f1 = interp1d(xperfil, np.real(perfil), kind=kind,bounds_error=False,fill_value=np.real(perfil[nbins-1]))
-        f2 = interp1d(xperfil, np.imag(perfil), kind=kind,bounds_error=False,fill_value=np.imag(perfil[nbins-1]))
+        f1 = interp1d(xperfil,
+                      np.real(perfil),
+                      kind=kind,
+                      bounds_error=False,
+                      fill_value=np.real(perfil[nbins-1]))
+        f2 = interp1d(xperfil,
+                      np.imag(perfil),
+                      kind=kind,
+                      bounds_error=False,
+                      fill_value=np.imag(perfil[nbins-1]))
         if kind=='linear':
-            pmap = np.interp(r,xperfil,np.real(perfil))+np.complex(0,1)*np.interp(r,xperfil,np.imag(perfil))
+            pmap = np.interp(r,xperfil,
+                             np.real(perfil))+np.complex(0,1)*np.interp(r,xperfil,np.imag(perfil))
         else:
             pmap = f1(r) + np.complex(0,1)*f2(r)
 
@@ -74,6 +120,5 @@ def radial_profile(data,nbins=50,center=None,
         pmap = pmap-pmap.mean()+dmean
 
     return pmap,xperfil,perfil
-
 
 
