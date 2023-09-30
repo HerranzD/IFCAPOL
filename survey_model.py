@@ -22,32 +22,10 @@ import astropy.units as u
 from fits_maps import Fitsmap
 from unit_conversions import uKcmb
 
-running_system = 'local'     # it can be 'local' or 'NERSC'
+from path_defs import LBdir,homed,scratchd
+from path_defs import data_dir,src_dir,cat_inp,cat_out
+from path_defs import scriptd,map_dir
 
-# %% --- PATH DEFINITIONS
-
-if running_system == 'local':
-
-    LBdir    = '/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/'    # main LiteBIRD directory (local)
-    data_dir = LBdir+'Data/'               # data folder
-    src_dir  = LBdir+'Src/'                # code folder
-    cat_inp  = LBdir+'Catalogs/Input/'     # input point source catalogues
-    cat_out  = LBdir+'Catalogs/Output/'    # output poit source catalogues
-
-elif running_system.upper() == 'NERSC':
-
-    data_dir = '/global/cfs/cdirs/litebird/simulations/maps/PTEP_20200915_compsep/'
-    homed    = os.getenv('HOME')+'/'
-    src_dir  = homed+'LiteBIRD/src/'
-    scriptd  = homed+'LiteBIRD/scripts/'
-    scratchd = os.getenv('SCRATCH')+'/'
-    map_dir  = scratchd+'LiteBIRD/Data/Maps/'
-    cat_inp  = scratchd+'LiteBIRD/Results/Catalogues/Input/'
-    cat_out  = scratchd+'LiteBIRD/Results/Catalogues/Output/'
-
-else:
-
-    print(' WARNING: unknown running system')
 
 # %% --- LITEBIRD IMO
 

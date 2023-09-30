@@ -9,8 +9,8 @@ Created on Tue Sep 19 15:17:08 2023
 import numpy as np
 import json
 from astropy.table import QTable
+from paths import IMos_dir
 import astropy.units as u
-
 
 def read_IMo(IMOversion,IMo_from='tbl'):
     '''
@@ -35,14 +35,14 @@ def read_IMo(IMOversion,IMo_from='tbl'):
 
     if 'v1.3' in IMOversion.lower():
 
-        IMo_dir      = '/Users/herranz/Dropbox/Trabajo/LiteBird/IMo/'
+        IMo_dir      = IMos_dir
         IMov1p3_dir  = IMo_dir+'iMo.V1.3/'
         IMo_file     = IMov1p3_dir+'schema_131022.json'
         IMO = {}
 
     if 'v2' in IMOversion.lower():
 
-        IMo_dir      = '/Users/herranz/Dropbox/Trabajo/LiteBird/IMo/IMoV2-14June/'
+        IMo_dir      = IMos_dir+'IMoV2-14June/'
         IMo_textfile = IMo_dir+'litebird_instrument_model.tbl'
         IMo_jsonfile = IMo_dir+'IMoV2-14June.json'
 
