@@ -26,27 +26,14 @@ from path_defs import LBdir,homed,scratchd
 from path_defs import data_dir,src_dir,cat_inp,cat_out
 from path_defs import scriptd,map_dir
 
+from LiteBIRD_IMo import read_IMo
+
 
 # %% --- LITEBIRD IMO
 
 IMo_version = 'V2'
 
-if IMo_version == 'PTEP':
-
-    IMO = np.load(src_dir+'instrument_LB_IMOv1.npy', allow_pickle=True).item()
-
-    for k in IMO.keys():    # add physical units to the IMO dictionary.
-                            # Beams will be asumed to be FWHM values.
-
-        IMO[k]['freq']      = IMO[k]['freq']*u.GHz
-        IMO[k]['freq_band'] = IMO[k]['freq_band']*u.GHz
-        IMO[k]['beam']      = IMO[k]['beam']*u.arcmin
-        IMO[k]['P_sens']    = IMO[k]['P_sens']*uKcmb*u.arcmin
-
-else:
-
-    from LiteBIRD_IMo import read_IMo
-    IMO = read_IMo(IMo_version)
+IMO = read_IMo(IMo_version)
 
 # %% --- BASIC MAP INPUT
 

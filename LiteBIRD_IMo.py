@@ -9,8 +9,9 @@ Created on Tue Sep 19 15:17:08 2023
 import numpy as np
 import json
 from astropy.table import QTable
-from paths import IMos_dir
+from path_defs import IMos_dir,src_dir
 import astropy.units as u
+from unit_conversions import uKcmb
 
 def read_IMo(IMOversion,IMo_from='tbl'):
     '''
@@ -32,6 +33,17 @@ def read_IMo(IMOversion,IMo_from='tbl'):
         main level keys are the names of the detectors (channels)
 
     '''
+
+    if 'ptep' in IMOversion.lower():
+
+        IMO = np.load(src_dir+'instrument_LB_IMOv1.npy', allow_pickle=True).item()
+
+        for k in IMO.keys():    # add physical units to the IMO dictionary.
+                                # Beams will be asumed to be FWHM values.
+            IMO[k]['freq']      = IMO[k]['freq']*u.GHz
+            IMO[k]['freq_band'] = IMO[k]['freq_band']*u.GHz
+            IMO[k]['beam']      = IMO[k]['beam']*u.arcmin
+            IMO[k]['P_sens']    = IMO[k]['P_sens']*uKcmb*u.arcmin
 
     if 'v1.3' in IMOversion.lower():
 
