@@ -7,4 +7,4 @@ Created on Thu Mar 10 16:59:44 2022
 """
 
 import sys
-sys.path.append('/Users/herranz/Dropbox/Trabajo/Programs/Python')
+sys.path.append('/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/Src')
