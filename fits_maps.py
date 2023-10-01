@@ -40,22 +40,208 @@ Planck_masks_file = '/Users/herranz/Trabajo/Planck/Non_Thermal_Catalogue/Data/Pl
 # %% ------- FITSMAP CLASS
 
 class Fitsmap:
+    """
+    Class for Healpix maps and masks. Each FITMAPS instance
+    contains n-dimensional maps (DATA) with its corresponding
+    n-dimensional mask, plus a HEADER dictionary and an ordering
+    (RING or NEST) parameter.
 
-#    Class for Healpix maps and masks. Each FITMAPS instance
-#     contains n-dimensional maps (DATA) with its corresponding
-#     n-dimensional mask, plus a HEADER dictionary and an ordering
-#     (RING or NEST) parameter.
-#
-#     The class is intended to facilitate Healpy programming,
-#     in particular allowing for direct map arithmetic operations such
-#     as  MAP3 = MAP1 * MAP2 taking into account masks
-#     and masked map statistics
-#
-#     Important notice: the mask convention used in this class is
-#     as follows:
-#        mask == True   means the pixel has to be masked (equivalent to IDL mask = 0)
-#        mask == False  means the pixel is not masked (equivalent to IDL mask=1)
+    The class is intended to facilitate Healpy programming,
+    in particular allowing for direct map arithmetic operations such
+    as  MAP3 = MAP1 * MAP2 taking into account masks
+    and masked map statistics
 
+    Important notice: the mask convention used in this class is
+    as follows:
+       mask == True   means the pixel has to be masked (equivalent to IDL mask = 0)
+       mask == False  means the pixel is not masked (equivalent to IDL mask=1)
+
+    
+    Attributes
+    ----------
+    data : numpy.ndarray
+        The data array.
+    mask : numpy.ndarray
+        The mask array.
+    header : dict
+        The header dictionary.
+    ordering : str
+        The ordering scheme of the data. Can be "RING" or "NEST".
+    nside : int
+        The HEALPix nside parameter.    
+    npix : int
+        The number of pixels in the map.
+    nmaps : int
+        The number of maps in the data array. A typical example is a Stokes IQU map, with nmaps=3.      
+    columns : list of str
+        The names of the columns in the data array. 
+    units : list of str
+        The units of the columns in the data array. 
+    obs_frequency : `~astropy.units.quantity.Quantity`
+        The observation frequency of the map.
+    fwhm_base : `~astropy.units.quantity.Quantity`
+        The FWHM of the beam used to create the map. If the map is a combination of maps with different beams, 
+        this is the FWHM of the beam of the first map. 
+    beam_area_base : `~astropy.units.quantity.Quantity`
+        The beam area of the beam used to create the map. 
+        If the map is a combination of maps with different beams, this is the beam area of the beam of the first map.
+    fwhm : `~astropy.units.quantity.Quantity`
+        The FWHM of the beam of the maps contained in the Fitsmap 
+    beam_area : `~astropy.units.quantity.Quantity`
+        The beam area of the beam of the maps.
+    comment_count : int
+        The number of comments in the header.
+    badval : float
+        The value used to indicate a bad pixel in the HEALPix convention. 
+        The default value is -1.6375e30, which is the value used by Planck.
+    ismask : bool
+        Whether the map is a mask or not.
+    pixel_area : `~astropy.units.quantity.Quantity`
+        The area of a pixel in the map.
+    pixel_size : `~astropy.units.quantity.Quantity`
+        The size of a pixel in the map.
+    pixel_fwhm : `~astropy.units.quantity.Quantity`
+        The FWHM of a pixel in the map.
+    pixel_sigma : `~astropy.units.quantity.Quantity`
+        The sigma of a pixel in the map.
+    pixsize : `~astropy.units.quantity.Quantity`
+        The size of a pixel in the map. Alias for pixel_size.
+    resolution : `~astropy.units.quantity.Quantity`
+        The resolution of the map. Alias for pixel_size and pixsize.
+    mask_area : `~astropy.units.quantity.Quantity`
+        The area of the sky that is covered by the mask.
+    unmasked_area : `~astropy.units.quantity.Quantity`
+        The area of the sky that is not covered by the mask.
+    masked_fraction : float
+        The fraction of pixels that are masked.
+    unmasked_fraction : float
+        The fraction of pixels that are not masked.
+    pixel_window_function : array
+        The pixel window function of the map.
+    beam_bls : array
+        The beam window function of the map. 
+    print_info :  
+        Print information about the map.
+    T : `Fitsmap`
+        The Stokes I map.
+    Q : `Fitsmap`   
+        The Stokes Q map.
+    U : `Fitsmap`
+        The Stokes U map.
+    I : `Fitsmap`
+        The Stokes I map. Alias for T.
+    coorsys : str
+        The coordinate system of the map. Can be "G" for Galactic or "C" for equatorial. It is read from the header, if possible.
+    set_beam_areas :
+        Sets the beam areas of the map. Ensures that the **beam_area_base** attribute of the `Fitsmap` is initialized.
+    physical_units : list of astropy.units.Unit
+        The physical units of the columns in the data array. This method tries to automatically determine which are the `astropy.unit`
+        of the `Fitsmap`. If this method is unable to parse the unit, it returns an empty list instead.
+    
+    Methods
+    -------
+    from_file(filename)
+        Reads a FITS file and returns a `Fitsmap` instance.
+    empty(nside,nmaps=1,ordering='RING')
+        Creates an empty `Fitsmap` instance.
+    mask_value(value)
+        Masks those pixels whose value is equal to a given input.
+    masked_data(i=-1)
+        Returns the mask as a data array.
+    add_mask(mask)
+        Adds a mask map (in HEALPix format) to the `Fitsmap`. The sum follows the boolean logic rules.
+    mask_band(band_size)
+        Masks a band of a given size around the Equator.
+    grow_mask_1pix()
+        Grows the mask of the `Fitsmap` in one pixel.
+    grow_mask_radius(radius)
+        Grows the mask by a certain radius.
+    to_mask()
+        Transfer the mask values to the data extension of the `Fitsmap`.
+    smooth(sigma)
+        Smooths the map with a Gaussian kernel of a given sigma.
+    ngood(i=-1)
+        Returns the number of good pixels in the map.   
+    maxval(i=-1)
+        Returns the maximum value of the map.
+    minval(i=-1)
+        Returns the minimum value of the map.
+    mean(i=-1)
+        Returns the mean value of the map.
+    median(i=-1)
+        Returns the median value of the map.
+    std(i=-1)
+        Returns the standard deviation of the map.
+    rms(i=-1)
+        Returns the root mean square of the map.
+    skew(i=-1)
+        Returns the skewness of the map.
+    kurtosis(i=-1)
+        Returns the kurtosis of the map.
+    statistics(i=-1)
+        Returns a dictionary with the statistics of the map.
+    test_normal(i=-1,toplot=False,tofile=None,threshold=1.e-3)
+        Performs a normality test on the map. Returns a dictionary with the results of the test.
+    to_ring()
+        Converts the `Fitsmap`to the HEALPix ordering scheme RING.
+    to_nest()
+        Converts the `Fitsmap`to the HEALPix ordering scheme NEST.
+    pixel_to_coordinates(pixel)
+        Returns the coordinates of a given pixel. 
+    coordinates_to_pixel(coordinates)
+        Returns the HEALPix pixel of a given set of coordinates.
+    coordinates_to_vector(coordinates)
+        Returns the HEALPix vector of a given set of coordinates.
+    ud_grade(nside)
+        Upgrades or downgrades the `Fitsmap` to a given nside.
+    disc_around_coordinates(coordinates,radius)
+        Returns the pixels within a given radius around a given coordinate.
+    fraction_masked_disc(coordinates,radius)
+        Returns the fraction of pixels within a given radius around a give coordinate that are masked.
+    pixel_beam_function(theta)
+        Returns the beam function of a given pixel for a given angular distance theta.
+    moll(i=0,tofile=None,norm='hist',**kwargs)
+        Plots the map in a Mollweide projection.
+    skyview(coord,i=0,tofile=None,title=None,zoom_size=4*u.deg)
+        Plots a zoom of the map around a given coordinate. This method internally calls the `mapview.skyview` function 
+        (see its documentation for more information and ackowledgements to the LIGO/Virgo collaboration).
+    patch
+        Projects a flat patch around a given sky coordinate, using the sky_images module.
+    spherical_beam(coordinate,bls,thetamax=10*u.deg,upscale_fact=4)
+        Returns a `Fitsmap` containing a sky image of a beam at a given
+        position (coordinate). The beam is defined by a beam window function (bls). 
+        The beam is projected on a patch of the sky of a given size (thetamax).
+        The beam is upscaled by a factor upscale_fact to avoid aliasing.
+    flat_beam(coordinate,bls,npix=512,deltatheta_deg=14.658)
+        Returns a `sky_images.Imagen` flat sky patch containing an image
+        of the beam at a given sky coordinate. The beam is defined by a beam window function (bls).
+        The image is projected on a patch of the sky of a given size (npix).
+        The image is sampled at a given angular resolution (deltatheta_deg).
+    update_fwhm(fwhm)
+        Updates the FWHM of the beam of the `Fitsmap`.
+    update_beam_area(beam_area)
+        Updates the beam area of the beam of the `Fitsmap`.
+    to_unit(final_unit,omega_B=None,freq=None)
+        Converts the `Fitsmap` to a given unit. The conversion is done in place.
+    to_Jy(barea=None,freq=None)
+        Converts the `Fitsmap` to Jy. The conversion is done in place.
+    to_K(barea=None,freq=None)
+        Converts the `Fitsmap` to K. The conversion is done in place. Thermodynamic conversion is assumed.
+    set_name(column,nombre)
+        Sets the name of a given column in the `Fitsmap` header.
+    set_unit(column,unit)
+        Sets the unit of a given column in the `Fitsmap` header.
+    set_units(unit_strin)
+        Sets all the TUNITs in the `Fitsmap` header to a given unit.
+    add_comment(comment)
+        Adds a comment to the `Fitsmap` header.
+    locate_type(string)
+        Searches the the TTYPEs in the `Fitsmap` header for a particular
+        string.
+    write(filename)
+        Writes the `Fitsmap` to a FITS file.
+
+    """
 
     comment_count  = 0
     obs_frequency  = None
@@ -69,6 +255,21 @@ class Fitsmap:
         self.ordering = ordering
 
     def __getitem__(self,sliced):                        # Slicing operation
+        """
+        Returns a `Fitsmap` slice. The slice can be a list of integers,
+        a string or a single integer.
+
+        Parameters
+        ----------
+        sliced : list, str or int
+            The slice to be returned.
+
+        Returns
+        -------
+        outmap : `Fitsmap`
+            The resulting `Fitsmap`.
+
+        """
 
         n = self.nmaps
         if n == 1:
@@ -150,6 +351,15 @@ class Fitsmap:
 # %% -------   ARITHMETIC AND LOGICAL OPERATORS ---------------------------
 
     def __neg__(self):                                  # MINUS operator
+        """
+        Changes the sign of the `Fitsmap` data and mask.
+
+        Returns
+        -------
+        r : `Fitsmap`
+            The resulting `Fitsmap`.
+
+        """
         if self.ismask:
             r = Fitsmap(np.invert(self.data.copy()),
                         np.invert(self.mask.copy()),
@@ -161,6 +371,21 @@ class Fitsmap:
         return r
 
     def __add__(self,other):                           # SUM operator
+        """
+        Adds another `Fitsmap`, a scalar, a vector or a 1D array to the
+        `Fitsmap`.
+
+        Parameters
+        ----------
+        other : `Fitsmap`, scalar, vector or 1D array
+            The object to be added to the `Fitsmap`.
+
+        Returns
+        -------
+        outmap : `Fitsmap`
+            The resulting `Fitsmap`.
+
+        """
 
         compatible,ctype = self.check_compatibility(other)
         header = self.header.copy()
@@ -208,12 +433,43 @@ class Fitsmap:
         return outmap
 
     def __radd__(self, other):                         # reverse SUM
+        """
+        Reversed addition of the `Fitsmap` by another `Fitsmap`, a scalar,
+        a vector or a 1D array.
+
+        Parameters
+        ----------
+        other : `Fitsmap`, scalar, vector or 1D array
+            The object to be added to the `Fitsmap`.
+
+        Returns
+        -------
+        outmap : `Fitsmap`
+            The resulting `Fitsmap`.
+
+        """
         if other == 0:
             return self
         else:
             return self.__add__(other)
 
     def __sub__(self,other):                           # SUBTRACT operator
+        """
+        Subtracts another `Fitsmap`, a scalar, a vector or a 1D array from the
+        `Fitsmap`.
+
+        Parameters
+        ----------
+        other : `Fitsmap`, scalar, vector or 1D array
+            The object to be subtracted from the `Fitsmap`.
+
+        Returns
+        -------
+        outmap : `Fitsmap`
+            The resulting `Fitsmap`.
+
+        """
+
         compatible,ctype = self.check_compatibility(other)
         header = self.header.copy()
         if compatible:
@@ -260,12 +516,43 @@ class Fitsmap:
         return outmap
 
     def __rsub__(self, other):                         # reverse SUBTRACT
+        """
+        Reversed subtraction of the `Fitsmap` by another `Fitsmap`, a scalar,
+        a vector or a 1D array.
+
+        Parameters
+        ----------
+        other : `Fitsmap`, scalar, vector or 1D array
+            The object to be subtracted from the `Fitsmap`.
+
+        Returns
+        -------
+        outmap : `Fitsmap`
+            The resulting `Fitsmap`.
+
+        """
+
         if other == 0:
             return self
         else:
             return self.__sub__(other)
 
     def __mul__(self,other):                           # MULTIPLY operator
+        """
+        Multiplies the `Fitsmap` by another `Fitsmap`, a scalar, a vector or a
+        1D array.
+
+        Parameters
+        ----------
+        other : `Fitsmap`, scalar, vector or 1D array
+            The object to be multiplied by the `Fitsmap`.
+
+        Returns
+        -------
+        outmap : `Fitsmap`
+            The resulting `Fitsmap`.
+
+        """
         compatible,ctype = self.check_compatibility(other)
         header = self.header.copy()
         if compatible:
@@ -2543,6 +2830,36 @@ class Fitsmap:
 """
 
 def read_healpix_map(fname,maskmap=False,freq=None,fwhm=None,maskval=None,verbose=True):
+    """
+    Reads a HEALPix map from a .fits file.
+
+    Parameters
+    ----------
+    fname : string
+        The name of the file from which the `Fitsmap`
+        is to be read.
+    maskmap : bool, optional
+        If True, the map is read as a mask. The default is False.
+    freq : frequency `~astropy.units.quantity.Quantity`, optional
+        The frequency of observation. The default is None.
+    fwhm : `~astropy.units.quantity.Quantity`, optional
+        Full Width Half at Maximum (FWHM). The default is None.
+    maskval : float, optional
+        Value of the pixels that are considered *bad pixels*. The
+        default is None.
+    verbose : bool, optional
+        If True, the method writes some information on screen.
+        n particular, this method writes and posteriorly deletes a temporary
+        FITS file. The verbose option returns the name of this temporary file.
+        The default is True.
+
+    Returns
+    -------
+    maps : `Fitsmap`
+        A `Fitsmap` object.
+
+    """
+
 
     if maskmap:
         maps,h = hp.read_map(fname,field=None,h=True,dtype=None)
@@ -2576,6 +2893,21 @@ def read_healpix_map(fname,maskmap=False,freq=None,fwhm=None,maskval=None,verbos
 
 
 def get_pixel_fwhm(nside):
+    """
+    Returns the FWHM of the pixel window function for a given HEALPix
+    resolution parameter.
+
+    Parameters
+    ----------
+    nside : int
+        HEALPix resolution parameter.
+
+    Returns
+    -------
+    sigma : `~astropy.units.quantity.Quantity`
+        The FWHM of the pixel window function.
+
+    """
 
     theta_max = 5*hp.nside2resol(nside)
     thetarr   = np.linspace(-theta_max,theta_max,1000)
