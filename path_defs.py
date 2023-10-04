@@ -19,7 +19,7 @@ if running_system == 'local':
     homed    = ''
     scratchd = ''
 
-    data_dir = LBdir+'Data/'               # data folder
+    data_dir = LBdir+'Data/Run0/'               # data folder
     src_dir  = LBdir+'Src/'                # code folder
     cat_inp  = LBdir+'Catalogs/Input/'     # input point source catalogues
     cat_out  = LBdir+'Catalogs/Output/'    # output poit source catalogues
@@ -35,7 +35,7 @@ elif running_system.upper() == 'NERSC':
     homed    = os.getenv('HOME')+'/'
     scratchd = os.getenv('SCRATCH')+'/'
 
-    data_dir = '/global/cfs/cdirs/litebird/simulations/maps/PTEP_20200915_compsep/'
+    data_dir = '/global/cfs/projectdirs/litebird/simulations/LB_e2e_simulations/e2e_ns512/'
     src_dir  = homed+'LiteBIRD/src/'
     cat_inp  = scratchd+'LiteBIRD/Results/Catalogues/Input/'
     cat_out  = scratchd+'LiteBIRD/Results/Catalogues/Output/'
@@ -44,6 +44,20 @@ elif running_system.upper() == 'NERSC':
 
     scriptd  = homed+'LiteBIRD/scripts/'
     map_dir  = scratchd+'LiteBIRD/Data/Maps/'
+
+    # Ensure that cat_in, cat_out, scriptd and map_dir exist. If not, create them (only in NERSC)
+
+    if not os.path.exists(cat_inp):
+        os.makedirs(cat_inp)
+
+    if not os.path.exists(cat_out):
+        os.makedirs(cat_out)
+
+    if not os.path.exists(scriptd):
+        os.makedirs(scriptd)
+
+    if not os.path.exists(map_dir):
+        os.makedirs(map_dir)
 
 else:
 
