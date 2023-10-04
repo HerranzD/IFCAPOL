@@ -30,6 +30,15 @@ if running_system == 'local':
     scriptd  = ''
     map_dir  = ''
 
+    # Ensure that cat_in and cat_out directiries exist. If not, create them (locally)
+
+    if not os.path.exists(cat_inp):
+        os.makedirs(cat_inp)
+
+    if not os.path.exists(cat_out):
+        os.makedirs(cat_out)
+
+
 elif running_system.upper() == 'NERSC':
 
 
