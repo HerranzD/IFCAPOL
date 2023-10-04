@@ -31,6 +31,11 @@ from path_defs import IMos_dir
 from path_defs import scriptd,map_dir
 
 
+# %% --- Simulation specific definitions
+
+fknee = '100mHz'
+
+
 # %% --- LITEBIRD IMO
 
 IMo_version = 'V2'   # The currently used version of IMo
