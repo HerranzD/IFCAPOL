@@ -15,11 +15,12 @@ running_system = 'local'     # it can be 'local' or 'NERSC'
 if running_system == 'local':
 
 
-    LBdir    = '/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/'    # main LiteBIRD directory (local)
+    LBdir    = '/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/'
+               # main LiteBIRD directory (local)
     homed    = ''
     scratchd = ''
 
-    data_dir = LBdir+'Data/Run0/'               # data folder
+    data_dir = LBdir+'Data/Run0/'          # data folder
     src_dir  = LBdir+'Src/'                # code folder
     cat_inp  = LBdir+'Catalogs/Input/'     # input point source catalogues
     cat_out  = LBdir+'Catalogs/Output/'    # output poit source catalogues
@@ -31,11 +32,14 @@ if running_system == 'local':
 
 elif running_system.upper() == 'NERSC':
 
-    LBdir    = ''
+
     homed    = os.getenv('HOME')+'/'
+    LBdir    = homed+'LiteBIRD/'
+               # main LiteBIRD directory (NERSC)
     scratchd = os.getenv('SCRATCH')+'/'
 
     data_dir = '/global/cfs/projectdirs/litebird/simulations/LB_e2e_simulations/e2e_ns512/'
+
     src_dir  = homed+'LiteBIRD/src/'
     cat_inp  = scratchd+'LiteBIRD/Results/Catalogues/Input/'
     cat_out  = scratchd+'LiteBIRD/Results/Catalogues/Output/'
