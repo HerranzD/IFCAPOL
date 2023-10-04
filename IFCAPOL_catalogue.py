@@ -213,7 +213,7 @@ def blind_survey(sky_map,fwhm,fname,threshold=3.0,verbose=False):
     fwhm : `~astropy.Quantity`
         The FWHM of the compact sources.
     fname : string
-        File name for the output catalogue od detections.
+        File name for the output catalogue of detections.
     threshold : float, optional
         The sigma (signal-to-noise) detection threshold. The default is 3.0.
     verbose : bool, optional
