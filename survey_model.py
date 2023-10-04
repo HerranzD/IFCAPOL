@@ -33,7 +33,8 @@ from path_defs import scriptd,map_dir
 
 # %% --- Simulation specific definitions
 
-fknee = '100mHz'
+fknee    = '100mHz'
+sim_type = 'binned'
 
 
 # %% --- LITEBIRD IMO
