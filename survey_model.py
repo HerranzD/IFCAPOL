@@ -194,7 +194,10 @@ def read_IMo(IMOversion,IMo_from='tbl'):
 
     return IMO
 
-IMO = read_IMo(IMo_version)
+IMO         = read_IMo(IMo_version)
+
+LBc         = [x for x in IMO.keys()]
+LB_channels = sorted(LBc, key=lambda x: int(x[-3:]))
 
 # %% --- BASIC MAP INPUT
 
