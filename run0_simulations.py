@@ -8,9 +8,8 @@ Created on Wed Oct  4 16:52:57 2023
 
 import os
 from time import time
+import survey_model as survey
 
-from path_defs    import running_system,data_dir
-from survey_model import fknee,sim_type
 
 # %% --- DEFINITIONS
 
@@ -43,14 +42,14 @@ def run0_name(chan_name,sim_number):
 
     str_sim = '{0:04d}'.format(sim_number)
 
-    fname  = data_dir
+    fname  = survey.data_dir
     fname += '{0}FT/'.format(chan_name[0])
     fname += '{0}/'.format(chan_name)
-    fname += '{0}_maps/'.format(sim_type)
+    fname += '{0}_maps/'.format(survey.sim_type)
     fname += 'LB_{0}FT_'.format(chan_name[0])
     fname += chan_name
-    fname += '_{0}_'.format(sim_type)
-    fname += 'cmb_fg_wn_1f_{0}_{1}.fits'.format(fknee,str_sim)
+    fname += '_{0}_'.format(survey.sim_type)
+    fname += 'cmb_fg_wn_1f_{0}_{1}.fits'.format(survey.fknee,str_sim)
 
     return fname
 
