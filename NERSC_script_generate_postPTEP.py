@@ -60,7 +60,7 @@ def make_script(isim,ichan,hours=1,minutes=30):
     lsta.append('srun -n 1 -c 1 -t {0} python3 $HOME/LiteBIRD/src/run_IFCAPOL_on_postPTEP.py {1} {2}'.format(time_str,ichan,isim))
     lsta.append('conda deactivate')
 
-    macro_name = postPTEP.survey.scriptd+'run_nchan{0}_nsim{1}.slurm'.format(ichan,isim)
+    macro_name = postPTEP.survey.scriptd+'Run_scripts/run_nchan{0}_nsim{1}.slurm'.format(ichan,isim)
     save_ascii_list(lsta,macro_name)
 
 def generate_slurm_scripts():
@@ -111,12 +111,12 @@ def generate_submission_script(ichan,sim_list=None):
     else:
         lista = [i for i in range(nsims)]
 
-    fname = postPTEP.survey.scriptd+'submit_nchan{0}.sh'.format(ichan)
+    fname = postPTEP.survey.scriptd+'Submit_scripts/submit_nchan{0}.sh'.format(ichan)
 
     lsubmits = []
 
     for isim in lista:
-        macro_name = postPTEP.survey.scriptd+'run_nchan{0}_nsim{1}.slurm'.format(ichan,
+        macro_name = postPTEP.survey.scriptd+'Run_scripts/run_nchan{0}_nsim{1}.slurm'.format(ichan,
                                                                                  isim)
         lsubmits.append('sbatch '+macro_name)
 
@@ -263,5 +263,22 @@ if __name__ == '__main__':
             test_generate_submission_script()
         else:
             print('ERROR: invalid argument')
+            print(' ')
+            print(' Valid arguments:')
+            print(' ')
+            print('     generate_slurm_scripts')
+            print('     generate_all_submission_scripts')
+            print('     check_submission_status')
+            print('     test_generate_submission_script')
+            print(' ')
+
     else:
         print('ERROR: no argument given')
+        print(' ')
+            print(' Valid arguments:')
+            print(' ')
+            print('     generate_slurm_scripts')
+            print('     generate_all_submission_scripts')
+            print('     check_submission_status')
+            print('     test_generate_submission_script')
+            print(' ')
