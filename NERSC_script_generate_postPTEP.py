@@ -11,7 +11,7 @@ import run0_simulations as postPTEP
 import os
 import sys
 
-nchans = len(postPTEP.LB_channels)
+nchans = len(postPTEP.survey.LB_channels)
 nsims  = 200
 Njobs  = nsims
 
@@ -78,7 +78,7 @@ def generate_slurm_scripts():
     for ichan in range(nchans):
         for isim in range(nsims):
             hours   = 1 + isim//5
-            minutes = 30    
+            minutes = 30
             make_script(isim,ichan,hours,minutes)
 
 # %% --- SUBMISSION SCRIPTS
@@ -93,7 +93,7 @@ def generate_submission_script(ichan,sim_list=None):
     Parameters
     ----------
     ichan : int
-        The channel number. Can take values from 0 to the number of 
+        The channel number. Can take values from 0 to the number of
         LiteBIRD channels (22) minus one.
     sim_list : list, optional
         The list of simulation numbers to run. If None, all the simulations
@@ -105,7 +105,7 @@ def generate_submission_script(ichan,sim_list=None):
     None.
 
     """
-    
+
     if sim_list is not None:
         lista = sim_list.copy()
     else:
@@ -136,7 +136,7 @@ def test_generate_submission_script():
     """
     ichan = 0
     sim_list = [0,1,2]
-    generate_submission_script(ichan,sim_list)  
+    generate_submission_script(ichan,sim_list)
 
 
 # %% --- SUBMISSION SCRIPTS FOR ALL CHANNELS
@@ -154,7 +154,7 @@ def generate_all_submission_scripts():
 
     """
     for ichan in range(nchans):
-        generate_submission_script(ichan)   
+        generate_submission_script(ichan)
 
 # %% --- CHECKING STATUS UF SUBMISSIONS
 
@@ -162,18 +162,18 @@ def check_submission_status(ichan):
     """
     This routine checks the status of the submissions for a given channel.
     The routine checks if the output log file exists for each simulation.
-    It also checks if the output catalogues, with names defined by 
-    postPTEP.detected_catalogue_name() and 
+    It also checks if the output catalogues, with names defined by
+    postPTEP.detected_catalogue_name() and
     postPTEP.cleaned_catalogue_name(), exist for each simulation.
     For every simulation that does not have an output log file and does not
     have both output catalogues, the routine creates a list and generates a
-    new submission script for the simulations in the list using 
+    new submission script for the simulations in the list using
     generate_submission_script().
 
     Parameters
     ----------
     ichan : int
-        The channel number. Can take values from 0 to the number of 
+        The channel number. Can take values from 0 to the number of
         LiteBIRD channels (22) minus one.
 
     Returns
@@ -238,7 +238,7 @@ def check_submission_status(ichan):
 
 if __name__ == '__main__':
     """
-    This routine runs the routines in this file from the command line. It 
+    This routine runs the routines in this file from the command line. It
     can take  four arguments:
         generate_slurm_scripts
         generate_all_submission_scripts
