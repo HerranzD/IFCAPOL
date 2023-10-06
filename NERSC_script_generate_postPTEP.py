@@ -39,28 +39,38 @@ def make_script(isim,ichan,hours=1,minutes=30):
     None.
 
     """
-    time_str = '0{0}:{1}:00'.format(hours,minutes)
+    time_str    = '0{0}:{1}:00'.format(hours,minutes)
+    app_name    = '$HOME/LiteBIRD/src/run_IFCAPOL_on_postPTEP.py'
+    macro_name  = postPTEP.survey.scriptd
+    macro_name += 'Run_scripts/run_nchan{0}_nsim{1}.slurm'.format(ichan,isim)
 
     lsta = []
+
     lsta.append('#!/bin/bash')
     lsta.append('#SBATCH -N 1')
-    lsta.append('#SBATCH -C haswell')
+    lsta.append('#SBATCH -C cpu')
     lsta.append('#SBATCH -q regular')
     lsta.append('#SBATCH -J IFCAPOL_{0}_{1}'.format(ichan,isim))
     lsta.append('#SBATCH --mail-user=herranz@ifca.unican.es')
     lsta.append('#SBATCH --mail-type=ALL')
     lsta.append('#SBATCH --account=mp107')
     lsta.append('#SBATCH -t {0}'.format(time_str))
-    lsta.append('#SBATCH --output={0}Output_Logs/IFCAPOL_nchan{1}_nsim{2}.out'.format(postPTEP.survey.scriptd,ichan,isim))
+    lsta.append('#SBATCH --output={0}Output_Logs/IFCAPOL_nchan{1}_nsim{2}.out'.format(postPTEP.survey.scriptd,
+                                                                                      ichan,isim))
     lsta.append('#SBATCH --chdir={0}'.format(postPTEP.survey.scriptd))
-    lsta.append(' ')
+
+    lsta.append('#OpenMP settings:')
+
+    lsta.append('export OMP_NUM_THREADS=1')
+    lsta.append('export OMP_PLACES=threads')
+    lsta.append('export OMP_PROC_BIND=spread')
+
     lsta.append('#run the application:')
     lsta.append('module load python')
     lsta.append('source activate pycmb')
-    lsta.append('srun -n 1 -c 1 -t {0} python3 $HOME/LiteBIRD/src/run_IFCAPOL_on_postPTEP.py {1} {2}'.format(time_str,ichan,isim))
+    lsta.append('srun -n 1 -c 256 --cpu_bind=cores python3 {0} {1} {2}'.format(app_name,ichan,isim))
     lsta.append('conda deactivate')
 
-    macro_name = postPTEP.survey.scriptd+'Run_scripts/run_nchan{0}_nsim{1}.slurm'.format(ichan,isim)
     save_ascii_list(lsta,macro_name)
 
 def generate_slurm_scripts():
