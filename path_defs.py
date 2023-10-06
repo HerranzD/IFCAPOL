@@ -53,7 +53,7 @@ elif running_system.upper() == 'NERSC':
     cat_inp  = scratchd+'LiteBIRD/Results/Catalogues/Input/'
     cat_out  = scratchd+'LiteBIRD/Results/Catalogues/Output/'
 
-    IMos_dir = ''
+    IMos_dir = scratchd+'LiteBIRD/Data/IMo/'
 
     scriptd  = homed+'LiteBIRD/scripts/'
     map_dir  = scratchd+'LiteBIRD/Data/Maps/'
