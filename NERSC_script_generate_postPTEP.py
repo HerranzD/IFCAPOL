@@ -259,27 +259,27 @@ if __name__ == '__main__':
     """
 
     if len(sys.argv) > 1:
-        if sys.argv[1] == 'generate_slurm_scripts':
+        if sys.argv[1] == 'A':
             generate_slurm_scripts()
-        elif sys.argv[1] == 'generate_all_submission_scripts':
+        elif sys.argv[1] == 'B':
             generate_all_submission_scripts()
-        elif sys.argv[1] == 'check_submission_status':
+        elif sys.argv[1] == 'C':
             if len(sys.argv) > 2:
                 ichan = int(sys.argv[2])
                 check_submission_status(ichan)
             else:
                 print('ERROR: check_submission_status requires a channel number as argument')
-        elif sys.argv[1] == 'test_generate_submission_script':
+        elif sys.argv[1] == 'D':
             test_generate_submission_script()
         else:
             print('ERROR: invalid argument')
             print(' ')
             print(' Valid arguments:')
             print(' ')
-            print('     generate_slurm_scripts')
-            print('     generate_all_submission_scripts')
-            print('     check_submission_status')
-            print('     test_generate_submission_script')
+            print('     A: generate_slurm_scripts')
+            print('     B: generate_all_submission_scripts')
+            print('     C: check_submission_status')
+            print('     D: test_generate_submission_script')
             print(' ')
 
     else:
@@ -287,8 +287,8 @@ if __name__ == '__main__':
         print(' ')
         print(' Valid arguments:')
         print(' ')
-        print('     generate_slurm_scripts')
-        print('     generate_all_submission_scripts')
-        print('     check_submission_status')
-        print('     test_generate_submission_script')
+        print('     A: generate_slurm_scripts')
+        print('     B: generate_all_submission_scripts')
+        print('     C: check_submission_status')
+        print('     D: test_generate_submission_script')
         print(' ')
