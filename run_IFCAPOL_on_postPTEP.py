@@ -36,7 +36,9 @@ p2 = L-1
 chan_number = int(sys.argv[p1])
 sim_number = int(sys.argv[p2])
 
-nmax = len(postPTEP.survey.LB_channels)
+nmax    = len(postPTEP.survey.LB_channels)
+
+snr_cut = 3.5
 
 if chan_number < nmax:
 
@@ -44,7 +46,9 @@ if chan_number < nmax:
 
     if sim_number < 100:
 
-        fname = postPTEP.cleaned_catalogue_name(sim_number,chan_name)
+        fname = postPTEP.cleaned_catalogue_name(sim_number,
+                                                chan_name,
+                                                snrcut=snr_cut)
         if os.path.isfile(fname):
 
             print(' Output catalogue already exists for sim {0} in {1}'.format(

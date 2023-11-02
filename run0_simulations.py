@@ -54,7 +54,7 @@ def run0_name(chan_name,sim_number):
     return fname
 
 
-def detected_catalogue_name(sim_number,chan_name,snrcut):
+def detected_catalogue_name(sim_number,chan_name,snrcut=3.5):
     """
     Returns the name of the blind catalogue of detected source candidates
     for a given Run0 post-PTEP simulation.
@@ -91,7 +91,7 @@ def detected_catalogue_name(sim_number,chan_name,snrcut):
 
     return fname
 
-def cleaned_catalogue_name(sim_number,chan_name,snrcut):
+def cleaned_catalogue_name(sim_number,chan_name,snrcut=3.5):
     """
     Returns the name of the blind catalogue of detected source candidates
     for a given Run0 post-PTEP simulation, after cleaning possible repetitions arising
