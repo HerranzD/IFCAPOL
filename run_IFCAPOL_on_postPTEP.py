@@ -36,11 +36,11 @@ p2 = L-1
 chan_number = int(sys.argv[p1])
 sim_number = int(sys.argv[p2])
 
-nmax = len(postPTEP.LB_channels)
+nmax = len(postPTEP.survey.LB_channels)
 
 if chan_number < nmax:
 
-    chan_name = postPTEP.LB_channels[chan_number]
+    chan_name = postPTEP.survey.LB_channels[chan_number]
 
     if sim_number < 100:
 
