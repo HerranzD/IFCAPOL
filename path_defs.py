@@ -47,7 +47,8 @@ elif running_system.upper() == 'NERSC':
                # main LiteBIRD directory (NERSC)
     scratchd = os.getenv('SCRATCH')+'/'
 
-    data_dir = '/global/cfs/projectdirs/litebird/simulations/LB_e2e_simulations/e2e_ns512/'
+    data_dir = '/global/cfs/projectdirs/litebird/simulations/'
+    data_dir = data_dir+'LB_e2e_simulations/e2e_ns512/2ndRelease/'
 
     src_dir  = homed+'LiteBIRD/src/'
     cat_inp  = scratchd+'LiteBIRD/Results/Catalogues/Input/'
