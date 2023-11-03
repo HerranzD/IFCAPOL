@@ -54,7 +54,7 @@ def run0_name(chan_name,sim_number):
     return fname
 
 
-def detected_catalogue_name(sim_number,chan_name,snrcut=3.5):
+def detected_catalogue_name(sim_number,chan_name_inp,snrcut=3.5):
     """
     Returns the name of the blind catalogue of detected source candidates
     for a given Run0 post-PTEP simulation.
@@ -77,6 +77,13 @@ def detected_catalogue_name(sim_number,chan_name,snrcut=3.5):
     """
 
     from path_defs import cat_out
+
+    if isinstance(chan_name_inp,str):
+        chan_name = chan_name_inp
+    elif isinstance(chan_name_inp,int):
+        chan_name = survey.LB_channels[chan_name_inp]
+    else:
+        print(' Warning: wrong chan_name format in detected_catalogue_name')
 
     simstr         = '{0:04d}'.format(sim_number)
     output_catdir  = cat_out
