@@ -129,11 +129,11 @@ def generate_submission_script(ichan,sim_list=None):
         macro_name = postPTEP.survey.scriptd+'Run_scripts/run_nchan{0}_nsim{1}.slurm'.format(ichan,isim)
         lsubmits.append('sbatch '+macro_name)
 
-    if sim_list is not None:
-        save_ascii_list(lsubmits,fname)
-    else:
-        save_ascii_list(lsubmits[0:100],fname)
-        save_ascii_list(lsubmits[100:],fname.replace('.sh','_b.sh'))
+#    if sim_list is not None:
+    save_ascii_list(lsubmits,fname)
+    # else:
+    #     save_ascii_list(lsubmits[0:100],fname)
+    #     save_ascii_list(lsubmits[100:],fname.replace('.sh','_b.sh'))
 
 # Test the routine with a single simulation for channel 0 and sim_list = [0,1,2]
 
