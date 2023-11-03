@@ -87,7 +87,7 @@ def generate_slurm_scripts():
     """
     for ichan in range(nchans):
         for isim in range(nsims):
-            hours   = 1 + isim//5
+            hours   = 1 + ichan//5
             minutes = 30
             make_script(isim,ichan,hours,minutes)
 
