@@ -78,7 +78,7 @@ def generate_slurm_scripts():
     This routine generates automatically the Slurm scripts needed to run
     the IFCAPOL source extraction over all the LiteBIRD postPTEP Run0
     simulations at NERSC. The number of hours to run the simulations is 10 if
-    the number sim is smaller than 20, 15 in any other case.
+    the channel number ichan is smaller than 20, 15 in any other case.
 
     Returns
     -------
@@ -87,7 +87,7 @@ def generate_slurm_scripts():
     """
     for ichan in range(nchans):
         for isim in range(nsims):
-            if isim < 20:
+            if ichan < 20:
                 hours = 10
             else:
                 hours = 15
