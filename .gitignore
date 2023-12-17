@@ -17,6 +17,8 @@ update_personal_code.py
 PTEP_spurious.py
 non_matched_local.py
 NERSC_download_script.py
+testing.py
+estudia_tiempos.py
 
 # Ignora archivos temporales
 temp.jpg

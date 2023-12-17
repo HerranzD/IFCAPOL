@@ -19,9 +19,11 @@ from myutils        import sigma2fwhm,table2skycoord
 chan_name    = 'LB_LFT_40'
 #chan_name    = 'LB_HFT_337'
 
-coadded_file = survey.data_dir+chan_name+'_coadd_signal_map_0000_PTEP_20200915_compsep.fits'
-noise_file   = survey.data_dir+chan_name+'_noise_FULL_0000_PTEP_20200915_compsep.fits'
-ps_file      = survey.data_dir+'radio_sources_'+chan_name[3:]+'_uKcmb_nside512.fits'
+data_dir = '/Users/herranz/Dropbox/Trabajo/LiteBird/Source_Extractor/Data/'
+
+coadded_file = data_dir+chan_name+'_coadd_signal_map_0000_PTEP_20200915_compsep.fits'
+noise_file   = data_dir+chan_name+'_noise_FULL_0000_PTEP_20200915_compsep.fits'
+ps_file      = data_dir+'radio_sources_'+chan_name[3:]+'_uKcmb_nside512.fits'
 
 
 
@@ -37,7 +39,7 @@ radiops = survey.load_LiteBIRD_map(ps_file,chan_name=chan_name)
 
 # %% --- TOTAL MAP
 
-totmap_file = survey.data_dir+chan_name+'_testing_map_0000_PTEP_20200915_compsep.fits'
+totmap_file = data_dir+chan_name+'_testing_map_0000_PTEP_20200915_compsep.fits'
 
 if os.path.isfile(totmap_file):
     total = survey.load_LiteBIRD_map(totmap_file,chan_name=chan_name)
@@ -47,7 +49,7 @@ else:
 
 # %% --- POINT SOURCE MOCK CATALOGUE FOR TESTING
 
-mock_catalogue_fname = survey.data_dir+'mock_ps_catalogue_'+chan_name[3:]+'_uKcmb_nside512.fits'
+mock_catalogue_fname = data_dir+'mock_ps_catalogue_'+chan_name[3:]+'_uKcmb_nside512.fits'
 
 def create_mock_point_source_catalogue():
 
