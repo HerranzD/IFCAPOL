@@ -39,7 +39,7 @@ sim_type = 'binned'
 
 # %% --- LITEBIRD IMO
 
-IMo_version = 'V2'   # The currently used version of IMo
+IMo_version = 'V2'   # The currently used version of IMo is V2
 
 
 def read_IMo(IMOversion,IMo_from='tbl'):
@@ -65,7 +65,8 @@ def read_IMo(IMOversion,IMo_from='tbl'):
 
     if 'ptep' in IMOversion.lower():
 
-        IMO = np.load(src_dir+'instrument_LB_IMOv1.npy', allow_pickle=True).item()
+        IMo_dir = IMos_dir+'iMo.v1/'
+        IMO = np.load(IMo_dir+'instrument_LB_IMOv1.npy', allow_pickle=True).item()
 
         for k in IMO.keys():    # add physical units to the IMO dictionary.
                                 # Beams will be asumed to be FWHM values.
@@ -197,7 +198,11 @@ def read_IMo(IMOversion,IMo_from='tbl'):
 IMO         = read_IMo(IMo_version)
 
 LBc         = [x for x in IMO.keys()]
-LB_channels = sorted(LBc, key=lambda x: int(x[-3:]))
+
+if IMo_version.lower() != 'ptep':
+    LB_channels = sorted(LBc, key=lambda x: int(x[-3:]))
+else:
+    LB_channels = LBc.copy()
 
 # %% --- BASIC MAP INPUT
 
