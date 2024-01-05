@@ -546,7 +546,7 @@ class Imagen:
 
 # %% ---- PLOTTING ----------------------
 
-    def plot(self):
+    def plot(self,**kwargs):
         """
         Basic plotting of the data in Imagen.datos
 
@@ -558,7 +558,8 @@ class Imagen:
         wcs = self.wcs
         fig = plt.figure()
         fig.add_subplot(111, projection=wcs)
-        plt.imshow(np.flipud(np.fliplr(self.datos)),  cmap=plt.cm.viridis)
+        plt.imshow(np.flipud(np.fliplr(self.datos)),
+                   cmap=plt.cm.viridis,**kwargs)
         plt.xlabel('RA')
         plt.ylabel('Dec')
 
@@ -569,7 +570,8 @@ class Imagen:
              animated   = False,
              coord_grid = False,
              colorbar   = True,
-             tofile     = None):
+             tofile     = None,
+             **kwargs):
         """
         Advanced plotting of the data in *Imagen.datos* .
         The plot uses World Coordinate System and can be placed inside a
@@ -605,7 +607,7 @@ class Imagen:
         if newfig:
             plt.figure()
         plt.subplot(pos,projection=wcs)
-        plt.imshow(np.flipud(np.fliplr(self.datos)),origin='lower')
+        plt.imshow(np.flipud(np.fliplr(self.datos)),origin='lower',**kwargs)
         if coord_grid:
             plt.grid(color='white', ls='dotted')
         if self.image_coordsys == 'galactic':
@@ -671,7 +673,7 @@ class Imagen:
                 w.wcs.ctype = ["GLON-TAN", "GLAT-TAN"]
             else:
                 w.wcs.crval = [c.icrs.ra.deg, c.icrs.dec.deg]
-                w.wcs.ctype = ["RA-TAN", "DEC-TAN"]
+                w.wcs.ctype = ["RA---TAN", "DEC--TAN"]
             w.wcs.cunit = ['deg','deg']
 
         return w
@@ -693,7 +695,7 @@ class Imagen:
 
     def pixel_coordinate(self,i,j):
         """
-        Returns the sky coordinate of a given pixel of the `Imagen`.
+        Returns the `SkyCoord` of a given pixel.
 
         Parameters
         ----------
@@ -705,38 +707,36 @@ class Imagen:
         Returns
         -------
         `~astropy.coordinates.SkyCoord`
-            The sky coordinate of the i,j pixel.
+            The sky coordinate of the pixel (i,j).
 
         """
-        s = self.size
-        p = np.array(self.wcs.wcs_pix2world(s[1]-j,s[0]-i,1))
-        return SkyCoord(p[0],p[1],unit='deg',frame=self.image_coordsys)
+
+        w = self.wcs.copy()
+        c = SkyCoord.from_pixel(i,j,w)
+        return c
 
     def coordinate_pixel(self,coord):
         """
-        Return the pixel index of the pixel nearest to a given coordinate.
+        Returns the pixel indices of a given sky coordinate.
 
         Parameters
         ----------
         coord : `~astropy.coordinates.SkyCoord`
-            A coordinate in the sky.
+            The sky coordinate of the pixel (i,j).
 
         Returns
         -------
-        int
+        i : int or float
             The pixel index along the x-axis.
-        int
+        j : int or float
             The pixel index along the y-axis.
 
         """
-        if self.image_coordsys == 'galactic':
-            l = coord.galactic.l.deg
-            b = coord.galactic.b.deg
-        else:
-            l = coord.icrs.ra.deg
-            b = coord.icrs.dec.deg
-        x = self.wcs.wcs_world2pix(l,b,1)
-        return x[1],x[0]
+
+        w = self.wcs.copy()
+        p = coord.to_pixel(w)
+        return p[0],p[1]
+
 
     def angular_distance(self,i1,j1,i2,j2):
         """
@@ -764,6 +764,8 @@ class Imagen:
         c2 = self.pixel_coordinate(i2,j2)
         d  = hp.rotator.angdist(coord2vec(c1),coord2vec(c2))*u.rad
         return d
+
+
 
 
 # %% ---- POSTSTAMPS -------------
