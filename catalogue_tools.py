@@ -19,6 +19,21 @@ from myutils import table2skycoord,coord2healpix,write_blank
 # %%  ----- SPECTIFIC INPUT
 
 def load_astrocat(fname):
+    """
+    Loads an astrocat catalogue and converts all coordinate columns with units
+    in degrees to astropy units of degrees (u.deg)
+
+    Parameters
+    ----------
+    fname : str
+        Path to the catalogue file
+
+    Returns
+    -------
+    t : astropy.table.Table
+        Table with the catalogue data
+    """
+
     t = Table.read(fname)
     for col in t.colnames:
         try:
@@ -31,7 +46,26 @@ def load_astrocat(fname):
 # %%  ----- CATALOGUE PROPERTIES
 
 def get_typical_separations(catalogue):
+    """
+    Computes the typical separations between astronomical objects 
+    in a catalogue in degrees (u.deg) units using the astropy.coordinates
+    module.
 
+    Parameters
+    ----------
+    catalogue : astropy.table.Table
+        Table with the catalogue data
+
+    Returns
+    -------
+    dmin : astropy.units.quantity.Quantity
+        Minimum separation between objects in the catalogue in degrees (u.deg)  
+    dmean : astropy.units.quantity.Quantity
+        Mean separation between objects in the catalogue in degrees (u.deg)
+    dmax : astropy.units.quantity.Quantity
+        Maximum separation between objects in the catalogue in degrees (u.deg)
+    """
+    
     c = table2skycoord(catalogue)
     x = c.match_to_catalog_sky(c,nthneighbor=2)
     d = x[1]
@@ -40,6 +74,24 @@ def get_typical_separations(catalogue):
 # %%  ----- CATALOGUE MATCHING
 
 def coord_in_catalogue(coordinate,catalogue,rsearch):
+    """
+    Checks if a given sky coordinate is in a catalogue within a given search radius 
+
+    Parameters
+    ----------
+    coordinate : astropy.coordinates.SkyCoord
+        Sky coordinate to be checked
+    catalogue : astropy.table.Table
+        Table with the catalogue data
+    rsearch : astropy.units.quantity.Quantity
+        Search radius as an astropy quantity
+
+    Returns
+    -------
+    bool
+        True if the coordinate is in the catalogue within the search radius
+        False otherwise.
+    """
 
     c = table2skycoord(catalogue)
     d = c.separation(coordinate)
@@ -50,9 +102,23 @@ def coord_in_catalogue(coordinate,catalogue,rsearch):
         return False
 
 def extract_nearest_object(catalogue,coordinate):
+    """
+    Finds and extracts, in a catalogue, the nearest object to a given sky coordinate    
 
-#    Finds and extracts, in a catalogue, the nearest object to a
-#    given sky coordinate
+    Parameters
+    ----------
+    catalogue : astropy.table.Table
+        Table with the catalogue data
+    coordinate : astropy.coordinates.SkyCoord
+        Sky coordinate to be checked 
+
+    Returns
+    -------
+    astropy.table.Table
+        Table with the data of the nearest object to the given coordinate. 
+        This table has an additional column with the separation between the
+        coordinate and the nearest object.  
+    """
 
     c = table2skycoord(catalogue)
     d = c.separation(coordinate)
@@ -69,7 +135,40 @@ def cat_match(cat1,cat2,radius,
               coord2=None,
               return_indexes=False,
               table_names=None):
+    """
+    Matches two catalogues within a given search radius and returns the matched 
+    catalogue.  
 
+    Parameters
+    ----------
+    cat1 : astropy.table.Table
+        Table with the first catalogue data 
+    cat2 : astropy.table.Table
+        Table with the second catalogue data
+    radius : astropy.units.quantity.Quantity
+        Search radius as an astropy quantity
+    coord1 : astropy.coordinates.SkyCoord, optional
+        Sky coordinates of the first catalogue. If not given, they are computed
+        from the catalogue data. The default is None. 
+    coord2 : astropy.coordinates.SkyCoord, optional
+        Sky coordinates of the second catalogue. If not given, they are computed
+        from the catalogue data. The default is None.   
+    return_indexes : bool, optional
+        If True, the function returns the indexes of the matched objects in the 
+        two catalogues. The default is False.
+    table_names : list, optional
+        List with the names of the two catalogues. The default is None.
+
+    Returns
+    -------
+    astropy.table.Table
+        Table with the data of the matched objects. This table has an additional 
+        column with the separation between the matched objects.
+    tuple of numpy.ndarray
+        Tuple of two numpy arrays with the indexes of the matched objects in the 
+        two catalogues. This is returned only if return_indexes is True.
+    """
+    
     if coord1 is not None:
         c1         = coord1
     else:
@@ -99,7 +198,40 @@ def cat1_in_cat2(cat1,cat2,radius,
                  coord2=None,
                  return_indexes=False,
                  table_names=None):
+    """
+    Matches two catalogues within a given search radius and returns the objects
+    in the first catalogue that are in the second catalogue.    
 
+    Parameters
+    ----------
+    cat1 : astropy.table.Table
+        Table with the first catalogue data 
+    cat2 : astropy.table.Table
+        Table with the second catalogue data
+    radius : astropy.units.quantity.Quantity
+        Search radius as an astropy quantity    
+    coord1 : astropy.coordinates.SkyCoord, optional
+        Sky coordinates of the first catalogue. If not given, they are computed
+        from the catalogue data. The default is None.   
+    coord2 : astropy.coordinates.SkyCoord, optional
+        Sky coordinates of the second catalogue. If not given, they are computed
+        from the catalogue data. The default is None.
+    return_indexes : bool, optional
+        If True, the function returns the indexes of the matched objects in the 
+        first catalogue. The default is False.
+    table_names : list, optional
+        List with the names of the two catalogues. The default is None.
+
+    Returns
+    -------
+    astropy.table.Table
+        Table with the data of the matched objects. This table has an additional 
+        column with the separation between the matched objects. 
+    numpy.ndarray
+        Numpy array with the indexes of the matched objects in the first catalogue.
+        This is returned only if return_indexes is True.
+    """
+    
     if coord1 is not None:
         c1         = coord1
     else:
@@ -125,7 +257,40 @@ def cat1_not_in_cat2(cat1,cat2,radius,
                      coord2=None,
                      return_indexes=False,
                      table_names=None):
+    """
+    Matches two catalogues within a given search radius and returns the objects 
+    in the first catalogue that are not in the second catalogue.    
 
+    Parameters
+    ----------
+    cat1 : astropy.table.Table
+        Table with the first catalogue data
+    cat2 : astropy.table.Table
+        Table with the second catalogue data
+    radius : astropy.units.quantity.Quantity
+        Search radius as an astropy quantity
+    coord1 : astropy.coordinates.SkyCoord, optional
+        Sky coordinates of the first catalogue. If not given, they are computed
+        from the catalogue data. The default is None.
+    coord2 : astropy.coordinates.SkyCoord, optional
+        Sky coordinates of the second catalogue. If not given, they are computed
+        from the catalogue data. The default is None.
+    return_indexes : bool, optional
+        If True, the function returns the indexes of the matched objects in the 
+        first catalogue. The default is False.
+    table_names : list, optional
+        List with the names of the two catalogues. The default is None.
+
+    Returns
+    -------
+    astropy.table.Table
+        Table with the data of the matched objects. This table has an additional 
+        column with the separation between the matched objects. 
+    numpy.ndarray
+        Numpy array with the indexes of the matched objects in the first catalogue.
+        This is returned only if return_indexes is True.
+    """
+    
     if coord1 is not None:
         c1         = coord1
     else:
@@ -149,6 +314,23 @@ def cat1_not_in_cat2(cat1,cat2,radius,
 # %%  ----- CLEAN REPEATED POSITIONS
 
 def clean_first_repetition(catalogue,dist):
+    """
+    Removes the first repetition of objects in a catalogue within a given 
+    separation. The first repetition is defined as the repetition of an object
+    with a lower index in the catalogue.    
+
+    Parameters
+    ----------  
+    catalogue : astropy.table.Table 
+        Table with the catalogue data
+    dist : astropy.units.quantity.Quantity
+        Separation as an astropy quantity
+
+    Returns
+    -------
+    astropy.table.Table 
+        Table with the cleaned catalogue data
+    """
 
     c           = table2skycoord(catalogue)
     idx,d2d,d3d = match_coordinates_sky(c,c,nthneighbor=2)
@@ -163,6 +345,32 @@ def clean_first_repetition(catalogue,dist):
     return catalogue[keeps]
 
 def clean_repetitions(catalogue,dist,verbose=False,return_cleaned=False):
+    """
+    Removes all repetitions of objects in a catalogue within a given separation.
+    Repetitions are defined as the repetition of an object with a lower index   
+    in the catalogue.   
+
+    Parameters
+    ----------
+    catalogue : astropy.table.Table
+        Table with the catalogue data
+    dist : astropy.units.quantity.Quantity
+        Separation as an astropy quantity
+    verbose : bool, optional
+        If True, the function prints the number of objects in the catalogue before
+        and after the cleaning. The default is False.
+    return_cleaned : bool, optional
+        If True, the function returns a tuple with the cleaned catalogue and the
+        objects that have been removed. The default is False.
+
+    Returns
+    -------
+    astropy.table.Table
+        Table with the cleaned catalogue data. This table has an additional column
+        with the separation between the matched objects.        
+    tuple of astropy.table.Table
+        Tuple with the cleaned catalogue and the objects that have been removed.    
+    """
 
     newcat = catalogue.copy()
     l0     = len(newcat)
@@ -191,6 +399,38 @@ def clean_repetitions(catalogue,dist,verbose=False,return_cleaned=False):
 # %%  ----- EFFECTIVE SKY AREA AND HEALPIX PATCHING
 
 def effective_area(table,method='conservative',verbose=True,remove_borders=True):
+    """
+    Computes the effective sky area of a catalogue and the optimal HEALPix  
+    resolution to cover the catalogue. The effective sky area is computed as the
+    area of the smallest HEALPix patch that covers the catalogue. The optimal 
+    HEALPix resolution is computed as the largest resolution that covers the
+    catalogue with a typical separation between objects in the catalogue.   
+
+    Parameters
+    ----------
+    table : astropy.table.Table
+        Table with the catalogue data
+    method : str, optional
+        Method to compute the optimal HEALPix resolution. If 'conservative', the
+        resolution is computed as the largest resolution that covers the catalogue
+        with the maximum separation between objects in the catalogue. If 'mean',
+        the resolution is computed as the largest resolution that covers the
+        catalogue with the mean separation between objects in the catalogue. The
+        default is 'conservative'.
+    verbose : bool, optional
+        If True, the function prints the typical separation between objects in the
+        catalogue, the optimal HEALPix resolution and the effective sky area.
+        The default is True.
+    remove_borders : bool, optional
+        If True, the function removes the HEALPix pixels at the borders of the
+        catalogue. The default is True.
+
+    Returns
+    -------
+    dict
+        Dictionary with the HEALPix pixel indexes, the optimal HEALPix resolution
+        and the effective sky area.
+    """
 
     dmin,dmean,dmax = get_typical_separations(table)
     if method == 'conservative':
@@ -242,6 +482,42 @@ def find_common_area(cat1,cat2,
                      method='conservative',
                      verbose=True,
                      remove_borders=True):
+    """
+    Computes the effective sky area of the common area between two catalogues
+    and the optimal HEALPix resolution to cover the common area. The effective
+    sky area is computed as the area of the smallest HEALPix patch that covers
+    the common area. The optimal HEALPix resolution is computed as the largest
+    resolution that covers the common area with a typical separation between
+    objects in the common area.
+
+    Parameters
+    ----------
+    cat1 : astropy.table.Table
+        Table with the first catalogue data
+    cat2 : astropy.table.Table
+        Table with the second catalogue data
+    method : str, optional
+        Method to compute the optimal HEALPix resolution. If 'conservative', the
+        resolution is computed as the largest resolution that covers the common
+        area with the maximum separation between objects in the common area. If
+        'mean', the resolution is computed as the largest resolution that covers
+        the common area with the mean separation between objects in the common
+        area. The default is 'conservative'.
+    verbose : bool, optional
+        If True, the function prints the typical separation between objects in the
+        common area, the optimal HEALPix resolution and the effective sky area.
+        The default is True.
+    remove_borders : bool, optional
+        If True, the function removes the HEALPix pixels at the borders of the
+        common area. The default is True.
+
+    Returns
+    -------
+    dict
+        Dictionary with the HEALPix pixel indexes, the optimal HEALPix resolution
+        and the effective sky area.
+    """ 
+
     if verbose:
         write_blank(verbose)
         print(' ---- CATALOGUE 1 ')
@@ -333,4 +609,15 @@ def find_common_area(cat1,cat2,
 PCNT_file = '/Users/herranz/Trabajo/Planck/Non_Thermal_Catalogue/Paper/SVN/PIP_127_Herranz/Catalogue/PCNT.fits'
 
 def load_PCNT():
+    """
+    Loads the Planck Planck Catalogue of Non Thermal sources catalogue 
+    and converts all coordinate columns with units
+    in degrees to astropy units of degrees (u.deg)  
+
+    Returns
+    -------
+    astropy.table.Table
+        Table with the catalogue data
+    """
+
     return load_astrocat(PCNT_file)
