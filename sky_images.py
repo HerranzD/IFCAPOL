@@ -6,25 +6,29 @@ Created on Tue Mar 20 16:43:56 2018
 @author: herranz
 """
 
-import numpy as np
+import numpy             as np
 import matplotlib.pyplot as plt
-import matched_filter as mf
-import healpy as hp
-import astropy.units as u
-import astropy.io.fits as fits
+import matched_filter    as mf
+import healpy            as hp
+import astropy.units     as u
+import astropy.io.fits   as fits
+import mhwn              as mhwn
+
 from astropy.coordinates import SkyCoord
-from astropy import wcs
-from astropy.nddata import block_reduce,block_replicate
-from astropy.nddata import Cutout2D
-from astropy.table  import Table
-from astropy.time   import Time
-from scipy.stats import describe
-from image_utils import ring_min,ring_max,ring_mean,ring_std,ring_sum,ring_count,ring_median
-from image_utils import min_in_circle,max_in_circle,sum_in_circle,count_in_circle,median_in_circle
-from gauss_window import makeGaussian
-from myutils import coord2vec,img_shapefit,sigma2fwhm,fwhm2sigma
-from gauss2dfit import fit_single_peak
-from scipy.ndimage import gaussian_filter,convolve
+from astropy             import wcs
+from astropy.nddata      import block_reduce,block_replicate
+from astropy.nddata      import Cutout2D
+from astropy.table       import Table
+from astropy.time        import Time
+from scipy.stats         import describe
+from image_utils         import ring_min,ring_max,ring_mean
+from image_utils         import ring_std,ring_sum,ring_count,ring_median
+from image_utils         import min_in_circle,max_in_circle
+from image_utils         import sum_in_circle,count_in_circle,median_in_circle
+from gauss_window        import makeGaussian
+from myutils             import coord2vec,img_shapefit,sigma2fwhm,fwhm2sigma
+from gauss2dfit          import fit_single_peak
+from scipy.ndimage       import gaussian_filter,convolve
 
 
 class Imagen:
@@ -546,9 +550,14 @@ class Imagen:
 
 # %% ---- PLOTTING ----------------------
 
-    def plot(self,**kwargs):
+    def plot(self,planck_convention=True,**kwargs):
         """
         Basic plotting of the data in Imagen.datos
+
+        Parameters
+        ----------
+        planck_convention : bool, optional
+            If True, the data array is flipped to follow Planck convention
 
         Returns
         -------
@@ -558,19 +567,25 @@ class Imagen:
         wcs = self.wcs
         fig = plt.figure()
         fig.add_subplot(111, projection=wcs)
-        plt.imshow(np.flipud(np.fliplr(self.datos)),
-                   cmap=plt.cm.viridis,**kwargs)
+        if planck_convention:
+            plt.imshow(np.flipud(np.fliplr(self.datos)),
+                       cmap=plt.cm.viridis,**kwargs)
+        else:
+            plt.imshow(self.datos,
+                       cmap=plt.cm.viridis,**kwargs)
+
         plt.xlabel('RA')
         plt.ylabel('Dec')
 
 
     def draw(self,
-             pos        = 111,
-             newfig     = False,
-             animated   = False,
-             coord_grid = False,
-             colorbar   = True,
-             tofile     = None,
+             pos               = 111,
+             newfig            = False,
+             animated          = False,
+             coord_grid        = False,
+             colorbar          = True,
+             tofile            = None,
+             planck_convention = True,
              **kwargs):
         """
         Advanced plotting of the data in *Imagen.datos* .
@@ -596,6 +611,8 @@ class Imagen:
         tofile : str or None, optional
             If not None, the method saves the figure to a file specified by
             this parameter. The default is None.
+        planck_convention : bool, optional
+                If True, the data array is flipped to follow Planck convention
 
         Returns
         -------
@@ -607,7 +624,10 @@ class Imagen:
         if newfig:
             plt.figure()
         plt.subplot(pos,projection=wcs)
-        plt.imshow(np.flipud(np.fliplr(self.datos)),origin='lower',**kwargs)
+        if planck_convention:
+            plt.imshow(np.flipud(np.fliplr(self.datos)),origin='lower',**kwargs)
+        else:
+            plt.imshow(self.datos,origin='lower',**kwargs)
         if coord_grid:
             plt.grid(color='white', ls='dotted')
         if self.image_coordsys == 'galactic':
@@ -795,9 +815,9 @@ class Imagen:
         r.image_header = None
         return r
 
-    def stamp_coord(self,coord,lado):
+    def stamp_coord(self,coord,lado,draw_box=False):
         """
-        Creates a poststamp of the sky `Imagen` around a given coordinate.
+        Creates a poststamp of the sky `Image` around a given coordinate.
 
         Parameters
         ----------
@@ -805,7 +825,11 @@ class Imagen:
             The coordinate around which the poststamp is generated.
         lado : int
             The size, in number of pixels per side, of the poststamp.
-
+        draw_box : bool, optional
+            If True, a new figure is created and the original image is
+            plotted with a box showing the position and size of the poststamp,
+            using the plot_on_original method.
+            The default is False.
         Returns
         -------
         output_img : `Imagen`
@@ -816,15 +840,41 @@ class Imagen:
 
         imagen      = fits.PrimaryHDU(self.datos)
         wcs0        = wcs.WCS(self.header)
-        wcs1        = wcs0.copy()
-        cutout      = Cutout2D(imagen.data,
-                               position=coord,
-                               size=lado,
-                               wcs=wcs1,
-                               mode='partial')
-        imagen.data = cutout.data
-        imagen.header.update(cutout.wcs.to_header())
-        output_img  = Imagen.from_hdu(imagen)
+
+        # Create a Cutout2D object
+        # The cutout is centered at the given position.
+        # The size of the cutout is given in pixels.
+        # The wcs is the same as the original wcs.
+        # The mode is 'partial' (default) or 'trim'.
+        # The fill_value is the value used to fill pixels outside the original image.
+        # The copy_data is True (default) or False.
+        # The wcs is updated in the header of the cutout image.
+        # The cutout image is returned as an astropy.io.fits.PrimaryHDU object.
+
+        cutout      = Cutout2D(imagen.data,coord,lado,wcs=wcs0,mode='partial',fill_value=0,copy=True)
+
+        # Create a new Image object from the cutout image
+        # The data is the cutout data.
+        # The centro is the colatitude and longitude (theta,phi) coordinates, in degrees, of
+        # the center of the image, using the Planck healpix convenion
+        # The size is the size in pixels of the image (xsize,ysize).
+        # The pixsize is the same as the pixsize of the original image.
+        # The image_header is the header of the cutout image but with the WCS updated to the cutout WCS.
+        # The image header is updated with the cutout image size.
+        # The image_coordsys is the same as the original image.
+        # The date and time of the cutout is added to the header.
+
+        centro = np.array([90.0-coord.galactic.b.deg,coord.galactic.l.deg])
+        output_img  = Imagen(cutout.data,centro,np.array(cutout.data.shape),self.pixsize)
+        output_img.image_header   = self.header
+        output_img.image_header.update(cutout.wcs.to_header())
+        output_img.image_header.update({('NAXIS1',lado)})
+        output_img.image_header.update({('NAXIS2',lado)})
+        output_img.image_header.update({('FDATE',Time.now().iso,'date of cutout')})
+        output_img.image_coordsys = self.image_coordsys
+
+        if draw_box:
+            cutout.plot_on_original(color='white',linewidth=1.0)
 
         return output_img
 
@@ -976,6 +1026,48 @@ class Imagen:
             cmap.draw(newfig=True)
 
         return cmap
+
+    def mhw(self,fwhm=1.0*u.deg,order=2,toplot=False):
+        """
+        Runs a Mexican Haw Wavelet filter of the desired order.
+
+        Parameters
+        ----------
+        fwhm : `~astropy.units.quantity.Quantity` or array, optional
+            The FWHM of the Mexican Hat Wavelet filter.  If an array is
+            provided, this variable stores the psf of a point source in
+            Fourier space. The default is 1.0*u.deg.
+        order : int, optional
+            The order of the Mexican Hat Wavelet filter. The default is 2.
+        toplot : bool, optional
+            If True, the filtered image is plotted in a new figure.
+            The default is False.
+
+        Returns
+        -------
+        filtered : `Imagen`
+            An `Imagen` with the same parameters as the parent `Imagen`
+            whose *datos* attribute contains the filtered version
+            of the parent `Imagen`.
+        r : dictionary
+            A dictionary containing the filtered image and the wavelet
+            coefficients. See mhwn.mhwn_filter for details.
+
+        """
+
+        if np.size(fwhm) == 1:
+            sigma = fwhm2sigma*(fwhm/self.pixsize).si.value
+        else:
+            sigma = fwhm
+
+        r     = mhwn.mhwn_filter(self.datos,sigma,
+                                 order=order,toplot=toplot)
+
+        filtered       = self.copy()
+        filtered.datos = r['filtered_image']
+
+        return filtered,r
+
 
 # %% ---- FITTING -----------------------
 
