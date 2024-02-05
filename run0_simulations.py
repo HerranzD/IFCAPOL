@@ -7,8 +7,12 @@ Created on Wed Oct  4 16:52:57 2023
 """
 
 import os
-from time import time
-import survey_model as survey
+import survey_model as     survey
+import healpy       as     hp
+
+from time           import time
+from astropy.table  import Table
+
 
 
 # %% --- DEFINITIONS
@@ -19,6 +23,73 @@ overwrite_existing   = True     # if True, the detect_sources routine runs
                                 # previous run of the code.
 
 # %% --- FILE NAMING ROUTINES
+
+def input_radio_source_catalogue_name(chan_name):
+    """
+    Returns the name of the input radio source catalogue for the given
+    channel.
+
+    Parameters
+    ----------
+    chan_name : str
+        Channel name.
+
+    Returns
+    -------
+    fname : str
+        File name.
+
+    """
+
+    return survey.cat_inp+'radio_sources_catalogue_{0}.fits'.format(chan_name)
+
+def point_source_map_name(chan_name):
+    """
+    Returns the name of the radio point source map for the given channel.
+
+    Parameters
+    ----------
+    chan_name : str
+        Channel name.
+
+    Returns
+    -------
+    fname : str
+        File name.
+
+    """
+
+    ps_dir = survey.data_dir+'foregrounds/radio_sources/'
+
+    source_id = ['LFT_40',
+                 'LFT_50',
+                 'LFT_60',
+                 'LFT_68a',
+                 'LFT_68b',
+                 'LFT_78a',
+                 'LFT_78b',
+                 'LFT_89a',
+                 'LFT_89b',
+                 'MFT_100',
+                 'LFT_100',
+                 'MFT_119',
+                 'LFT_119',
+                 'MFT_140',
+                 'LFT_140',
+                 'MFT_166',
+                 'HFT_195',
+                 'MFT_195',
+                 'HFT_235',
+                 'HFT_280',
+                 'HFT_337',
+                 'HFT_402']
+
+    band_str = source_id[survey.LB_channels.index(chan_name)]
+
+    fname = ps_dir+'radio_sources_{0}_uKrj_nside512.fits'.format(band_str)
+
+    return fname
+
 
 def run0_name(chan_name,sim_number):
     """
@@ -101,8 +172,8 @@ def detected_catalogue_name(sim_number,chan_name_inp,snrcut=3.5):
 def cleaned_catalogue_name(sim_number,chan_name,snrcut=3.5):
     """
     Returns the name of the blind catalogue of detected source candidates
-    for a given Run0 post-PTEP simulation, after cleaning possible repetitions arising
-    from overlapping sky patches.
+    for a given Run0 post-PTEP simulation, after cleaning possible
+    repetitions arising from overlapping sky patches.
 
     Parameters
     ----------
@@ -125,6 +196,59 @@ def cleaned_catalogue_name(sim_number,chan_name,snrcut=3.5):
                               '_{0}_cleaned.fits'.format(catalogue_clean_mode))
 
     return fname_out
+
+
+
+# %% --- INPUT RADIO SOURCE CATALOGUES
+
+def create_INPUT_point_source_catalogue(chan_name):
+    """
+    Creates a catalogue of point sources from a point source HEALPix map and
+    stores it in the appropriate output folder
+
+    Parameters
+    ----------
+    chan_name : srt
+        The name of the LiteBIRD channel
+
+    Returns
+    -------
+    peaks : astropy.table.Table
+        The table of detected peaks
+    valleys : astropy.table.Table
+        The table of detected valleys
+
+    """
+
+    fname   = point_source_map_name(chan_name)
+    radiops = survey.load_LiteBIRD_map(fname,chan_name=chan_name)
+
+    sources = radiops[0].data
+    minmax  = hp.hotspots(sources)
+    peaks   = {'Ipix':minmax[2],
+               'RA':radiops.pixel_to_coordinates(minmax[2]).icrs.ra,
+               'DEC':radiops.pixel_to_coordinates(minmax[2]).icrs.dec,
+               'GLON':radiops.pixel_to_coordinates(minmax[2]).galactic.l,
+               'GLAT':radiops.pixel_to_coordinates(minmax[2]).galactic.b,
+               'I':radiops[0].data[minmax[2]],
+               'Q':radiops[1].data[minmax[2]],
+               'U':radiops[2].data[minmax[2]]}
+    valleys = {'Ipix':minmax[1],
+               'RA':radiops.pixel_to_coordinates(minmax[1]).icrs.ra,
+               'DEC':radiops.pixel_to_coordinates(minmax[1]).icrs.dec,
+               'GLON':radiops.pixel_to_coordinates(minmax[1]).galactic.l,
+               'GLAT':radiops.pixel_to_coordinates(minmax[1]).galactic.b,
+               'I':radiops[0].data[minmax[1]],
+               'Q':radiops[1].data[minmax[1]],
+               'U':radiops[2].data[minmax[1]]}
+
+    peaks   = Table(peaks)
+    valleys = Table(valleys)
+
+    peaks.write(input_radio_source_catalogue_name(chan_name),
+                overwrite=True)
+
+    return peaks,valleys
 
 
 # %% --- SOURCE DETECTION PIPELINE
