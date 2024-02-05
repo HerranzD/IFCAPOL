@@ -3,12 +3,40 @@
 """
 Created on Sat Sep 30 17:57:08 2023
 
+This module defines the path configurations for the LiteBird Source Extractor.
+It sets the paths for different directories based on the running system.
+
+Running System:
+- If running_system is set to 'local', the paths are configured for a local system.
+- If running_system is set to 'NERSC', the paths are configured for the NERSC system.
+
+Path Definitions:
+- LBdir: Main LiteBIRD directory.
+- homed: Home directory.
+- scratchd: Scratch directory.
+- data_dir: Data folder.
+- src_dir: Code folder.
+- cat_inp: Input point source catalogues folder.
+- cat_out: Output point source catalogues folder.
+- IMos_dir: IMo directory.
+- scriptd: Script directory.
+- map_dir: Map directory.
+
+Note: The module also creates the necessary directories if they do not exist.
+
+Author: herranz
+"""
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Sep 30 17:57:08 2023
+
 @author: herranz
 """
 
 import os
 
-running_system = 'NERSC'     # it can be 'local' or 'NERSC'
+running_system = 'local'     # it can be 'local' or 'NERSC'
 
 # %% --- PATH DEFINITIONS
 
