@@ -211,12 +211,13 @@ def load_LiteBIRD_map(fname,chan_name=None,fwhm=None,freq=None,units_string='uK_
     """
 
     Reads a LiteBIRD healpix map from a file FNAME. Units are assumed to be
-    thermodynamic mK except otherwise said. FWHM and central frequency are provided
-    either using the corresponding argument (using physical quantities, e.g.
-    fwhm = 70*u.arcmin) or, preferably, are obtained from the IMO if the channel name is
-    provided in the CHAN_NAME argument. CHAN_NAME takes preference over the FWHM and
-    FREQ arguments, so if wanted to use different values from the IMO ones the
-    CHAN_NAME should not be declared.
+    thermodynamic mK except otherwise said. FWHM and central frequency are
+    provided either using the corresponding argument
+    (using physical quantities, e.g. fwhm = 70*u.arcmin) or, preferably,
+    are obtained from the IMO if the channel name is provided in the CHAN_NAME
+    argument. CHAN_NAME takes preference over the FWHM and FREQ arguments,
+    so if wanted to use different values from the IMO ones the CHAN_NAME
+    should not be declared.
 
     Parameters
     ----------
