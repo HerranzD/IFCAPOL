@@ -276,10 +276,10 @@ def non_blind_survey(sky_map,blind_survey_fname,
         repetitions is defined as source profile sigma times `xclean`.
         The default is 2.0.
     clean_mode : str, optional
-        Can take values in {'after','before'}. If 'before', the overlap cleaning
-        is performed before the non-blind analysis. If 'after', the cleaning
-        is performed after the non-blind analysis, using the new signal-to-noise
-        ratio as reference. The default is 'after'.
+        Can take values in {'after','before'}. If 'before', the overlap
+        cleaning is performed before the non-blind analysis. If 'after',
+        the cleaning is performed after the non-blind analysis, using
+        the new signal-to-noise ratio as reference. The default is 'after'.
     snr_cut : float, optional
         The signal to noise ratio (SNR) in intensity at which to cut the
         catalogue, that is, the effective sigma detection threshold.
@@ -290,14 +290,14 @@ def non_blind_survey(sky_map,blind_survey_fname,
     Returns
     -------
     out_tabl : `~astropy.Table`
-        A Table containing the non-blind catalogue. See the `IFCAPOL.Source.info`
-        documentation for additional information on the format and columns
-        of this output table. The Table is automatically saved to a file
-        named as the `blind_survey_fname` parameter, but adding the '_cleaned'
+        A Table containing the non-blind catalogue.
+        See the `IFCAPOL.Source.info` documentation for additional
+        information on the format and columns of this output table.
+        The Table is automatically saved to a file named as the
+        `blind_survey_fname` parameter, but adding the '_cleaned'
         string at the end of the file name.
 
     """
-
 
     import IFCAPOL as pol
 
@@ -305,6 +305,7 @@ def non_blind_survey(sky_map,blind_survey_fname,
     dist    = sky_map.fwhm[0]*fwhm2sigma*xclean
 
     if clean_mode == 'before':
+        blind.sort(keys='SNR',reverse=True)
         cleaned = remove_repeated_positions(blind,dist)
     else:
         cleaned = blind.copy()
@@ -324,6 +325,7 @@ def non_blind_survey(sky_map,blind_survey_fname,
         outpl.append(d)
 
     out_tabl = Table(outpl)
+
     if clean_mode == 'after':
 
         bln        = out_tabl.copy()
@@ -334,7 +336,8 @@ def non_blind_survey(sky_map,blind_survey_fname,
         temp       = remove_repeated_positions(bln, dist)
         out_tabl   = temp.copy()
 
-    fname    = blind_survey_fname.replace('.fits','_{0}_cleaned.fits'.format(clean_mode))
+    fname    = blind_survey_fname.replace('.fits',
+                                          '_{0}_cleaned.fits'.format(clean_mode))
 
     ttotal   = out_tabl.copy()
     out_tabl = ttotal[ttotal['I SNR']>=snrcut]
