@@ -86,7 +86,7 @@ def point_source_map_name(chan_name):
 
     band_str = source_id[survey.LB_channels.index(chan_name)]
 
-    fname = ps_dir+'radio_sources_{0}_uKrj_nside512.fits'.format(band_str)
+    fname = ps_dir+'radio_sources_{0}_uKCMB_nside512.fits'.format(band_str)
 
     return fname
 
@@ -121,6 +121,28 @@ def run0_name(chan_name,sim_number):
     fname += chan_name
     fname += '_{0}_'.format(survey.sim_type)
     fname += 'cmb_fg_wn_1f_{0}_{1}.fits'.format(survey.fknee,str_sim)
+
+    return fname
+
+def run0_foregrounds_name(chan_name):
+    """
+    Returns the name of the file containing the run0 foreground maps for the
+    given channel.
+
+    Parameters
+    ----------
+    chan_name : str
+        Channel name.
+
+    Returns
+    -------
+    fname : str
+        File name.
+
+    """
+
+    fdir = survey.data_dir+'foregrounds/'
+    fname = fdir+'LB_{0}FT_{1}_fg.fits'.format(chan_name[0],chan_name)
 
     return fname
 
