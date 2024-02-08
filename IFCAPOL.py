@@ -495,7 +495,7 @@ def peak_fit(patch,
 def significance_level(image,value):
     """
     Returns the significance level of a given value in a given image
-    
+
     Parameters
     ----------
     image : Imagen object (see the Imagen class in sky_images.py)
@@ -529,7 +529,7 @@ def pol_angle(Q,U):
     Q : float
         Stokes Q.
     U : float
-        Stokes U.   
+        Stokes U.
 
     Returns
     -------
@@ -548,7 +548,7 @@ def pol_angle_error(Q,U,sQ,sU):
     Parameters
     ----------
     Q : float
-        Stokes Q.   
+        Stokes Q.
     U : float
         Stokes U.
     sQ : float
