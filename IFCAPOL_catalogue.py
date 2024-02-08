@@ -70,8 +70,9 @@ def patch_analysis(sky_map,coord,fwhm,threshold=3.0,border=10,sclip=3.0):
     # gnomonic projection of a patch around the coordinate `coord`
 
     plt.ioff()
+    psize = define_npix(sky_map.nside)
     patch = sky_map.patch(coord,
-                          define_npix(sky_map.nside),
+                          psize+1,
                           resampling=image_resampling)
     plt.ion()
 
@@ -102,7 +103,8 @@ def patch_analysis(sky_map,coord,fwhm,threshold=3.0,border=10,sclip=3.0):
     c3 = Column(data=[mfpatch.datos[x[0],x[1]] for x in peaks],name='Intensity')
     c4 = Column(data=[sigma for x in peaks],name='Intensity error')
     c5 = Column(data=[mfpatch.datos[x[0],x[1]]/sigma for x in peaks],name='SNR')
-    co = patch.pixel_coordinate(c1,c2)
+#    co = patch.pixel_coordinate(c1,c2) # routine appears to be inverted
+    co = patch.pixel_coordinate((psize-1)-c2,(psize-1)-c1) # flipping of the axis convention
     c6 = Column(data=co.icrs.ra.deg,name='RA')
     c7 = Column(data=co.icrs.dec.deg,name='DEC')
     c8 = Column(data=patch.center_coordinate.separation(co).to(u.deg),name='Dist [deg]')
