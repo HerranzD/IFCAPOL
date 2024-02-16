@@ -39,4 +39,4 @@ This project is under development and testing phase and must not be considered a
 
 ## Diagram
 
-![PIPELINE](PIPELINE_UML_diagram.png "Pipeline diagram")
+![PIPELINE](Figures/PIPELINE_UML_diagram.png "Pipeline diagram")
