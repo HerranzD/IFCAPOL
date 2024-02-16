@@ -7,8 +7,12 @@ This module defines the path configurations for the LiteBird Source Extractor.
 It sets the paths for different directories based on the running system.
 
 Running System:
-- If running_system is set to 'local', the paths are configured for a local system.
-- If running_system is set to 'NERSC', the paths are configured for the NERSC system.
+- If running_system is set to 'local', the paths are configured for
+     a local system.
+- If running_system is set to 'NERSC', the paths are configured for
+     the NERSC system.
+- If running_system is set to 'IFCA', the paths are configured for
+     the IFCA HPC system.
 
 Path Definitions:
 - LBdir: Main LiteBIRD directory.
@@ -87,7 +91,8 @@ elif running_system.upper() == 'NERSC':
     scriptd  = homed+'LiteBIRD/scripts/'
     map_dir  = scratchd+'LiteBIRD/Data/Maps/'
 
-    # Ensure that cat_in, cat_out, scriptd and map_dir exist. If not, create them (only in NERSC)
+    # Ensure that cat_in, cat_out, scriptd and map_dir exist.
+    # If not, create them (only in NERSC)
 
     if not os.path.exists(cat_inp):
         os.makedirs(cat_inp)
@@ -100,6 +105,28 @@ elif running_system.upper() == 'NERSC':
 
     if not os.path.exists(map_dir):
         os.makedirs(map_dir)
+
+elif running_system.upper() == 'IFCA':
+
+    homed    = '/gpfs/users/herranz/'
+    LBdir    = homed+'LiteBIRD/'       # main LiteBIRD directory (IFCA)
+
+    src_dir  = LBdir+'Src/'
+    scriptd  = LBdir+'Scripts/'
+
+    IMos_dir = LBdir+'IMo/'
+
+    scratchd = '/gpfs/res_scratch/astro/herranz/'
+    gpfs     = '/gpfs/projects/astro/'
+    data_dir = gpfs+'data/LB_e2e_simulations/e2e_ns512/2ndRelease/'
+    cat_out  = gpfs+'herranz/LiteBIRD/Catalogues/Output/'
+
+    # Ensure that cat_out and scriptd exist.
+    # If not, create them (only at IFCA)
+
+    for direc in [scriptd,cat_out]:
+        if not os.path.exists(direc):
+            os.makedirs(direc)
 
 else:
 
