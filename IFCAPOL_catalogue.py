@@ -95,8 +95,7 @@ def patch_analysis(sky_map,coord,fwhm,threshold=3.0,border=10,sclip=3.0):
     peaks               = peak_local_max(mfpatch.datos,
                                          min_distance   = mindist,
                                          threshold_abs  = detection_threshold,
-                                         exclude_border = border,
-                                         indices        = True)
+                                         exclude_border = border)
 
     c1 = Column(data=[x[0] for x in peaks],name='I')
     c2 = Column(data=[x[1] for x in peaks],name='J')
