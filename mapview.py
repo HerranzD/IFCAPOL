@@ -5,12 +5,18 @@ Editor de Spyder
 Este es un archivo temporal.
 """
 
-import ligo.skymap.plot
+try:
+    import ligo.skymap.plot as liplot
+    ligo_is_defined = True
+except ImportError:
+    liplot          = None
+    ligo_is_defined = False
+
 import healpy            as hp
 import astropy.units     as u
 import matplotlib.colors as colors
 
-from matplotlib import pyplot as plt
+from matplotlib          import pyplot as plt
 
 def skyview(data,
             coord,
@@ -55,72 +61,78 @@ def skyview(data,
 
     """
 
-    res = isinstance(data,str)
+    if ligo_is_defined:
 
-    def get_normalization():
+        res = isinstance(data,str)
+
+        def get_normalization():
+            if res:
+                mapa  = hp.read_map(data)
+            else:
+                mapa  = data.copy()
+            linth = mapa.std()/2.0
+            return colors.SymLogNorm(linthresh=linth,
+                                     linscale=0.8,
+                                     vmin=mapa.min(),
+                                     vmax=mapa.max(),
+                                     base=10)
+
+        norma = get_normalization()
+
+        fig = plt.figure(figsize=(8, 8), dpi=100)
+
+        ax = plt.axes(
+            [0.05, 0.05, 0.9, 0.9],
+            projection='astro globe',
+            center=coord)
+
+        ax_inset = plt.axes(
+            [0.59, 0.3, 0.4, 0.4],
+            projection='astro zoom',
+            center=coord,
+            radius=zoom_size)
+
+        for key in ['ra', 'dec']:
+            ax_inset.coords[key].set_ticklabel_visible(False)
+            ax_inset.coords[key].set_ticks_visible(False)
+
+        ax.grid()
+        ax.mark_inset_axes(ax_inset)
+        ax.connect_inset_axes(ax_inset, 'upper left')
+        ax.connect_inset_axes(ax_inset, 'lower left')
+        ax_inset.scalebar((0.1, 0.1), zoom_size/2).label()
+        ax_inset.compass(0.9, 0.1, 0.2)
+
         if res:
-            mapa  = hp.read_map(data)
+            ax.imshow_hpx(data, cmap=cmap,norm=norma)
         else:
-            mapa  = data.copy()
-        linth = mapa.std()/2.0
-        return colors.SymLogNorm(linthresh=linth,
-                                 linscale=0.8,
-                                 vmin=mapa.min(),
-                                 vmax=mapa.max(),
-                                 base=10)
+            if coordsys in ['G','GAL','Gal','GALACTIC','Galactic','galactic']:
+                rot_gal2eq = hp.Rotator(coord="GC")
+                mapa       = rot_gal2eq.rotate_map_pixel(data)
+            else:
+                mapa       = data.copy()
+            ax.imshow_hpx(mapa, cmap=cmap,norm=norma)
 
-    norma = get_normalization()
+        if title is not None:
+            ax.set_title(title,fontsize=16)
 
-    fig = plt.figure(figsize=(8, 8), dpi=100)
-
-    ax = plt.axes(
-        [0.05, 0.05, 0.9, 0.9],
-        projection='astro globe',
-        center=coord)
-
-    ax_inset = plt.axes(
-        [0.59, 0.3, 0.4, 0.4],
-        projection='astro zoom',
-        center=coord,
-        radius=zoom_size)
-
-    for key in ['ra', 'dec']:
-        ax_inset.coords[key].set_ticklabel_visible(False)
-        ax_inset.coords[key].set_ticks_visible(False)
-
-    ax.grid()
-    ax.mark_inset_axes(ax_inset)
-    ax.connect_inset_axes(ax_inset, 'upper left')
-    ax.connect_inset_axes(ax_inset, 'lower left')
-    ax_inset.scalebar((0.1, 0.1), zoom_size/2).label()
-    ax_inset.compass(0.9, 0.1, 0.2)
-
-    if res:
-        ax.imshow_hpx(data, cmap=cmap,norm=norma)
-    else:
-        if coordsys in ['G','GAL','Gal','GALACTIC','Galactic','galactic']:
-            rot_gal2eq = hp.Rotator(coord="GC")
-            mapa       = rot_gal2eq.rotate_map_pixel(data)
+        if res:
+            ax_inset.imshow_hpx(data, cmap=cmap)
         else:
-            mapa       = data.copy()
-        ax.imshow_hpx(mapa, cmap=cmap,norm=norma)
+            ax_inset.imshow_hpx(mapa, cmap=cmap)
 
-    if title is not None:
-        ax.set_title(title,fontsize=16)
+        ax_inset.plot(
+            coord.icrs.ra.deg, coord.icrs.dec.deg,
+            transform=ax_inset.get_transform('world'),
+            marker=liplot.reticle(),
+            markersize=30,
+            markeredgewidth=3)
 
-    if res:
-        ax_inset.imshow_hpx(data, cmap=cmap)
+        if tofile is not None:
+            fig.savefig(tofile)
+
     else:
-        ax_inset.imshow_hpx(mapa, cmap=cmap)
 
-    ax_inset.plot(
-        coord.icrs.ra.deg, coord.icrs.dec.deg,
-        transform=ax_inset.get_transform('world'),
-        marker=ligo.skymap.plot.reticle(),
-        markersize=30,
-        markeredgewidth=3)
-
-    if tofile is not None:
-        fig.savefig(tofile)
+        print(' Warning: ligo.skymap is not installed in this system.')
 
 
