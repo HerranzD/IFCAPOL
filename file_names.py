@@ -3,6 +3,8 @@
 """
 Created on Fri Feb 16 21:20:55 2024
 
+ File name formatting
+
 @author: herranz
 """
 
@@ -10,7 +12,66 @@ import os
 import survey_model as     survey
 
 
-# %% --- FILE NAMING ROUTINES
+# %% --- SIMULATIONS
+
+def simulation_name(chan_name,sim_number):
+    """
+    Returns the name of the file containing the run0 simulation maps for the
+    given channel and simulation number.
+
+    Parameters
+    ----------
+    chan_name : str
+        Channel name.
+    sim_number : int
+        Simulation number.
+
+    Returns
+    -------
+    fname : str
+        File name.
+
+    """
+
+    str_sim = '{0:04d}'.format(sim_number)
+
+    fname  = survey.data_dir
+    fname += '{0}FT/'.format(chan_name[0])
+    fname += '{0}/'.format(chan_name)
+    fname += '{0}_maps/'.format(survey.sim_type)
+    fname += 'LB_{0}FT_'.format(chan_name[0])
+    fname += chan_name
+    fname += '_{0}_'.format(survey.sim_type)
+    fname += 'cmb_fg_wn_1f_{0}_{1}.fits'.format(survey.fknee,str_sim)
+
+    return fname
+
+# %% --- FOREGROUNDS
+
+def foregrounds_name(chan_name):
+    """
+    Returns the name of the file containing the run0 foreground maps for the
+    given channel.
+
+    Parameters
+    ----------
+    chan_name : str
+        Channel name.
+
+    Returns
+    -------
+    fname : str
+        File name.
+
+    """
+
+    fdir = survey.data_dir+'foregrounds/'
+    fname = fdir+'LB_{0}FT_{1}_fg.fits'.format(chan_name[0],chan_name)
+
+    return fname
+
+
+# %% --- INPUT RADIO POINT SOURCE CATALOGUES
 
 def input_radio_source_catalogue_name(chan_name):
     """
@@ -79,61 +140,7 @@ def point_source_map_name(chan_name):
     return fname
 
 
-def simulation_name(chan_name,sim_number):
-    """
-    Returns the name of the file containing the run0 simulation maps for the
-    given channel and simulation number.
-
-    Parameters
-    ----------
-    chan_name : str
-        Channel name.
-    sim_number : int
-        Simulation number.
-
-    Returns
-    -------
-    fname : str
-        File name.
-
-    """
-
-
-    str_sim = '{0:04d}'.format(sim_number)
-
-    fname  = survey.data_dir
-    fname += '{0}FT/'.format(chan_name[0])
-    fname += '{0}/'.format(chan_name)
-    fname += '{0}_maps/'.format(survey.sim_type)
-    fname += 'LB_{0}FT_'.format(chan_name[0])
-    fname += chan_name
-    fname += '_{0}_'.format(survey.sim_type)
-    fname += 'cmb_fg_wn_1f_{0}_{1}.fits'.format(survey.fknee,str_sim)
-
-    return fname
-
-def foregrounds_name(chan_name):
-    """
-    Returns the name of the file containing the run0 foreground maps for the
-    given channel.
-
-    Parameters
-    ----------
-    chan_name : str
-        Channel name.
-
-    Returns
-    -------
-    fname : str
-        File name.
-
-    """
-
-    fdir = survey.data_dir+'foregrounds/'
-    fname = fdir+'LB_{0}FT_{1}_fg.fits'.format(chan_name[0],chan_name)
-
-    return fname
-
+# %% --- OUTPUT SOURCE CATALOGUES
 
 def detected_catalogue_name(sim_number,chan_name_inp,snrcut=3.5):
     """
