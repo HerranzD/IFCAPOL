@@ -2,13 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Mar  1 10:27:32 2022
+Updated on Fri Feb 16 16:54:30 2024
 
-    SURVEY MODEL v1.0
+    SURVEY MODEL v1.1
 
-    This module includes both local (paths, folders, etc)
-    and global (i.e. instrument, data format, etc) definitions
-    and utilities concerning the configuration of the LiteBIRD
-    mission and its data products.
+    This module sets up the survey configuration of the LiteBIRD
+    mission and its data products. In particular:
+
+    - Instrument Model configuration (IMo)
+    - Input routines for LiteBIRD survey maps
 
 
 @author: Diego Herranz
