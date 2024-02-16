@@ -56,7 +56,7 @@ class Fitsmap:
        mask == True   means the pixel has to be masked (equivalent to IDL mask = 0)
        mask == False  means the pixel is not masked (equivalent to IDL mask=1)
 
-    
+
     Attributes
     ----------
     data : numpy.ndarray
@@ -68,31 +68,31 @@ class Fitsmap:
     ordering : str
         The ordering scheme of the data. Can be "RING" or "NEST".
     nside : int
-        The HEALPix nside parameter.    
+        The HEALPix nside parameter.
     npix : int
         The number of pixels in the map.
     nmaps : int
-        The number of maps in the data array. A typical example is a Stokes IQU map, with nmaps=3.      
+        The number of maps in the data array. A typical example is a Stokes IQU map, with nmaps=3.
     columns : list of str
-        The names of the columns in the data array. 
+        The names of the columns in the data array.
     units : list of str
-        The units of the columns in the data array. 
+        The units of the columns in the data array.
     obs_frequency : `~astropy.units.quantity.Quantity`
         The observation frequency of the map.
     fwhm_base : `~astropy.units.quantity.Quantity`
-        The FWHM of the beam used to create the map. If the map is a combination of maps with different beams, 
-        this is the FWHM of the beam of the first map. 
+        The FWHM of the beam used to create the map. If the map is a combination of maps with different beams,
+        this is the FWHM of the beam of the first map.
     beam_area_base : `~astropy.units.quantity.Quantity`
-        The beam area of the beam used to create the map. 
+        The beam area of the beam used to create the map.
         If the map is a combination of maps with different beams, this is the beam area of the beam of the first map.
     fwhm : `~astropy.units.quantity.Quantity`
-        The FWHM of the beam of the maps contained in the Fitsmap 
+        The FWHM of the beam of the maps contained in the Fitsmap
     beam_area : `~astropy.units.quantity.Quantity`
         The beam area of the beam of the maps.
     comment_count : int
         The number of comments in the header.
     badval : float
-        The value used to indicate a bad pixel in the HEALPix convention. 
+        The value used to indicate a bad pixel in the HEALPix convention.
         The default value is -1.6375e30, which is the value used by Planck.
     ismask : bool
         Whether the map is a mask or not.
@@ -119,12 +119,12 @@ class Fitsmap:
     pixel_window_function : array
         The pixel window function of the map.
     beam_bls : array
-        The beam window function of the map. 
-    print_info :  
+        The beam window function of the map.
+    print_info :
         Print information about the map.
     T : `Fitsmap`
         The Stokes I map.
-    Q : `Fitsmap`   
+    Q : `Fitsmap`
         The Stokes Q map.
     U : `Fitsmap`
         The Stokes U map.
@@ -137,7 +137,7 @@ class Fitsmap:
     physical_units : list of astropy.units.Unit
         The physical units of the columns in the data array. This method tries to automatically determine which are the `astropy.unit`
         of the `Fitsmap`. If this method is unable to parse the unit, it returns an empty list instead.
-    
+
     Methods
     -------
     from_file(filename)
@@ -161,7 +161,7 @@ class Fitsmap:
     smooth(sigma)
         Smooths the map with a Gaussian kernel of a given sigma.
     ngood(i=-1)
-        Returns the number of good pixels in the map.   
+        Returns the number of good pixels in the map.
     maxval(i=-1)
         Returns the maximum value of the map.
     minval(i=-1)
@@ -187,7 +187,7 @@ class Fitsmap:
     to_nest()
         Converts the `Fitsmap`to the HEALPix ordering scheme NEST.
     pixel_to_coordinates(pixel)
-        Returns the coordinates of a given pixel. 
+        Returns the coordinates of a given pixel.
     coordinates_to_pixel(coordinates)
         Returns the HEALPix pixel of a given set of coordinates.
     coordinates_to_vector(coordinates)
@@ -203,13 +203,13 @@ class Fitsmap:
     moll(i=0,tofile=None,norm='hist',**kwargs)
         Plots the map in a Mollweide projection.
     skyview(coord,i=0,tofile=None,title=None,zoom_size=4*u.deg)
-        Plots a zoom of the map around a given coordinate. This method internally calls the `mapview.skyview` function 
+        Plots a zoom of the map around a given coordinate. This method internally calls the `mapview.skyview` function
         (see its documentation for more information and ackowledgements to the LIGO/Virgo collaboration).
     patch
         Projects a flat patch around a given sky coordinate, using the sky_images module.
     spherical_beam(coordinate,bls,thetamax=10*u.deg,upscale_fact=4)
         Returns a `Fitsmap` containing a sky image of a beam at a given
-        position (coordinate). The beam is defined by a beam window function (bls). 
+        position (coordinate). The beam is defined by a beam window function (bls).
         The beam is projected on a patch of the sky of a given size (thetamax).
         The beam is upscaled by a factor upscale_fact to avoid aliasing.
     flat_beam(coordinate,bls,npix=512,deltatheta_deg=14.658)
@@ -1852,7 +1852,7 @@ class Fitsmap:
         if resampling == 1:
             mapa  = self.copy()
         else:
-            nside = np.int(resampling)*(self.nside)
+            nside = np.int64(resampling)*(self.nside)
             mapa  = self.ud_grade(nside)
 
         pixel      = mapa.coordinates_to_pixel(coord)
