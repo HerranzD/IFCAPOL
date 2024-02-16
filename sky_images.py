@@ -735,6 +735,8 @@ class Imagen:
         c = SkyCoord.from_pixel(i,j,w)
         return c
 
+
+
     def coordinate_pixel(self,coord):
         """
         Returns the pixel indices of a given sky coordinate.
