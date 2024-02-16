@@ -36,3 +36,7 @@ For the moment we are using a generic MIT License. MIT License is a short and si
 ## Project status
 
 This project is under development and testing phase and must not be considered as a stable/final part ot the LiteBIRD data analysis pipeline. 
+
+## Diagram
+
+![PIPELINE](PIPELINE_UML_diagram.png "Pipeline diagram")
