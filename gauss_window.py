@@ -1,3 +1,11 @@
+"""
+Created by D. Herranz, 2016
+
+
+
+
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -70,6 +78,29 @@ def makeGaussian(size,fwhm=3,
     return u
 
 def make_map_of_Gaussians(size,xyz,fwhm=3,verbose=False,toplot=False):
+    """
+    
+    Makes a square image of a sum of Gaussian kernels, returned as a numpy two-dimensional array. 
+    
+    Parameters
+    ----------
+    size : int
+        is the length of a side of the square
+    xyz : array
+        contains the (x,y,z) coordinates (in pixel units) of the centre of the Gaussian kernels
+    fwhm : float
+        is full-width-half-maximum, in pixel units, of the Gaussian kernels.
+    verbose : bool
+        if True, the routine writes out the info about the code. Default is False
+    toplot : bool
+        if True, plots the output array. Default is False
+
+    Returns
+    -------
+    image : array
+        2D array with the sum of Gaussian kernels
+    
+    """
 
     start_time = time.time()
     image = np.zeros((size,size))
@@ -93,14 +124,59 @@ from astropy.modeling import custom_model
 
 @custom_model
 def pixelized_Gaussian(x,y,amplitude=1.0,x_0=0.0,y_0=0.0,sigma_pix=1.0):
-    """Two dimensional pixelixed Gaussian function"""
+    """
+    Two dimensional pixelixed Gaussian function. 
+    
+    Parameters
+    ----------
+    x : array
+        x-coordinate of the pixel
+    y : array
+        y-coordinate of the pixel
+    amplitude : float
+        amplitude of the Gaussian
+    x_0 : float
+        x-coordinate of the center of the Gaussian
+    y_0 : float
+        y-coordinate of the center of the Gaussian
+    sigma_pix : float
+        standard deviation of the Gaussian in pixel units
+
+    Returns
+    -------
+    r : array
+        pixelized Gaussian
+   
+    """
     
     fwhm = sigma2fwhm*sigma_pix   
     return amplitude*analytical_pixelized_Gaussian(x,y,(x_0,y_0),fwhm_pix=fwhm)
     
 
 def analytical_pixelized_Gaussian(i,j,center,fwhm_pix=3.0):
-    
+    """
+    Analytical expression for a pixelized Gaussian function. 
+    The Gaussian is normalized to have a maximum value of 1.0 
+    at the center of the Gaussian.
+
+    Parameters
+    ----------
+    i : array
+        x-coordinate of the pixel
+    j : array
+        y-coordinate of the pixel
+    center : tuple
+        (x,y) coordinates of the center of the Gaussian
+    fwhm_pix : float
+        FWHM of the Gaussian in pixel units
+
+    Returns
+    -------
+    r : array
+        pixelized Gaussian
+
+    """
+
     x = i-center[0]
     y = j-center[1]
     s = fwhm_pix*fwhm2sigma
@@ -114,7 +190,27 @@ def analytical_pixelized_Gaussian(i,j,center,fwhm_pix=3.0):
 
 def makeAnalyticalGaussian(size,fwhm_pix = 3.0,
                            center        = None):
-           
+    """
+    Makes a square image of a pixelized Gaussian kernel, returned as a numpy
+    two-dimensional array. The Gaussian takes a maximum value = 1
+    at the position defined in 'center'
+
+    Parameters
+    ----------
+    size : int
+        is the length of a side of the square
+    fwhm_pix : float
+        FWHM of the Gaussian in pixel units
+    center : tuple
+        (x,y) coordinates of the center of the Gaussian. If center=None, the Gaussian is
+        placed at the geometrical centre of the image (default is None)
+
+    Returns
+    -------
+    m : array
+        2D array with the pixelized Gaussian
+
+    """ 
     
     y = np.arange(0, size, 1, float)
     x = y[:,np.newaxis]

@@ -3,6 +3,17 @@
 """
 Created on Tue Mar 20 16:43:56 2018
 
+This module contains the class Imagen, used to represent a sky image. The module wraps
+the astropy.io.fits and astropy.wcs modules to:
+
+    1. Read and write astronomical FITS files.
+    2. Handle World Coordinate Systems. 
+    3. Create poststamps of the image around its center or around a given coordinate.
+    4. Filter the image using matched filters, Gaussian smoothing and Mexican Hat Wavelet filters.
+    5. Calculate statistics in rings around the center of the image.
+    6. Plot the image using matplotlib.
+
+
 @author: herranz
 """
 

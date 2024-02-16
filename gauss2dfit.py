@@ -2,6 +2,12 @@
 """
 Created on Fri Jul 29 09:08:54 2016
 
+Fits a 2D Gaussian to a patch of an image. The patch is assumed to be a
+2D array of data. The fit is done using the astropy
+modeling package. The function returns an object of the Ajuste class,
+which contains the fit parameters, the synthetic image, the Gaussian
+model, and the residual.
+
 @author: herranz
 """
 
@@ -96,7 +102,34 @@ def fit_single_peak(patch,toplot=False,fixwidth=False,fixed_sigma=2.0,
     """
        Fits an image patch to a composite model consisting of
     a planar baseline plus a symmetric Gaussian. Returns a fit object
-    of the Ajuste class
+    of the Ajuste class. If toplot is True, it also plots the data, the
+    model, the Gaussian component, and the residual.
+
+    Parameters
+    ----------
+    patch : array
+        2D array of data
+    toplot : bool
+        if True, plots the data, the model, the Gaussian component, and the
+        residual. Default is False
+    fixwidth : bool
+        if True, fixes the width of the Gaussian. Default is False
+    fixed_sigma : float
+        if fixwidth is True, this is the fixed width of the Gaussian. Default
+        is 2.0
+    fixcenter : bool
+        if True, fixes the center of the Gaussian. Default is False
+    center : tuple
+        if fixcenter is True, this is the fixed center of the Gaussian. Default
+        is None
+    return_full_fit : bool
+        if True, returns the full fit object. Default is False
+
+    Returns
+    -------
+    f : Ajuste
+        fit object of the Ajuste class. If return_full_fit is True, returns the
+        full fit object instead of the Ajuste object.   
 
     """
 
