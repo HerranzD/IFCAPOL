@@ -79,11 +79,11 @@ def create_INPUT_point_source_catalogue(chan_name):
 
 # %% --- SOURCE DETECTION PIPELINE
 
-def detect_source_run0(sim_number,chan_name,snrcut=3.5,count_time=False):
+def detect_source_pipeline(sim_number,chan_name,snrcut=3.5,count_time=False):
     """
     Runs the IFCAPOL source detection algorithm on an individual LiteBIRD
-    Run0 post-PTEP simulation in Cori at NERSC. The simulation is defined by a
-    LiteBIRD detector name and a noise+CMB simulation number (from 0 to 199).
+    simulation. The simulation is defined by a LiteBIRD detector name and
+    a noise+CMB simulation number (from 0 to 499).
 
     The detection is done in three stages:
         - First a blind search is performed, using a flat sky patching with
