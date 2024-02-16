@@ -24,11 +24,7 @@ import json
 from astropy.table    import QTable
 from fits_maps        import Fitsmap
 from unit_conversions import uKcmb
-
-from path_defs import LBdir,homed,scratchd
-from path_defs import data_dir,src_dir,cat_inp,cat_out
-from path_defs import IMos_dir
-from path_defs import scriptd,map_dir
+from path_defs        import IMos_dir
 
 
 # %% --- Simulation specific definitions
@@ -145,7 +141,6 @@ def read_IMo(IMOversion,IMo_from='tbl'):
                         fwhms.append(data['data_files'][offset]['metadata']['fwhm_arcmin'])
                         sensitivities.append(data['data_files'][offset]['metadata']['net_ukrts']/np.sqrt(ndets))
                         offset +=ndets
-                        #print(channelname , f, bandwidth[-1] )
                     except KeyError:
                         offset +=1
 
