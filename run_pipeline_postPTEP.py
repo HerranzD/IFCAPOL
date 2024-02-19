@@ -15,6 +15,7 @@ from astropy.table  import Table
 from file_names     import input_radio_source_catalogue_name
 from file_names     import point_source_map_name
 from file_names     import detected_catalogue_name
+from file_names     import cleaned_catalogue_name
 from file_names     import simulation_name
 
 

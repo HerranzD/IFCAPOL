@@ -40,7 +40,7 @@ Created on Sat Sep 30 17:57:08 2023
 
 import os
 
-running_system = 'local'     # it can be 'local' or 'NERSC'
+running_system = 'IFCA'     # it can be 'local' or 'NERSC'
 
 # %% --- PATH DEFINITIONS
 
