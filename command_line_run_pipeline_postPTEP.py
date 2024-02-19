@@ -63,9 +63,9 @@ if chan_number < nmax:
                                                                 chan_name))
 
             try:
-                dicia = postPTEP.detect_source_run0(sim_number,
-                                                    chan_name,
-                                                    count_time=True)
+                dicia = postPTEP.detect_source_pipeline(sim_number,
+                                                        chan_name,
+                                                        count_time=True)
 
                 print('IFCAPOL detection successful for sim {0} in {1}'.format(
                     sim_number, chan_name))
