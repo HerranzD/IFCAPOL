@@ -26,12 +26,16 @@ Script for calling run0_simulations.detect_sources from command line
 
 import os
 import sys
-import run0_simulations as postPTEP
+import run_pipeline_postPTEP as postPTEP
+
+from time import time
 
 args = sys.argv
 L = len(args)
 p1 = L-2
 p2 = L-1
+
+t0 = time()
 
 chan_number = int(sys.argv[p1])
 sim_number = int(sys.argv[p2])
@@ -74,3 +78,10 @@ if chan_number < nmax:
         raise ValueError('Wrong simulation number')
 else:
     raise ValueError('Wrong channel number')
+
+t1 = time()
+
+print(' ')
+print(' Execution time: ',t1-t0)
+
+
