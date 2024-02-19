@@ -11,6 +11,8 @@ Created on Fri Feb 16 21:20:55 2024
 import os
 import survey_model as     survey
 
+from path_defs import data_dir
+
 
 # %% --- SIMULATIONS
 
@@ -35,7 +37,7 @@ def simulation_name(chan_name,sim_number):
 
     str_sim = '{0:04d}'.format(sim_number)
 
-    fname  = survey.data_dir
+    fname  = data_dir
     fname += '{0}FT/'.format(chan_name[0])
     fname += '{0}/'.format(chan_name)
     fname += '{0}_maps/'.format(survey.sim_type)
@@ -65,7 +67,7 @@ def foregrounds_name(chan_name):
 
     """
 
-    fdir = survey.data_dir+'foregrounds/'
+    fdir = data_dir+'foregrounds/'
     fname = fdir+'LB_{0}FT_{1}_fg.fits'.format(chan_name[0],chan_name)
 
     return fname
@@ -90,7 +92,7 @@ def input_radio_source_catalogue_name(chan_name):
 
     """
 
-    return survey.cat_inp+'radio_sources_catalogue_{0}.fits'.format(chan_name)
+    return cat_inp+'radio_sources_catalogue_{0}.fits'.format(chan_name)
 
 def point_source_map_name(chan_name):
     """
@@ -108,7 +110,7 @@ def point_source_map_name(chan_name):
 
     """
 
-    ps_dir = survey.data_dir+'foregrounds/radio_sources/'
+    ps_dir = data_dir+'foregrounds/radio_sources/'
 
     source_id = ['LFT_40',
                  'LFT_50',
