@@ -53,28 +53,70 @@ def make_script(isim,ichan,hours=1,minutes=30):
     lsta = []
 
     lsta.append('#!/bin/bash')
-    lsta.append('#SBATCH -N 1')
-    lsta.append('#SBATCH -C cpu')
-    lsta.append('#SBATCH -q regular')
-    lsta.append('#SBATCH -J IFCAPOL_{0}_{1}'.format(ichan,isim))
-    lsta.append('#SBATCH --mail-user=herranz@ifca.unican.es')
-    lsta.append('#SBATCH --mail-type=ALL')
-    lsta.append('#SBATCH --account=mp107')
-    lsta.append('#SBATCH -t {0}'.format(time_str))
-    lsta.append('#SBATCH --output={0}Output_Logs/IFCAPOL_nchan{1}_nsim{2}.out'.format(scriptd,
-                                                                                      ichan,isim))
-    lsta.append('#SBATCH --chdir={0}'.format(scriptd))
+    lsta.append(' ')
 
-    lsta.append('#OpenMP settings:')
+    if running_system.upper() == 'NERSC':
 
-    lsta.append('export OMP_NUM_THREADS=1')
-    lsta.append('export OMP_PLACES=threads')
-    lsta.append('export OMP_PROC_BIND=spread')
+        lsta.append('#SBATCH -N 1')
+        lsta.append('#SBATCH -C cpu')
+        lsta.append('#SBATCH -q regular')
+        lsta.append('#SBATCH -J IFCAPOL_{0}_{1}'.format(ichan,isim))
+        lsta.append('#SBATCH --mail-user=herranz@ifca.unican.es')
+        lsta.append('#SBATCH --mail-type=ALL')
+        lsta.append('#SBATCH --account=mp107')
+        lsta.append('#SBATCH -t {0}'.format(time_str))
 
-    lsta.append('#run the application:')
+        output_str  = ' --output={0}Output_Logs/'.format(scriptd)
+        output_str += 'IFCAPOL_nchan{0}_nsim{1}.out'.format(ichan,isim)
+        lsta.append('#SBATCH'+output_str)
+        lsta.append('#SBATCH --chdir={0}'.format(scriptd))
+
+        lsta.append('#OpenMP settings:')
+        lsta.append('export OMP_NUM_THREADS=1')
+        lsta.append('export OMP_PLACES=threads')
+        lsta.append('export OMP_PROC_BIND=spread')
+
+    elif running_system.upper() == 'IFCA':
+
+        lsta.append('#SBATCH --partition=wncompute_astro ')
+        lsta.append('#SBATCH --reservation=cosmo')
+
+        lsta.append('#SBATCH --job-name=IFCAPOL_{0}_{1}'.format(ichan,isim))
+        lsta.append('#SBATCH --chdir={0}'.format(scriptd))
+
+        output_str  = ' --output={0}Output_Logs/'.format(scriptd)
+        output_str += 'IFCAPOL_nchan{0}_nsim{1}.out'.format(ichan,isim)
+        lsta.append('#SBATCH'+output_str)
+
+        error_str = output_str.replace('--output','--error')
+        error_str = error_str.replace('Output','Error')
+        lsta.append('#SBATCH'+error_str)
+
+
+        lsta.append('#SBATCH --ntasks=1')
+        lsta.append('#SBATCH --cpus-per-task=1')
+        lsta.append('#SBATCH --time={0}'.format(time_str))
+
+    else:
+
+        print(' Warning: unknown running system')
+
+    lsta.append(' ')
+    lsta.append('#From here the job starts')
     lsta.append('module load python')
     lsta.append('source activate pycmb')
-    lsta.append('srun -n 1 -c 256 --cpu_bind=cores python3 {0} {1} {2}'.format(app_name,ichan,isim))
+    lsta.append(' ')
+
+    if running_system.upper() == 'NERSC':
+        runcomnd  = 'srun -n 1 -c 256 --cpu_bind=cores python3'
+        runcomnd += ' {0} {1} {2}'.format(app_name,ichan,isim)
+        lsta.append(runcomnd)
+    elif running_system.upper() == 'IFCA':
+        runcomnd  = 'python3'
+        runcomnd += ' {0} {1} {2}'.format(app_name,ichan,isim)
+        lsta.append(runcomnd)
+
+    lsta.append(' ')
     lsta.append('conda deactivate')
 
     save_ascii_list(lsta,macro_name)
@@ -205,8 +247,6 @@ def generate_submission_script_for_isim(isim):
         lsubmits.append('sbatch '+macro_name)
 
     save_ascii_list(lsubmits,fname)
-
-
 
 
 # %% --- CHECKING STATUS UF SUBMISSIONS
