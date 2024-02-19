@@ -6,13 +6,19 @@ Created on Fri May 20 16:20:39 2022
 @author: herranz
 """
 
-from myutils import save_ascii_list
-import run0_simulations as postPTEP
+
 import os
 import sys
 
-nchans = len(postPTEP.survey.LB_channels)
-nsims  = 200
+from survey_model import LB_channels
+from myutils      import save_ascii_list
+from path_defs    import running_system,scriptd
+from file_names   import detected_catalogue_name
+from file_names   import cleaned_catalogue_name
+
+
+nchans = len(LB_channels)
+nsims  = 500
 Njobs  = nsims
 
 # %% --- SLURM SCRIPT GENERATION
@@ -40,8 +46,8 @@ def make_script(isim,ichan,hours=1,minutes=30):
 
     """
     time_str    = '0{0}:{1}:00'.format(hours,minutes)
-    app_name    = '$HOME/LiteBIRD/src/run_IFCAPOL_on_postPTEP.py'
-    macro_name  = postPTEP.survey.scriptd
+    app_name    = '$HOME/LiteBIRD/Src/command_line_run_pipeline_postPTEP.py'
+    macro_name  = scriptd
     macro_name += 'Run_scripts/run_nchan{0}_nsim{1}.slurm'.format(ichan,isim)
 
     lsta = []
@@ -55,9 +61,9 @@ def make_script(isim,ichan,hours=1,minutes=30):
     lsta.append('#SBATCH --mail-type=ALL')
     lsta.append('#SBATCH --account=mp107')
     lsta.append('#SBATCH -t {0}'.format(time_str))
-    lsta.append('#SBATCH --output={0}Output_Logs/IFCAPOL_nchan{1}_nsim{2}.out'.format(postPTEP.survey.scriptd,
+    lsta.append('#SBATCH --output={0}Output_Logs/IFCAPOL_nchan{1}_nsim{2}.out'.format(scriptd,
                                                                                       ichan,isim))
-    lsta.append('#SBATCH --chdir={0}'.format(postPTEP.survey.scriptd))
+    lsta.append('#SBATCH --chdir={0}'.format(scriptd))
 
     lsta.append('#OpenMP settings:')
 
@@ -124,12 +130,12 @@ def generate_submission_script(ichan,sim_list=None):
     else:
         lista = [i for i in range(nsims)]
 
-    fname = postPTEP.survey.scriptd+'Submit_scripts/submit_nchan{0}.sh'.format(ichan)
+    fname = scriptd+'Submit_scripts/submit_nchan{0}.sh'.format(ichan)
 
     lsubmits = []
 
     for isim in lista:
-        macro_name = postPTEP.survey.scriptd+'Run_scripts/run_nchan{0}_nsim{1}.slurm'.format(ichan,isim)
+        macro_name = scriptd+'Run_scripts/run_nchan{0}_nsim{1}.slurm'.format(ichan,isim)
         lsubmits.append('sbatch '+macro_name)
 
 #    if sim_list is not None:
@@ -190,18 +196,18 @@ def generate_submission_script_for_isim(isim):
     None.
 
     """
-    fname = postPTEP.survey.scriptd+'Submit_scripts/submit_nsim{0}.sh'.format(isim)
+    fname = scriptd+'Submit_scripts/submit_nsim{0}.sh'.format(isim)
 
     lsubmits = []
 
     for ichan in range(6,nchans):
-        macro_name = postPTEP.survey.scriptd+'Run_scripts/run_nchan{0}_nsim{1}.slurm'.format(ichan,isim)
+        macro_name = scriptd+'Run_scripts/run_nchan{0}_nsim{1}.slurm'.format(ichan,isim)
         lsubmits.append('sbatch '+macro_name)
 
     save_ascii_list(lsubmits,fname)
 
 
- 
+
 
 # %% --- CHECKING STATUS UF SUBMISSIONS
 
@@ -210,8 +216,8 @@ def check_submission_status(ichan):
     This routine checks the status of the submissions for a given channel.
     The routine checks if the output log file exists for each simulation.
     It also checks if the output catalogues, with names defined by
-    postPTEP.detected_catalogue_name() and
-    postPTEP.cleaned_catalogue_name(), exist for each simulation.
+    detected_catalogue_name() and
+    cleaned_catalogue_name(), exist for each simulation.
     For every simulation that does not have an output log file and does not
     have both output catalogues, the routine creates a list and generates a
     new submission script for the simulations in the list using
@@ -236,18 +242,18 @@ def check_submission_status(ichan):
     # check if the output log file exists for each simulation
     lsim = []
     for isim in range(nsims):
-        fname = postPTEP.survey.scriptd+'Output_Logs/IFCAPOL_nchan{0}_nsim{1}.out'.format(ichan,isim)
+        fname = scriptd+'Output_Logs/IFCAPOL_nchan{0}_nsim{1}.out'.format(ichan,isim)
         if not os.path.isfile(fname):
             lsim.append(isim)
 
     # check if the output catalogues exist for each simulation
     lsim2 = []
     for isim in lsim:
-        fname = postPTEP.detected_catalogue_name(isim,ichan) # the order of the arguments in this routine is different from the order in the other routines
+        fname = detected_catalogue_name(isim,ichan) # the order of the arguments in this routine is different from the order in the other routines
         if not os.path.isfile(fname):
             lsim2.append(isim)
         else:
-            fname = postPTEP.cleaned_catalogue_name(isim,ichan) # the order of the arguments in this routine is different from the order in the other routines
+            fname = cleaned_catalogue_name(isim,ichan) # the order of the arguments in this routine is different from the order in the other routines
             if not os.path.isfile(fname):
                 lsim2.append(isim)
 
@@ -258,9 +264,9 @@ def check_submission_status(ichan):
     generate_submission_script(ichan,lsim2)
 
     # write a log of the stauts of the submissions to a file named 'status_{0}.txt'.format(ichan) located
-    # in the directory postPTEP.survey.scriptd
+    # in the directory scriptd
 
-    fname = postPTEP.survey.scriptd+'status_{0}.txt'.format(ichan)
+    fname = scriptd+'status_{0}.txt'.format(ichan)
     lstatus = []
     lstatus.append('Channel {0}'.format(ichan))
     lstatus.append(' ')
@@ -285,8 +291,8 @@ def check_submission_status_isim(isim):
     This routine checks the status of the submissions for a given simulation.
     The routine checks if the output log file exists for each channel.
     It also checks if the output catalogues, with names defined by
-    postPTEP.detected_catalogue_name() and
-    postPTEP.cleaned_catalogue_name(), exist for each channel.
+    detected_catalogue_name() and
+    cleaned_catalogue_name(), exist for each channel.
     For every channel that does not have an output log file and does not
     have both output catalogues, the routine creates a list and generates a
     new submission script for the simulations in the list using
@@ -307,18 +313,18 @@ def check_submission_status_isim(isim):
     # check if the output log file exists for each channel
     lchan = []
     for ichan in range(nchans):
-        fname = postPTEP.survey.scriptd+'Output_Logs/IFCAPOL_nchan{0}_nsim{1}.out'.format(ichan,isim)
+        fname = scriptd+'Output_Logs/IFCAPOL_nchan{0}_nsim{1}.out'.format(ichan,isim)
         if not os.path.isfile(fname):
             lchan.append(ichan)
 
     # check if the output catalogues exist for each channel
     lchan2 = []
     for ichan in lchan:
-        fname = postPTEP.detected_catalogue_name(isim,ichan) # the order of the arguments in this routine is different from the order in the other routines
+        fname = detected_catalogue_name(isim,ichan) # the order of the arguments in this routine is different from the order in the other routines
         if not os.path.isfile(fname):
             lchan2.append(ichan)
         else:
-            fname = postPTEP.cleaned_catalogue_name(isim,ichan) # the order of the arguments in this routine is different from the order in the other routines
+            fname = cleaned_catalogue_name(isim,ichan) # the order of the arguments in this routine is different from the order in the other routines
             if not os.path.isfile(fname):
                 lchan2.append(ichan)
 
@@ -329,9 +335,9 @@ def check_submission_status_isim(isim):
     generate_submission_script_for_isim(isim)
 
     # write a log of the stauts of the submissions to a file named 'status_{0}.txt'.format(ichan) located
-    # in the directory postPTEP.survey.scriptd
+    # in the directory scriptd
 
-    fname = postPTEP.survey.scriptd+'status{0}.txt'.format(isim)
+    fname = scriptd+'status{0}.txt'.format(isim)
     lstatus = []
     lstatus.append('Simulation {0}'.format(isim))
     lstatus.append(' ')
