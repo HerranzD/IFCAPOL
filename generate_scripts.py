@@ -95,7 +95,8 @@ def make_script(isim,ichan,hours=1,minutes=30):
 
 
         lsta.append('#SBATCH --ntasks=1')
-        lsta.append('#SBATCH --cpus-per-task=4')
+        lsta.append('#SBATCH --cpus-per-task=1')
+        lsta.append('#SBATCH --mem-per-cpu=20')
         lsta.append('#SBATCH --time={0}'.format(time_str))
 
     else:
