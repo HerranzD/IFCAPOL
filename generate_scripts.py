@@ -103,8 +103,6 @@ def make_script(isim,ichan,hours=1,minutes=30):
 
     lsta.append(' ')
     lsta.append('#From here the job starts')
-    lsta.append('module load python')
-    lsta.append('source activate pycmb')
     lsta.append(' ')
 
     if running_system.upper() == 'NERSC':
@@ -117,7 +115,9 @@ def make_script(isim,ichan,hours=1,minutes=30):
         lsta.append(runcomnd)
 
     lsta.append(' ')
-    lsta.append('conda deactivate')
+
+    if running_system.upper() == 'NERSC':
+        lsta.append('conda deactivate')
 
     save_ascii_list(lsta,macro_name)
 
