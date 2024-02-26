@@ -110,7 +110,7 @@ def make_script(isim,ichan,hours=1,minutes=30):
         runcomnd += ' {0} {1} {2}'.format(app_name,ichan,isim)
         lsta.append(runcomnd)
     elif running_system.upper() == 'IFCA':
-        runcomnd  = 'python3'
+        runcomnd  = 'srun python3'
         runcomnd += ' {0} {1} {2}'.format(app_name,ichan,isim)
         lsta.append(runcomnd)
 
