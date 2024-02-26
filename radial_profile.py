@@ -62,7 +62,7 @@ def radial_profile(data,
 
     r = np.sqrt((x-x0)**2+(y-y0)**2)
 
-    rbin = (nbins * r/r.max()).astype(np.int)
+    rbin = (nbins * r/r.max()).astype(int)
 
     if datype=='real':
         perfil  = ndimage.mean(data, labels=rbin, index=np.arange(0, rbin.max() ))
