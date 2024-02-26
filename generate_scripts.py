@@ -90,11 +90,12 @@ def make_script(isim,ichan,hours=1,minutes=30):
 
         error_str = output_str.replace('--output','--error')
         error_str = error_str.replace('Output','Error')
+        error_str = error_str.replace('.out','.err')
         lsta.append('#SBATCH'+error_str)
 
 
         lsta.append('#SBATCH --ntasks=1')
-        lsta.append('#SBATCH --cpus-per-task=1')
+        lsta.append('#SBATCH --cpus-per-task=4')
         lsta.append('#SBATCH --time={0}'.format(time_str))
 
     else:
