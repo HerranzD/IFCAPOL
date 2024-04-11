@@ -718,12 +718,73 @@ def P_from_dict(dicc):
             'pol angle fit':pol_angle(dicc['Gaussian fit Q'].amplitude,
                                       dicc['Gaussian fit U'].amplitude)}
 
+def MHW2_P_from_dict(dicc):
+    """
+    Returns a dictionary containing the polarization parameters estimated
+    by a Mexican Hat Wavelet. The P Stokes parameter is calculated using the
+    Filtered Fusion technique from the Stokes parameters I,Q,U. The Stokes
+    parameters are assumed to
+    be contained in the input dictionary.
+
+    Parameters
+    ----------
+    dicc : dictionary
+        Input dictionary containing the Stokes parameters I,Q,U and their associated errors.
+        The dictionary must also contain
+        the MHW2 filtered Stokes parameters and the MHW2filtered polarization P map.
+        This dictionary can be obtained from the output of the get_IQUP function.
+
+    Returns
+    -------
+    A dictionary containing:
+        - Polarization P and its error.
+        - Debiased polarization P and its error.
+        - Polarization significance level.
+        - Polarization fraction and its error.
+        - Polarization angle and its error.
+
+
+    """
+
+    Q    = dicc['MHW2 Q']
+    U    = dicc['MHW2 U']
+    sQ   = dicc['MHW2 Q err']
+    sU   = dicc['MHW2 U err']
+
+    deno = np.sqrt(Q*Q+U*U)
+    nume = Q*Q*sQ*sQ + U*U*sU*sU
+
+    P    = np.sqrt(Q**2+U**2)
+    sP   = np.sqrt(nume)/deno
+    if (P**2-sP**2) >= 0.0:
+        debP = np.sqrt(P**2-sP**2)
+    else:
+        debP = P
+
+    Pmap = dicc['Patch MHW2 P'].copy()
+    Pmap.mask_border(signif_border)
+    Pmap.mask_brightest_fraction(signif_fraction)
+    sgn  = significance_level(Pmap,P)
+
+    polfrac     = 100*debP/dicc['I']
+    polfrac_err = 100*polfrac_error(dicc['I'],P,dicc['I err'],sP)
+
+    return {'MHW2 P':P,
+            'MHW2 debiased P':debP,
+            'MHW2 P err':sP,
+            'MHW2 P significance level':sgn,
+            'MHW2 pol frac [%]':polfrac,
+            'MHW2 pol frac err [%]':polfrac_err,
+            'MHW2 pol angle':pol_angle(Q,U),
+            'MHW2 pol angle err':pol_angle_error(Q,U,sQ,sU)}
+
 # %%  I,Q,U,P ESTIMATION AROUND A GIVEN COORDINATE
 
 def get_IQUP(sky_map,
              coord,
              return_abbrv  = False,
-             QU_mode       = 'intensity'):
+             QU_mode       = 'intensity',
+             mhw           = False):
 
     """
     Returns the estimated photometry of a source candidate located at
@@ -747,7 +808,9 @@ def get_IQUP(sky_map,
         they are measured on the local maxima (or minima) around the centre
         of the filtered patch.
 
-
+    mhw : bool
+        If True, MHW2 filtering and photometry are also comupted. The default
+        value if False.
 
     Returns
     -------
@@ -772,6 +835,9 @@ def get_IQUP(sky_map,
 
     patches = filter_coordinate(sky_map,coord)
 
+    if mhw:
+        mhw_patches = mhw_coordinate(sky_map,coord)
+
     fwhm                                = patches['FWHM']
     out_dict                            = {}
     out_dict['FWHM']                    = fwhm
@@ -783,6 +849,7 @@ def get_IQUP(sky_map,
     out_dict['Image resampling factor'] = image_resampling
     out_dict['UNIT']                    = patches['UNIT']
     out_dict['Freq']                    = patches['FREQ']
+    out_dict['MHW2']                    = mhw
 
     dictI     = peak_info(patches['MF I'],fwhm,keyname = 'I',take_positive=True)
 
@@ -798,6 +865,31 @@ def get_IQUP(sky_map,
     out_dict.update(dictI)
     out_dict.update(dictQ)
     out_dict.update(dictU)
+
+    if mhw:
+
+        dict_mhwI = peak_info(mhw_patches['MHW2 I'],
+                              fwhm,keyname = 'MHW2 I',
+                              take_positive=True)
+
+        if QU_mode == 'intensity':
+            dict_mhwQ = peak_info(mhw_patches['MHW2 Q'],
+                                  fwhm,keyname = 'MHW2 Q',
+                                  x=dict_mhwI['I X'],
+                                  y=dict_mhwI['I Y'])
+            dict_mhwU = peak_info(mhw_patches['MHW2 U'],
+                                  fwhm,keyname = 'MHW2 U',
+                                  x=dict_mhwI['I X'],
+                                  y=dict_mhwI['I Y'])
+        else:
+            dict_mhwQ = peak_info(patches['MHW2 Q'],fwhm,
+                                  keyname = ' MHW2 Q')
+            dict_mhwU = peak_info(patches['MHW2 U'],fwhm,
+                                  keyname = 'MHW2 U')
+
+        out_dict.update(dict_mhwI)
+        out_dict.update(dict_mhwQ)
+        out_dict.update(dict_mhwU)
 
     psize    = sky_map.pixel_size
 
@@ -835,12 +927,23 @@ def get_IQUP(sky_map,
     out_dict['Patch MF Q'] = patches['MF Q'].copy()
     out_dict['Patch MF U'] = patches['MF U'].copy()
 
+    if mhw:
+        out_dict['Patch MHW2 I'] = patches['MHW2 I'].copy()
+        out_dict['Patch MHW2 Q'] = patches['MHW2 Q'].copy()
+        out_dict['Patch MHW2 U'] = patches['MHW2 U'].copy()
+
 #      P from the matched filtered Q and U maps
 
     out_dict['Patch MF P'] = (out_dict['Patch MF U']**2 + out_dict['Patch MF Q']**2)**(1/2)
     out_dict['Patch MF P'].image_header['TTYPE1'] = 'P POLARIZATION'
     diccP = P_from_dict(out_dict.copy())
     out_dict.update(diccP)
+
+    if mhw:
+        out_dict['Patch MHW2 P'] = (out_dict['Patch MHW2 U']**2 + out_dict['Patch MHW2 Q']**2)**(1/2)
+        out_dict['Patch MHW2 P'].image_header['TTYPE1'] = 'P POLARIZATION'
+        diccP_MHW2 = MHW2_P_from_dict(out_dict.copy())
+        out_dict.update(diccP_MHW2)
 
 #      P from a Gaussian fit in the unfiltered maps
 
@@ -1306,6 +1409,64 @@ class Source:
         if tofile is not None:
             plt.savefig(tofile)
 
+    def mhwdraw(self,lsize=None,tofile=None):
+        """
+        Plots the I,Q,U,P MHW2 filtered patches from which the Source
+        has been extracted.
+
+        Parameters
+        ----------
+        lsize : int or None
+            If None, the method plots the entire patch. If it is an integer,
+            then the method plots a (lsize,lsize) poststamp centered
+            at the coordinate of the Source.
+
+        tofile: string or None
+            If not note, writes the plot to the given file name.
+        """
+
+        if self.diccio['MHW2']:
+
+            plt.figure(figsize=(16,12))
+
+            if lsize is not None:
+
+                plt.subplot(221)
+                self.diccio['Patch MHW2 I'].stamp_central_region(lsize).draw(pos=221)
+                plt.title('MF I [{0}]'.format(self.unit))
+                plt.subplot(222)
+                self.diccio['Patch MHW2 Q'].stamp_central_region(lsize).draw(pos=222)
+                plt.title('MF Q [{0}]'.format(self.unit))
+                plt.subplot(223)
+                self.diccio['Patch MHW2 U'].stamp_central_region(lsize).draw(pos=223)
+                plt.title('MF U [{0}]'.format(self.unit))
+                plt.subplot(224)
+                self.diccio['Patch MHW2 P'].stamp_central_region(lsize).draw(pos=224)
+                plt.title('MF P [{0}]'.format(self.unit))
+
+            else:
+
+                plt.subplot(221)
+                self.diccio['Patch MHW2 I'].draw(pos=221)
+                plt.title('MF I [{0}]'.format(self.unit))
+                plt.subplot(222)
+                self.diccio['Patch MHW2 Q'].draw(pos=222)
+                plt.title('MF Q [{0}]'.format(self.unit))
+                plt.subplot(223)
+                self.diccio['Patch MHW2 U'].draw(pos=223)
+                plt.title('MF U [{0}]'.format(self.unit))
+                plt.subplot(224)
+                self.diccio['Patch MHW2 P'].draw(pos=224)
+                plt.title('MF P [{0}]'.format(self.unit))
+
+
+            if tofile is not None:
+                plt.savefig(tofile)
+
+        else:
+
+            print(' Source has no MHW2 info')
+
 
 # %% -- photometry
 
@@ -1374,6 +1535,92 @@ class Source:
                           self.diccio['pol angle err'],
                           0,
                           self.copy())
+
+    @property
+    def MHW2_I(self):
+        """
+        Returns the estimated intensity of the
+        source, using the MHW2 estimation on the I map.
+        """
+        if self.diccio['MHW2']:
+            return Photometry(self.diccio['MHW2 I'],
+                              self.diccio['MHW2 I err'],
+                              0,
+                              self.copy())
+        else:
+            print('Source has no MHW2 info')
+
+    @property
+    def MHW2_Q(self):
+        """
+        Returns the estimated Q Stokes parameter of the
+        source, using the MHW2 estimation on the Q map.
+        """
+        if self.diccio['MHW2']:
+            return Photometry(self.diccio['MHW2 Q'],
+                              self.diccio['MHW2 Q err'],
+                              0,
+                              self.copy())
+        else:
+            print('Source has no MHW2 info')
+
+    @property
+    def MHW2_U(self):
+        """
+        Returns the estimated U Stokes parameter of the
+        source, using the MHW2 estimation on the U map.
+        """
+        if self.diccio['MHW2']:
+            return Photometry(self.diccio['MHW2 U'],
+                              self.diccio['MHW2 U err'],
+                              0,
+                              self.copy())
+        else:
+            print('Source has no MHW2 info')
+
+    @property
+    def MHW2_P(self):
+        """
+        Returns the estimated polarization of the
+        source, using the Filtered Fusion (FF) estimation method with
+        the MHW2 Stokes parameter estimation.
+        """
+        if self.diccio['MHW2']:
+            return Photometry(self.diccio['MHW2 debiased P'],
+                              self.diccio['MHW2 P err'],
+                              self.diccio['MHW2 P significance level'],
+                              self.copy())
+        else:
+            print('Source has no MHW2 info')
+
+    @property
+    def MHW2_polfrac(self):
+        """
+        Returns the estimated polarization fraction of the
+        source, using the Filtered Fusion (FF) estimation method with
+        the MHW2 Stokes parameter estimation.
+        """
+        if self.diccio['MHW2']:
+            return Photometry(self.diccio['MHW2 pol frac [%]'],
+                              self.diccio['MHW2 pol frac err [%]'],
+                              self.diccio['MHW2 P significance level'],
+                              self.copy())
+        else:
+            print('Source has no MHW2 info')
+
+    @property
+    def MHW2_angle(self):
+        """
+        Returns the estimated polarization angle of the
+        source, using the MHW2 estimation of Q and U.
+        """
+        if self.diccio['MHW2']:
+            return Photometry(self.diccio['pol angle'],
+                              self.diccio['pol angle err'],
+                              0,
+                              self.copy())
+        else:
+            print('Source has no MHW2 info')
 
 
     @property
@@ -1453,7 +1700,7 @@ class Source:
 # %% -- input/output
 
     @classmethod
-    def from_coordinate(self,sky_map,coordinate):
+    def from_coordinate(self,sky_map,coordinate,mhw=False):
         """
         Returns a Source object from the sky_map, around a given sky coordinate
 
@@ -1471,13 +1718,13 @@ class Source:
 
         """
 
-        d = get_IQUP(sky_map,coordinate)
+        d = get_IQUP(sky_map,coordinate,mhw=mhw)
         d['Parent map FWHM'] = sky_map.fwhm[0].to(u.arcmin)
         d['Creation time']   = datetime.datetime.now()
         return Source(d)
 
     @classmethod
-    def from_object_name(self,sky_map,name):
+    def from_object_name(self,sky_map,name,mhw=False):
         """
         Returns a Source object from the sky_map, around a source with
         a known name.
@@ -1497,7 +1744,7 @@ class Source:
         """
 
         coordinate = SkyCoord.from_name(name)
-        return self.from_coordinate(sky_map,coordinate)
+        return self.from_coordinate(sky_map,coordinate,mhw=mhw)
 
     @classmethod
     def from_tgz(self,fname):
