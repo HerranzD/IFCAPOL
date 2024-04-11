@@ -485,7 +485,7 @@ def mhw_coordinate(sky_map,coord,beam='default',order=2):
     for stokes in ['I','Q','U']:
         patch = patches_dict[stokes]
         fp    = patch.mhw(fwhm=fwhm,order=order)
-        patches_dict['MHW2 {0}'.format(stokes)] = fp
+        patches_dict['MHW2 {0}'.format(stokes)] = fp[0]
 
     return patches_dict
 
@@ -851,7 +851,8 @@ def get_IQUP(sky_map,
     out_dict['Freq']                    = patches['FREQ']
     out_dict['MHW2']                    = mhw
 
-    dictI     = peak_info(patches['MF I'],fwhm,keyname = 'I',take_positive=True)
+    dictI     = peak_info(patches['MF I'],
+                          fwhm,keyname = 'I',take_positive=True)
 
     if QU_mode == 'intensity':
         dictQ = peak_info(patches['MF Q'],fwhm,keyname = 'Q',
@@ -875,12 +876,12 @@ def get_IQUP(sky_map,
         if QU_mode == 'intensity':
             dict_mhwQ = peak_info(mhw_patches['MHW2 Q'],
                                   fwhm,keyname = 'MHW2 Q',
-                                  x=dict_mhwI['I X'],
-                                  y=dict_mhwI['I Y'])
+                                  x=dict_mhwI['MHW2 I X'],
+                                  y=dict_mhwI['MHW2 I Y'])
             dict_mhwU = peak_info(mhw_patches['MHW2 U'],
                                   fwhm,keyname = 'MHW2 U',
-                                  x=dict_mhwI['I X'],
-                                  y=dict_mhwI['I Y'])
+                                  x=dict_mhwI['MHW2 I X'],
+                                  y=dict_mhwI['MHW2 I Y'])
         else:
             dict_mhwQ = peak_info(patches['MHW2 Q'],fwhm,
                                   keyname = ' MHW2 Q')
@@ -928,9 +929,9 @@ def get_IQUP(sky_map,
     out_dict['Patch MF U'] = patches['MF U'].copy()
 
     if mhw:
-        out_dict['Patch MHW2 I'] = patches['MHW2 I'].copy()
-        out_dict['Patch MHW2 Q'] = patches['MHW2 Q'].copy()
-        out_dict['Patch MHW2 U'] = patches['MHW2 U'].copy()
+        out_dict['Patch MHW2 I'] = mhw_patches['MHW2 I'].copy()
+        out_dict['Patch MHW2 Q'] = mhw_patches['MHW2 Q'].copy()
+        out_dict['Patch MHW2 U'] = mhw_patches['MHW2 U'].copy()
 
 #      P from the matched filtered Q and U maps
 
@@ -1433,31 +1434,31 @@ class Source:
 
                 plt.subplot(221)
                 self.diccio['Patch MHW2 I'].stamp_central_region(lsize).draw(pos=221)
-                plt.title('MF I [{0}]'.format(self.unit))
+                plt.title('MHW2 I [{0}]'.format(self.unit))
                 plt.subplot(222)
                 self.diccio['Patch MHW2 Q'].stamp_central_region(lsize).draw(pos=222)
-                plt.title('MF Q [{0}]'.format(self.unit))
+                plt.title('MHW2 Q [{0}]'.format(self.unit))
                 plt.subplot(223)
                 self.diccio['Patch MHW2 U'].stamp_central_region(lsize).draw(pos=223)
-                plt.title('MF U [{0}]'.format(self.unit))
+                plt.title('MHW2 U [{0}]'.format(self.unit))
                 plt.subplot(224)
                 self.diccio['Patch MHW2 P'].stamp_central_region(lsize).draw(pos=224)
-                plt.title('MF P [{0}]'.format(self.unit))
+                plt.title('MHW2 P [{0}]'.format(self.unit))
 
             else:
 
                 plt.subplot(221)
                 self.diccio['Patch MHW2 I'].draw(pos=221)
-                plt.title('MF I [{0}]'.format(self.unit))
+                plt.title('MHW2 I [{0}]'.format(self.unit))
                 plt.subplot(222)
                 self.diccio['Patch MHW2 Q'].draw(pos=222)
-                plt.title('MF Q [{0}]'.format(self.unit))
+                plt.title('MHW2 Q [{0}]'.format(self.unit))
                 plt.subplot(223)
                 self.diccio['Patch MHW2 U'].draw(pos=223)
-                plt.title('MF U [{0}]'.format(self.unit))
+                plt.title('MHW2 U [{0}]'.format(self.unit))
                 plt.subplot(224)
                 self.diccio['Patch MHW2 P'].draw(pos=224)
-                plt.title('MF P [{0}]'.format(self.unit))
+                plt.title('MHW2 P [{0}]'.format(self.unit))
 
 
             if tofile is not None:
