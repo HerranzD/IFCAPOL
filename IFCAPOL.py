@@ -1616,8 +1616,8 @@ class Source:
         source, using the MHW2 estimation of Q and U.
         """
         if self.diccio['MHW2']:
-            return Photometry(self.diccio['pol angle'],
-                              self.diccio['pol angle err'],
+            return Photometry(self.diccio['MHW2 pol angle'],
+                              self.diccio['MHW2 pol angle err'],
                               0,
                               self.copy())
         else:
@@ -1870,6 +1870,15 @@ class Source:
         odic['I err [Jy]']                                = self.I.Jy.error
         odic['I SNR']                                     = self.I.snr
 
+        if self.diccio['MHW2']:
+
+            odic['MHW2 I [{0}]'.format(self.unit.to_string())]     = self.MHW2_I.value
+            odic['MHW2 I err [{0}]'.format(self.unit.to_string())] = self.MHW2_I.error
+            odic['MHW2 I [Jy]']                                    = self.MHW2_I.Jy.value
+            odic['MHW2 I err [Jy]']                                = self.MHW2_I.Jy.error
+            odic['MHW2 I SNR']                                     = self.MHW2_I.snr
+
+
         # polarization
 
         odic['P [{0}]'.format(self.unit.to_string())]     = self.P.value
@@ -1881,6 +1890,18 @@ class Source:
         odic['P significance']                            = self.P.significance
         odic['Polarization fraction [%]']                 = self.polfrac.value
         odic['Polarization fraction error [%]']           = self.polfrac.error
+
+        if self.diccio['MHW2']:
+
+            odic['MHW2 P [{0}]'.format(self.unit.to_string())]     = self.MHW2_P.value
+            odic['MHW2 P err [{0}]'.format(self.unit.to_string())] = self.MHW2_P.error
+            odic['MHW2 P [Jy]']                                    = self.MHW2_P.Jy.value
+            odic['MHW2 P err [Jy]']                                = self.MHW2_P.Jy.error
+            odic['MHW2 Angle [deg]']                               = self.MHW2_angle.value.value
+            odic['MHW2 Angle err [deg]']                           = self.MHW2_angle.error.value
+            odic['MHW2 P significance']                            = self.MHW2_P.significance
+            odic['MHW2 Polarization fraction [%]']                 = self.MHW2_polfrac.value
+            odic['MHW2 Polarization fraction error [%]']           = self.MHW2_polfrac.error
 
         # flags
 
