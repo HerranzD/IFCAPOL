@@ -423,6 +423,72 @@ def filter_coordinate(sky_map,coord,beam='default'):
 
     return patches_dict
 
+# %%  MEXICAN HAT WAVELET AROUND A GIVEN COORDINATE
+
+def mhw_coordinate(sky_map,coord,beam='default',order=2):
+
+    """
+    MHW2 filtered sky patches from Gnomic projection patches from
+    HEALPix maps around a coordinate.
+
+    Parameters
+    ----------
+    sky_map : Fitsmap object (see the Fitsmap class in fits_maps.py)
+        The input LiteBIRD image, as a Fitsmap object.
+
+    coord : astropy.SkyCoord
+        Coordinate around which the sky is being projected.
+
+    beam : string or FHWM (as an astropy.units.quantity.Quantity):
+            - If beam='default' the patches will be filtered with an
+                ideal Gaussian beam whose FWHM is the one read from
+                the sky_map (and, if use_pixel_window is set to True, also
+                the pixel effective window FWHM).
+            - If beam is an astropy.units.quantity.Quantity, the patches
+                will be filtered with an ideal Gaussian beam whose FWHM
+                is the one here specified.
+    order : int
+        The MHW family order. The default value is 2 for MHW2.
+
+    Returns
+    -------
+    A dictionary containing:
+
+        - Three flat sky patches, one for each Stokes
+            parameters. By default, each patch is a Imagen object (see
+            the Imagen class in sky_images.py) containing a flat patch
+            14.658 x 14.658 degrees wide. The pixel area is equal to
+            the parent HEALPix map pixel area, unless the image_resampling
+            parameter is larger than one (in that case the pixel area is
+            rescaled accordingly).
+        - Three MHW2-filtered flat sky patches, one for each Stokes
+            parameters. The size and number of pixels are the same as those
+            of the corresponding non-filtered image
+        - The FWHM of the patch beam. This FWHM is the same as the HEALPix
+            parent map, unless the 'use_pixel_window' parameter is set to
+            True. In that case, the HEALPix pixel effective window is
+            quadratically added to the nominal FWHM
+        - The central frequency of observation. It is the same as the parent
+            HEALPIX map.
+        - The physical units of the patches. It is the same as the parent
+            HEALPIX map.
+
+    """
+
+    patches_dict = get_patches(sky_map,coord)
+
+    if beam == 'default':
+        fwhm   = patches_dict['FWHM']
+    else:
+        fwhm   = beam
+
+    for stokes in ['I','Q','U']:
+        patch = patches_dict[stokes]
+        fp    = patch.mhw(fwhm=fwhm,order=order)
+        patches_dict['MHW2 {0}'.format(stokes)] = fp
+
+    return patches_dict
+
 # %%  GAUSSIAN FITTING
 
 def peak_fit(patch,
