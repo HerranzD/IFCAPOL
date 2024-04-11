@@ -20,13 +20,15 @@ from myutils             import fwhm2sigma,table2skycoord
 # %%  MATCHED FILTERING OF A PATCH AND EXTRACTION OF PEAKS ABOVE A CERTAIN THRESHOLD
 
 
-def patch_analysis(sky_map,coord,fwhm,threshold=3.0,border=10,sclip=3.0):
+def patch_analysis(sky_map,coord,fwhm,
+                   threshold=3.0,border=10,sclip=3.0,mhw=False):
     """
 
     Projects a square flat patch from a sky map around a given coordinate,
-    filters the patch using a recursive matched filter, locates local
-    peaks in the filtered image above a given number of sigmas (excluding
-    a certain number of pixels at the border) a return a table of results.
+    filters the patch using a recursive matched filter or a Mexican Hat Wavelet,
+    locates local peaks in the filtered image above a given number of sigmas
+    (excluding a certain number of pixels at the border) a return a table of
+    results.
 
     Parameters
     ----------
@@ -35,7 +37,7 @@ def patch_analysis(sky_map,coord,fwhm,threshold=3.0,border=10,sclip=3.0):
     coord : `~astropy.SkyCoord`
         Coordinate around which the search is done.
     fwhm : `~astropy.units.quantity.Quantity`
-        FWHM for the matched filter.
+        FWHM for the matched filter or the MHW2.
     threshold : float, optional
         Number of standard deviations over which peaks are looked for.
         The default is 3.0.
@@ -45,6 +47,11 @@ def patch_analysis(sky_map,coord,fwhm,threshold=3.0,border=10,sclip=3.0):
     sclip : float, optional
         Sigma clipping level applied for the calculation of the matched
         filtered image rms. The default is 3.0.
+    mwh : bool
+        If True, the filtering is done using a Mexican Hat Wavelet 2.
+        If False, a recursive matched filter is used. The default value
+        is False.
+
 
     Returns
     -------
@@ -54,8 +61,8 @@ def patch_analysis(sky_map,coord,fwhm,threshold=3.0,border=10,sclip=3.0):
 
             - I: the i pixel index in the image data matrix
             - J: the j pixel index in the image data matrix
-            - Intensity: the value of the matched filtered image at (i,j)
-            - Intensity error: the rms of the matched filtered image
+            - Intensity: the value of the matched filtered or MHW2 image at (i,j)
+            - Intensity error: the rms of the matched filtered or MHW2 image
             - SNR: the signal to noise ratio of the peak
             - RA: the corresponding source RA (deg)
             - DEC: the corresponding source DEC (deg)
@@ -76,9 +83,12 @@ def patch_analysis(sky_map,coord,fwhm,threshold=3.0,border=10,sclip=3.0):
                           resampling=image_resampling)
     plt.ion()
 
-    # matched filtering of the patch (iterative)
-
-    temp,mfpatch  = patch.iter_matched(fwhm=fwhm,toplot=False)
+    if mhw:
+        # Mexican Hat Wavewelet 2 filter
+        mfpatch = patch.mwh(fwhm=fwhm)
+    else:
+        # matched filtering of the patch (iterative)
+        temp,mfpatch  = patch.iter_matched(fwhm=fwhm,toplot=False)
 
     # selection of a region without borders for the computation of statistics
 
@@ -202,7 +212,10 @@ def remove_repeated_positions(input_table,radius):
 
 # %%  BLIND SEARCH ACROSS ALL THE SKY
 
-def blind_survey(sky_map,fwhm,fname,threshold=3.0,verbose=False):
+def blind_survey(sky_map,fwhm,fname,
+                 threshold = 3.0,
+                 mhw       = False,
+                 verbose   = False):
     """
     Runs a blind search for sources of a given FWHM and over a certain
     signal-to-noise ratio on a given sky map.
@@ -217,6 +230,10 @@ def blind_survey(sky_map,fwhm,fname,threshold=3.0,verbose=False):
         File name for the output catalogue of detections.
     threshold : float, optional
         The sigma (signal-to-noise) detection threshold. The default is 3.0.
+    mhw : float, optional
+        Whether to filter with a Mexican Hat Wavelet 2 or with an iterative
+        matched filter. If True. MHW2 is used. If False, iterative matched
+        filter is used. The default is False
     verbose : bool, optional
         If True, the routine writes some basic information during runtime.
         The default is False.
@@ -245,7 +262,8 @@ def blind_survey(sky_map,fwhm,fname,threshold=3.0,verbose=False):
         ltables.append(patch_analysis(sky_map,
                                       coord,
                                       fwhm,
-                                      threshold=threshold))
+                                      threshold=threshold,
+                                      mhw=mhw))
 
     out_table = vstack(ltables)
     out_table.sort(keys='SNR',reverse=True)
@@ -259,6 +277,7 @@ def non_blind_survey(sky_map,blind_survey_fname,
                      xclean     = 2.0,
                      clean_mode = 'after',
                      snrcut     = 3.5,
+                     mhw        = False,
                      verbose    = False):
     """
     Runs a non-blind polarization detection/estimation pipeline on a
@@ -281,9 +300,13 @@ def non_blind_survey(sky_map,blind_survey_fname,
         cleaning is performed before the non-blind analysis. If 'after',
         the cleaning is performed after the non-blind analysis, using
         the new signal-to-noise ratio as reference. The default is 'after'.
-    snr_cut : float, optional
+    snrcut : float, optional
         The signal to noise ratio (SNR) in intensity at which to cut the
         catalogue, that is, the effective sigma detection threshold.
+    mhw : bool,optional
+        Whether add  Mexican Hat Wavelet 2 photometry or not.
+        IMPORTANT: if mhw is True, the SNR cut of the catalogue will be done
+        using the MHW2 photometry. The default is False.
     verbose : bool, optional
         If True, some basic info is written on screen during runtime.
         The default is False.
@@ -320,7 +343,7 @@ def non_blind_survey(sky_map,blind_survey_fname,
 
         if verbose:
             print(' Analysing source {0} of {1}'.format(i,len(cleaned)))
-        s = pol.Source.from_coordinate(sky_map,coords[i])
+        s = pol.Source.from_coordinate(sky_map,coords[i],mhw=mhw)
         d = s.info(include_coords=True,ID=i+1)
         d['Separation from centre [deg]'] = seps[i]
         outpl.append(d)
@@ -332,7 +355,10 @@ def non_blind_survey(sky_map,blind_survey_fname,
         bln        = out_tabl.copy()
         bln['RA']  = bln['RA [deg]'].copy()
         bln['DEC'] = bln['DEC [deg]'].copy()
-        bln.sort(keys='I SNR',reverse=True)
+        if mhw:
+            bln.sort(keys='MHW2 I SNR',reverse=True)
+        else:
+            bln.sort(keys='I SNR',reverse=True)
 
         temp       = remove_repeated_positions(bln, dist)
         out_tabl   = temp.copy()
@@ -341,7 +367,10 @@ def non_blind_survey(sky_map,blind_survey_fname,
                                           '_{0}_cleaned.fits'.format(clean_mode))
 
     ttotal   = out_tabl.copy()
-    out_tabl = ttotal[ttotal['I SNR']>=snrcut]
+    if mhw:
+        out_tabl = ttotal[ttotal['MHW2 I SNR']>=snrcut]
+    else:
+        out_tabl = ttotal[ttotal['I SNR']>=snrcut]
 
     out_tabl.write(fname,overwrite=True)
 
