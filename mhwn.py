@@ -285,15 +285,17 @@ def mhwn_filter(image,beam,order=2,toplot=False,timer=False):
         real_beam   = makeGaussian(image_size,fwhm=beam*sigma2fwhm)
         real_beam   = real_beam/real_beam.max()
         beam_kernel = np.fft.fft2(real_beam)
+        boundes     = (0.5*beam*sigma2fwhm,2*beam*sigma2fwhm)
     else:
         beam_kernel = beam  # it is assumed that the beam in real space is normalized to one
+        boundes     = (0.01, 20)
 
     def snr(R):
         w = normalized_mhwn_2D(image_size,R,beam_kernel,n=order)
         f = fft_filter(fft_image,w)
         return f.std()
 
-    optimal_R = minimize_scalar(snr, bounds=(0.01, 20), method='bounded')
+    optimal_R = minimize_scalar(snr, bounds=boundes, method='bounded')
 
     w = normalized_mhwn_2D(image_size,
                            optimal_R.x,
